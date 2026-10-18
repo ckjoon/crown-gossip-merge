@@ -88,9 +88,9 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
       const c = board.cellCenter(e.to);
       if (node) pop(node);
       const r = Math.min(board.cellSize().w, board.cellSize().h) * 0.55;
-      board.particles.ring(c.x, c.y, e.generatorEvolved ? 0xfde047 : node?.vis.border ?? 0xffffff, r);
+      board.particles.ring(c.x, c.y, e.generatorEvolved ? 0xfde047 : node?.vis.accent ?? 0xffffff, r);
       if (e.generatorEvolved) board.particles.ring(c.x, c.y, 0xf59e0b, r * 1.4, 4);
-      const colors = node ? [node.vis.border, node.vis.bg, 0xffffff, 0xfde047] : GOLD;
+      const colors = node ? [node.vis.accent, 0xffffff, 0xfde047] : GOLD;
       board.particles.burst(c.x, c.y, { count: amount(Math.min(48, lv * 6 + (e.generatorEvolved ? 16 : 0))), colors, speed: 2.6 + lv * 0.35, size: 2.8 });
       if (lv >= 5 || e.generatorEvolved) shake(board, 4);
     });

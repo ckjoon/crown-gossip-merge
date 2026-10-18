@@ -2,6 +2,7 @@
   import TopBar from "./components/TopBar.svelte";
   import MergeScreen from "./components/MergeScreen.svelte";
   import Toasts from "./components/Toasts.svelte";
+  import DialogueBar from "./components/DialogueBar.svelte";
   import Modals from "./Modals.svelte";
   import CastleScreen from "./castle/CastleScreen.svelte";
 
@@ -12,5 +13,6 @@
   <MergeScreen />
   <CastleScreen />
   <Modals />
+  <DialogueBar />
   <Toasts />
 </div>

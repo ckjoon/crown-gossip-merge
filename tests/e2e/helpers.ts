@@ -13,11 +13,9 @@ export async function seed(page: Page, fn: string): Promise<void> {
   }, `${fn}; return [];`);
 }
 
-export async function cellCenter(page: Page, idx: number, selector = ".gh-board-container .board-host canvas", cols = 7, rows = 8) {
-  const box = (await page.locator(selector).boundingBox())!;
-  const cw = (box.width - 3.5 * (cols - 1)) / cols;
-  const ch = (box.height - 3.5 * (rows - 1)) / rows;
-  return { x: box.x + (idx % cols) * (cw + 3.5) + cw / 2, y: box.y + Math.floor(idx / cols) * (ch + 3.5) + ch / 2 };
+// 본 보드 칸 중심 (화면 좌표) — 보드 뷰의 실제 배치를 그대로 쓴다
+export async function cellCenter(page: Page, idx: number) {
+  return page.evaluate((i) => (window as unknown as { __board(): { cellCenterClient(i: number): { x: number; y: number } } }).__board().cellCenterClient(i), idx);
 }
 
 export async function drag(page: Page, from: number, to: number) {

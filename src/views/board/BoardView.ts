@@ -27,6 +27,7 @@ export interface ItemNode {
 }
 
 const GAP = 3.5;
+const MAX_CELL_ASPECT = 1.18;
 const DRAG_THRESHOLD = 6;
 const DOUBLE_TAP_MS = 350;
 const CELL_LIGHT = 0xefe6d4;
@@ -47,6 +48,9 @@ export class BoardView {
   private deco: BoardDeco = { selected: null };
   private cw = 0;
   private ch = 0;
+  // 칸이 세로로 너무 길어지지 않게 비율을 제한하고, 남는 공간은 가운데 정렬
+  private ox = 0;
+  private oy = 0;
   private hints = new Set<number>();
   private inputEnabled = true;
   private drag: { pointerId: number; from: number; sx: number; sy: number; active: boolean; node: ItemNode | null } | null = null;
@@ -124,7 +128,7 @@ export class BoardView {
   cellRect(i: number): { x: number; y: number; w: number; h: number } {
     const col = i % this.cols;
     const row = Math.floor(i / this.cols);
-    return { x: col * (this.cw + GAP), y: row * (this.ch + GAP), w: this.cw, h: this.ch };
+    return { x: this.ox + col * (this.cw + GAP), y: this.oy + row * (this.ch + GAP), w: this.cw, h: this.ch };
   }
 
   cellCenter(i: number): Point {
@@ -144,8 +148,8 @@ export class BoardView {
   }
 
   cellAt(x: number, y: number): number {
-    const col = Math.floor(x / (this.cw + GAP));
-    const row = Math.floor(y / (this.ch + GAP));
+    const col = Math.floor((x - this.ox) / (this.cw + GAP));
+    const row = Math.floor((y - this.oy) / (this.ch + GAP));
     if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return -1;
     return row * this.cols + col;
   }
@@ -170,7 +174,9 @@ export class BoardView {
     const W = this.app.screen.width;
     const H = this.app.screen.height;
     this.cw = Math.max(1, (W - GAP * (this.cols - 1)) / this.cols);
-    this.ch = Math.max(1, (H - GAP * (this.rows - 1)) / this.rows);
+    this.ch = Math.max(1, Math.min((H - GAP * (this.rows - 1)) / this.rows, this.cw * MAX_CELL_ASPECT));
+    this.ox = 0;
+    this.oy = Math.max(0, (H - (this.ch * this.rows + GAP * (this.rows - 1))) / 2);
     this.rebuildAll();
   }
 
@@ -262,39 +268,32 @@ export class BoardView {
     for (const child of c.removeChildren()) child.destroy({ children: true });
     c.pivot.set(w / 2, h / 2);
 
-    const bg = new Graphics();
-    bg.roundRect(0, 2, w, h, 8).fill({ color: vis.shadow });
-    bg.roundRect(0, 0, w, h, 8).fill({ color: vis.bg }).stroke({ width: 1.5, color: vis.border });
-    if (!vis.isGenerator && vis.state !== "crate") bg.roundRect(3, 3, w - 6, h * 0.45, 6).fill({ color: 0xffffff, alpha: 0.55 });
-    c.addChild(bg);
+    // 생성기는 은은한 금빛 원판 + 작은 ⚡ 표시로만 구분 (카드·이름표 없음)
+    if (vis.isGenerator) {
+      const glow = new Graphics();
+      glow.circle(w / 2, h / 2, Math.min(w, h) * 0.5).fill({ color: 0xfde68a, alpha: 0.35 });
+      glow.circle(w / 2, h / 2, Math.min(w, h) * 0.4).fill({ color: 0xfef3c7, alpha: 0.55 });
+      c.addChild(glow);
+    }
 
     const tex = getTexture(vis.tex);
     if (tex) {
       const icon = new Sprite(tex);
-      const size = Math.min(w, h) * 0.66;
+      const size = Math.min(w, h) * (vis.state === "crate" ? 0.9 : 0.94);
       icon.anchor.set(0.5);
       icon.width = size;
       icon.height = size;
-      icon.position.set(w / 2, h * 0.43);
+      icon.position.set(w / 2, h / 2);
       c.addChild(icon);
     }
 
-    const fontSize = Math.max(6.5, Math.min(9.5, h * 0.12));
-    const label = new Text({ text: vis.label, style: { fontFamily: "Pretendard, Apple SD Gothic Neo, Noto Sans KR, sans-serif", fontSize, fontWeight: "800", fill: vis.labelDark ? 0xffffff : 0x0f172a } });
-    const maxW = w - 4;
-    if (label.width > maxW) label.scale.set(maxW / label.width);
-    const lbg = new Graphics();
-    const lh = label.height + 1;
-    lbg.roundRect(2, h - lh - 2, w - 4, lh, 3.5).fill({ color: vis.labelDark ? 0x0f172a : 0xffffff, alpha: vis.labelDark ? 0.7 : 0.88 });
-    label.position.set((w - label.width) / 2, h - lh - 1.5);
-    c.addChild(lbg, label);
-
-    if (vis.pill) {
-      const pill = new Text({ text: vis.pill, style: { fontFamily: "sans-serif", fontSize: Math.max(6, fontSize - 1), fontWeight: "900", fill: vis.isGenerator ? 0xfde047 : 0xffffff } });
-      const pb = new Graphics();
-      pb.roundRect(w - pill.width - 6, 1, pill.width + 4, pill.height, 3.5).fill({ color: 0x0f172a, alpha: 0.8 });
-      pill.position.set(w - pill.width - 4, 1);
-      c.addChild(pb, pill);
+    const fontSize = Math.max(8, Math.min(11, h * 0.15));
+    if (vis.isGenerator) {
+      const chip = new Graphics().circle(w - 7, h - 7, 7).fill({ color: 0xf59e0b }).stroke({ width: 1.5, color: 0xffffff });
+      const bolt = new Text({ text: "⚡", style: { fontSize: 8 } });
+      bolt.anchor.set(0.5);
+      bolt.position.set(w - 7, h - 7);
+      c.addChild(chip, bolt);
     }
 
     if (vis.state === "cobweb") {
@@ -404,5 +403,5 @@ export class BoardView {
 }
 
 function sameVisual(a: CellVisual, b: CellVisual): boolean {
-  return a.tex === b.tex && a.label === b.label && a.pill === b.pill && a.state === b.state && a.wanted === b.wanted && a.bg === b.bg;
+  return a.tex === b.tex && a.state === b.state && a.wanted === b.wanted;
 }

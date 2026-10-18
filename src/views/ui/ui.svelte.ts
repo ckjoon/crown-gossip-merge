@@ -24,7 +24,8 @@ export const ui = $state({
   selectedEventCell: 6 as number | null,
   selectedOrderIdx: null as number | null,
   modal: null as ModalId | null,
-  dialogue: { speaker: "🧙‍♀️ 셀레네", text: "\"주문 카드를 누르면 어떤 생성기나 재료가 필요한지 알려드려요!\"" },
+  // 말풍선: 할 말이 생길 때만 잠깐 떠오른다 (seq가 바뀌면 다시 표시)
+  dialogue: { speaker: "", text: "", seq: 0 },
   inputLocked: false,
   cutscene: null as CutsceneView | null,
   clock: Date.now(),
@@ -60,7 +61,7 @@ export function toast(text: string, x?: number, y?: number, color = "#fbbf24"): 
 }
 
 export function say(speaker: string, text: string): void {
-  ui.dialogue = { speaker, text };
+  ui.dialogue = { speaker, text, seq: ui.dialogue.seq + 1 };
 }
 
 const REJECT_TEXT: Record<RejectReason, string> = {

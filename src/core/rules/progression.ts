@@ -1,7 +1,5 @@
 // progression.ts — 구역 진행·주문 상한·생성기 배출·배속 부스트·재화 환산 같은 순수 게임 규칙 모음 (v2.5 progression.js 이전)
 
-export const APP_STARTED = "v3 scaffold";
-
 export type ZoneKey = "alchemy" | "harbor" | "garden" | "banquet";
 export type Boost = 1 | 2 | 4;
 

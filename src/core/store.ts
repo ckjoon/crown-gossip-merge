@@ -6,11 +6,22 @@ import type { GameState } from "./types";
 
 export type Action<P> = (draft: GameState, ctx: Ctx, payload: P) => GameEvent[];
 
+// transient: 저장할 필요가 없는 변경 (예: 1초마다 줄어드는 번개 카운트다운)
+export interface DispatchOptions {
+  transient?: boolean;
+}
+
+export interface CommitInfo {
+  transient: boolean;
+  events: GameEvent[];
+}
+
 export interface Store {
   get(): GameState;
   subscribe(fn: (s: GameState) => void): () => void;
   onEvent(fn: (e: GameEvent) => void): () => void;
-  dispatch<P>(action: Action<P>, payload: P): GameEvent[];
+  onCommit(fn: (info: CommitInfo) => void): () => void;
+  dispatch<P>(action: Action<P>, payload: P, opts?: DispatchOptions): GameEvent[];
   replace(next: GameState): void;
 }
 
@@ -18,6 +29,7 @@ export function createStore(initial: GameState, ctx: Ctx): Store {
   let state = initial;
   const listeners = new Set<(s: GameState) => void>();
   const eventListeners = new Set<(e: GameEvent) => void>();
+  const commitListeners = new Set<(info: CommitInfo) => void>();
 
   const notify = () => {
     for (const fn of listeners) fn(state);
@@ -34,18 +46,25 @@ export function createStore(initial: GameState, ctx: Ctx): Store {
       eventListeners.add(fn);
       return () => eventListeners.delete(fn);
     },
-    dispatch(action, payload) {
+    onCommit(fn) {
+      commitListeners.add(fn);
+      return () => commitListeners.delete(fn);
+    },
+    dispatch(action, payload, opts) {
       // 사본에서 실행하므로 행동이 예외를 던지면 기존 상태가 그대로 남는다
       const draft = structuredClone(state);
       const events = action(draft, ctx, payload);
       state = draft;
       notify();
+      const info: CommitInfo = { transient: !!opts?.transient, events };
+      for (const fn of commitListeners) fn(info);
       for (const e of events) for (const fn of eventListeners) fn(e);
       return events;
     },
     replace(next) {
       state = next;
       notify();
+      for (const fn of commitListeners) fn({ transient: false, events: [] });
     },
   };
 }

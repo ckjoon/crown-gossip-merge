@@ -1,0 +1,67 @@
+/* v3 추가 스타일 (v2 legacy.css 위에 얹음) */
+
+/* Svelte 마운트 지점: v2의 body flex 중앙 정렬을 그대로 이어받는 래퍼 */
+#app {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.board-host {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  touch-action: none;
+}
+
+.board-host canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.toast-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+}
+
+/* 재화 숫자 통통 */
+.gh-res-pill.res-bump {
+  animation: resBump 0.45s cubic-bezier(0.2, 1.8, 0.4, 1);
+}
+
+@keyframes resBump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+button.gh-res-pill {
+  border: inherit;
+  font: inherit;
+  color: inherit;
+}
+
+/* 💎 부족 시 흐리게만 보이고 누르면 안내 */
+.order-buy-btn.is-short,
+.gem-pack-btn.is-short {
+  opacity: 0.45;
+}
+
+/* 주문 카드 흡수 펄스 (주문 완료 비행 연출) */
+.gh-order-card.absorb {
+  animation: absorbPulse 0.35s ease-out;
+}
+
+@keyframes absorbPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.55); }
+  100% { transform: scale(1); }
+}

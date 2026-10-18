@@ -10,7 +10,6 @@ export interface Autosave {
 
 export function createAutosave(store: Store, repo: SaveRepository, opts: { debounceMs: number; now: () => number }): Autosave {
   let timer: ReturnType<typeof setTimeout> | null = null;
-  let first = true;
 
   const flush = async () => {
     if (timer) {
@@ -20,11 +19,9 @@ export function createAutosave(store: Store, repo: SaveRepository, opts: { debou
     await repo.save(store.get(), opts.now());
   };
 
-  const unsubState = store.subscribe(() => {
-    if (first) {
-      first = false;
-      return;
-    }
+  // 일시적 변경(번개 카운트다운)은 저장하지 않되, 번개가 실제로 충전되면 저장
+  const unsubState = store.onCommit(({ transient, events }) => {
+    if (transient && !events.some((e) => e.type === "energyRegen")) return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       timer = null;

@@ -86,7 +86,7 @@ export const serveOrder: Action<{ orderIdx: number }> = (s, ctx, { orderIdx }) =
       bonusCell = cell;
     }
   }
-  ev.push({ type: "orderServed", orderIdx, cells: [...st.matchedCells], coins: ord.coins, bonusCell });
+  ev.push({ type: "orderServed", orderIdx, cells: [...st.matchedCells], coins: ord.coins, bonusCell, customer: { ...ord.customer } });
   s.orders[orderIdx] = createOrder(s, ctx, orderIdx);
   return ev;
 };

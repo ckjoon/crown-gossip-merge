@@ -65,3 +65,22 @@ describe("묶음 저장", () => {
     vi.useRealTimers();
   });
 });
+
+describe("묶음 저장: 일시적 변경", () => {
+  test("transient dispatch(번개 타이머)는 저장을 예약하지 않음, 충전 이벤트가 있으면 저장", async () => {
+    vi.useFakeTimers();
+    const ctx = fixedCtx();
+    const store = createStore(createInitialState(ctx), ctx);
+    let saves = 0;
+    const repo: SaveRepository = { load: async () => null, save: async () => void saves++ };
+    const auto = createAutosave(store, repo, { debounceMs: 300, now: () => 1 });
+    store.dispatch((d) => { d.energyCountdown -= 1; return []; }, undefined, { transient: true });
+    await vi.advanceTimersByTimeAsync(400);
+    expect(saves).toBe(0);
+    store.dispatch((d) => { d.energy += 1; return [{ type: "energyRegen", energy: d.energy }]; }, undefined, { transient: true });
+    await vi.advanceTimersByTimeAsync(400);
+    expect(saves).toBe(1);
+    auto.dispose();
+    vi.useRealTimers();
+  });
+});

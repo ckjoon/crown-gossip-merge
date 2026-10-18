@@ -1962,3 +1962,47 @@ body {
     box-shadow: 0 0 0 18px rgba(253, 224, 71, 0);
   }
 }
+
+/* v2.5.0 구역 완성 배너 */
+.zone-complete-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 18px;
+  pointer-events: auto;
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(17, 10, 33, 0.6), transparent 45%);
+}
+
+.zone-complete-banner.hidden {
+  display: none;
+}
+
+.zone-complete-banner strong {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fde047;
+  text-shadow: 0 2px 0 #7c2d12, 0 0 18px rgba(253, 224, 71, 0.6);
+  animation: zoneBannerPop 0.6s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.zone-complete-banner span {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #f5f3ff;
+}
+
+@keyframes zoneBannerPop {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

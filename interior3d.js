@@ -1344,6 +1344,52 @@ window.Interior3DEngine = (function () {
     }
   }
 
+  // 🎉 구역 완성 연출: 완성된 방을 카메라가 좌우로 크게 둘러봄 (약 4초, skipRoomShowcase로 즉시 종료)
+  let showcaseTimeline = null;
+  function playRoomShowcase(onDone) {
+    const finish = () => {
+      showcaseTimeline = null;
+      if (camera) {
+        camera.position.set(DEFAULT_CAM_POS.x, DEFAULT_CAM_POS.y, DEFAULT_CAM_POS.z);
+        camera.zoom = 1.0;
+        camera.updateProjectionMatrix();
+        camera.lookAt(camLookTarget.x, camLookTarget.y, camLookTarget.z);
+      }
+      updatePinsDOM();
+      if (onDone) onDone();
+    };
+    if (!window.gsap || !camera) {
+      finish();
+      return;
+    }
+    if (isCastleMapMode) switchTheme(currentThemeKey);
+    activeInspectSpot = null;
+    camLookTarget.x = 0;
+    camLookTarget.y = 1.0;
+    camLookTarget.z = 0;
+    if (pinsContainerEl) pinsContainerEl.innerHTML = "";
+
+    const radius = Math.hypot(DEFAULT_CAM_POS.x, DEFAULT_CAM_POS.z);
+    const baseAngle = Math.atan2(DEFAULT_CAM_POS.z, DEFAULT_CAM_POS.x);
+    const orbit = { a: 0, zoom: 1.0 };
+    const apply = () => {
+      const ang = baseAngle + orbit.a;
+      camera.position.set(Math.cos(ang) * radius, DEFAULT_CAM_POS.y, Math.sin(ang) * radius);
+      camera.zoom = orbit.zoom;
+      camera.updateProjectionMatrix();
+      camera.lookAt(camLookTarget.x, camLookTarget.y, camLookTarget.z);
+    };
+    showcaseTimeline = gsap.timeline({ onUpdate: apply, onComplete: finish });
+    showcaseTimeline
+      .to(orbit, { a: 0.75, zoom: 1.18, duration: 1.4, ease: "sine.inOut" })
+      .to(orbit, { a: -0.75, duration: 1.8, ease: "sine.inOut" })
+      .to(orbit, { a: 0, zoom: 1.0, duration: 0.8, ease: "sine.inOut" });
+  }
+
+  function skipRoomShowcase() {
+    if (showcaseTimeline) showcaseTimeline.progress(1);
+  }
+
   function resetCameraSmooth() {
     if (!window.gsap || !camera) return;
     gsap.to(camera, {
@@ -1548,5 +1594,7 @@ window.Interior3DEngine = (function () {
     getZoneProgress,
     getStorySpots,
     markZoneRevealed,
+    playRoomShowcase,
+    skipRoomShowcase,
   };
 })();

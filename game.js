@@ -641,8 +641,18 @@ async function init() {
         setDialogue("🔨 " + spot.name, spot.story);
         renderAll();
 
+        // 방금 복구로 구역의 마지막 장소가 끝났다면 컷신이 닫힌 뒤 구역 완성 연출 실행
+        const zoneJustCompleted =
+          !wasAlreadyDone &&
+          currentThemeObj &&
+          Interior3DEngine.getZoneProgress().completedKeys.includes(currentThemeObj.id);
         setTimeout(() => {
-          openStoryCutscene(spot, currentThemeObj ? currentThemeObj.title : "🏰 마녀의 성", !wasAlreadyDone);
+          openStoryCutscene(
+            spot,
+            currentThemeObj ? currentThemeObj.title : "🏰 마녀의 성",
+            !wasAlreadyDone,
+            zoneJustCompleted ? () => playZoneCompleteSequence(currentThemeObj.id) : null
+          );
         }, 720);
       },
     });
@@ -1072,6 +1082,41 @@ function closeOrAdvanceCutscene(skipAll = false) {
   cutsceneState.onFinish = null;
   renderAll();
   if (finishCb) finishCb();
+}
+
+// 🎉 구역 완성: 💎 보상 → 완성된 방 둘러보기 → 성 지도에서 다음 구역 공개
+function playZoneCompleteSequence(zoneKey) {
+  if (!window.Interior3DEngine) return;
+  const themes = Interior3DEngine.getProgressStats().allThemes;
+  const theme = themes[zoneKey];
+  const gemReward = GameProgression.GEM_REWARDS.zoneComplete;
+  state.gems += gemReward;
+  triggerAutoSave();
+
+  const banner = document.getElementById("zone-complete-banner");
+  document.getElementById("zone-complete-title").textContent = `🎉 ${theme ? theme.shortName : "구역"} 완성!`;
+  document.getElementById("zone-complete-sub").textContent = `구역 완성 보상 +💎${gemReward} · 화면을 탭하면 건너뛰어요`;
+  banner.classList.remove("hidden");
+  sfx.serve();
+
+  const skip = () => Interior3DEngine.skipRoomShowcase();
+  banner.addEventListener("click", skip);
+
+  Interior3DEngine.playRoomShowcase(() => {
+    banner.classList.add("hidden");
+    banner.removeEventListener("click", skip);
+
+    const nextKey = GameProgression.getNextZoneKey(zoneKey);
+    if (nextKey) {
+      Interior3DEngine.markZoneRevealed(nextKey);
+      selectCastleThemeTab("castle_map");
+      const nextTheme = themes[nextKey];
+      setDialogue("🗺️ 새 구역 공개", `${nextTheme.shortName}이(가) 열렸어요! 성 지도에서 핀을 눌러 입장하세요.`);
+    } else {
+      setDialogue("👑 마녀의 성 완전 복원", "모든 구역을 완성했어요! 셀레네의 성이 다시 빛나기 시작했어요.");
+    }
+    renderAll();
+  });
 }
 
 // ============================================================================

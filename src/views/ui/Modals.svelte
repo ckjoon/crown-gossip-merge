@@ -27,7 +27,8 @@
     if (!showReport && changelogPending && ui.modal === null) {
       changelogPending = false;
       app().store.dispatch(markVersionSeen, { version: APP_VERSION });
-      setTimeout(() => (ui.modal = "changelog"), 350);
+      // 바로 띄워야 함: 지연 중엔 ui.modal이 비어 있어 서비스 워커 교체 새로고침이 끼어들면 패치노트를 영영 못 봄
+      ui.modal = "changelog";
     }
   });
 

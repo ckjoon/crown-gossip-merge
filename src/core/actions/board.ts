@@ -198,3 +198,20 @@ export const sellItem: Action<{ cell: number }> = (s, _ctx, { cell }) => {
   ev.push({ type: "sold", cell, coins: meta.sell });
   return ev;
 };
+
+// 드래그 중 합칠 수 있는 칸 (같은 재료·레벨이며 최대 레벨 미만 — 거미줄 칸 포함, 또는 같은 체인·등급 생성기 ★3 미만)
+export function getMergeTargets(s: GameState, from: number): number[] {
+  const src = s.board[from];
+  if (!src || src.state !== "active") return [];
+  const out: number[] = [];
+  s.board.forEach((t, i) => {
+    if (i === from || !t || t.state === "crate") return;
+    if (src.isGenerator) {
+      if (t.isGenerator && t.state === "active" && t.chain === src.chain && t.level === src.level && src.level < 3) out.push(i);
+      return;
+    }
+    if (t.isGenerator || src.chain === "combo") return;
+    if (t.chain === src.chain && t.level === src.level && src.level < getItemMeta(src.chain, src.level).maxLv) out.push(i);
+  });
+  return out;
+}

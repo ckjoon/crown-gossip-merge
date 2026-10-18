@@ -190,3 +190,26 @@ describe("레벨업", () => {
     expect(ev.find((e) => e.type === "generatorPartGranted")).toMatchObject({ chain: "potion", where: "board" });
   });
 });
+
+import { getMergeTargets } from "../../src/core/actions/board";
+
+describe("드래그 힌트", () => {
+  test("같은 재료(거미줄 포함)와 같은 등급 생성기만 합성 대상", () => {
+    s.board[0] = item("tea", 2);
+    s.board[1] = item("tea", 2);
+    s.board[2] = item("tea", 2, { state: "cobweb" });
+    s.board[3] = item("tea", 2, { state: "crate" });
+    s.board[4] = item("tea", 3);
+    s.board[5] = gen("tea", 1);
+    s.board[6] = gen("tea", 1);
+    s.board[7] = gen("tea", 3);
+    s.board[8] = gen("tea", 3);
+    s.board[9] = item("tea", 8);
+    s.board[10] = item("tea", 8);
+    expect(getMergeTargets(s, 0)).toEqual([1, 2]);
+    expect(getMergeTargets(s, 5)).toEqual([6]);
+    expect(getMergeTargets(s, 7)).toEqual([]);
+    expect(getMergeTargets(s, 9)).toEqual([]);
+    expect(getMergeTargets(s, 3)).toEqual([]);
+  });
+});

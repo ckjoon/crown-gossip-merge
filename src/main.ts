@@ -14,6 +14,7 @@ import { createAutosave } from "./services/save/autosave";
 import { setApp } from "./views/ui/context";
 import { ui } from "./views/ui/ui.svelte";
 import { attachFeedback } from "./views/ui/feedback";
+import { preloadTextures } from "./views/art/textures";
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -51,14 +52,8 @@ async function boot(): Promise<void> {
     (window as unknown as { __game: typeof store }).__game = store;
   }
 
-  mount(App, {
-    target: document.getElementById("app")!,
-    props: {
-      onBoardHost: () => {
-        // Task 8에서 Pixi 보드를 마운트한다
-      },
-    },
-  });
+  await preloadTextures();
+  mount(App, { target: document.getElementById("app")! });
 }
 
 void boot();

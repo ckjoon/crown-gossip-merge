@@ -7,8 +7,8 @@
   import DialogueBar from "./DialogueBar.svelte";
   import SideTools from "./SideTools.svelte";
   import Inspector from "./Inspector.svelte";
+  import BoardCanvas from "../../board/BoardCanvas.svelte";
 
-  let { boardHost = $bindable() }: { boardHost?: HTMLDivElement } = $props();
   const game = app().store;
   const holiday = $derived(getHolidayConfig($game.holiday.activeHolidayId));
   const remain = $derived(getHolidayRemainingText(holiday, new Date(ui.clock)));
@@ -31,7 +31,7 @@
   </div>
 
   <main class="gh-board-container" id="board-section">
-    <div class="board-host" bind:this={boardHost}></div>
+    <BoardCanvas mode="main" />
   </main>
 
   <footer class="gh-bottom-panel">

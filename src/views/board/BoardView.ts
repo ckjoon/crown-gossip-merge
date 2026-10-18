@@ -22,6 +22,8 @@ export interface ItemNode {
   cell: number;
   w: number;
   h: number;
+  // 생성 포물선 연출 중이면 그 트윈과 도착 칸 (다른 위치 지정과 충돌하지 않게)
+  arc?: { tween: gsap.core.Tween; cell: number } | null;
 }
 
 const GAP = 3.5;
@@ -52,6 +54,7 @@ export class BoardView {
   private ro: ResizeObserver | null = null;
   private offReady: (() => void) | null = null;
   private destroyed = false;
+  private offWindow: (() => void) | null = null;
 
   onTap: (cell: number, isDouble: boolean, at: Point) => void = () => {};
   onDrop: (from: number, to: number, at: Point) => void = () => {};
@@ -87,6 +90,17 @@ export class BoardView {
     this.app.renderer.on("resize", () => this.relayout());
     this.ro = new ResizeObserver(() => this.app.resize());
     this.ro.observe(this.host);
+    // Pixi는 pointercancel을 듣지 않으므로, 터치가 취소되면(제스처·알림창·앱 전환) 드래그를 직접 정리한다
+    const cancel = () => this.cancelDrag();
+    this.app.canvas.addEventListener("pointercancel", cancel);
+    this.app.canvas.addEventListener("lostpointercapture", cancel);
+    window.addEventListener("blur", cancel);
+    const onVis = () => document.visibilityState === "hidden" && cancel();
+    document.addEventListener("visibilitychange", onVis);
+    this.offWindow = () => {
+      window.removeEventListener("blur", cancel);
+      document.removeEventListener("visibilitychange", onVis);
+    };
     this.offReady = onTexturesReady(() => this.rebuildAll());
     this.relayout();
   }
@@ -94,6 +108,7 @@ export class BoardView {
   destroy(): void {
     this.destroyed = true;
     this.ro?.disconnect();
+    this.offWindow?.();
     this.offReady?.();
     gsap.killTweensOf(this.hintG);
     try {
@@ -133,6 +148,10 @@ export class BoardView {
     const row = Math.floor(y / (this.ch + GAP));
     if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) return -1;
     return row * this.cols + col;
+  }
+
+  isDragging(node: ItemNode): boolean {
+    return this.drag?.node === node;
   }
 
   nodeAt(cell: number): ItemNode | null {
@@ -196,7 +215,11 @@ export class BoardView {
         this.drawNode(node);
       }
       node.cell = cell;
-      if (this.drag?.node !== node) {
+      if (node.arc && node.arc.cell !== cell) {
+        node.arc.tween.kill();
+        node.arc = null;
+      }
+      if (this.drag?.node !== node && !node.arc) {
         const c = this.cellCenter(cell);
         const far = Math.hypot(node.c.x - c.x, node.c.y - c.y);
         if (node.c.x === 0 && node.c.y === 0) node.c.position.set(c.x, c.y);
@@ -305,10 +328,14 @@ export class BoardView {
   }
 
   private cancelDrag(): void {
-    if (this.drag?.active && this.drag.node) {
-      this.itemsLayer.addChild(this.drag.node.c);
-      this.drag.node.c.scale.set(1);
-      this.drag.node.c.rotation = 0;
+    if (!this.drag) return;
+    if (this.drag.active && this.drag.node) {
+      const c = this.drag.node.c;
+      this.itemsLayer.addChild(c);
+      gsap.killTweensOf(c.scale);
+      gsap.killTweensOf(c);
+      c.scale.set(1);
+      c.rotation = 0;
     }
     this.drag = null;
     this.setHints(new Set());
@@ -316,7 +343,10 @@ export class BoardView {
   }
 
   private handleDown(e: FederatedPointerEvent): void {
-    if (!this.inputEnabled || this.drag) return;
+    if (!this.inputEnabled) return;
+    // 이전 포인터가 움직임 없이 남아 있으면(취소된 터치) 버리고 새로 시작
+    if (this.drag && this.drag.pointerId !== e.pointerId && !this.drag.active) this.drag = null;
+    if (this.drag) return;
     const cell = this.cellAt(e.global.x, e.global.y);
     if (cell < 0) return;
     this.drag = { pointerId: e.pointerId, from: cell, sx: e.global.x, sy: e.global.y, active: false, node: null };
@@ -332,6 +362,10 @@ export class BoardView {
       if (!vis || vis.state !== "active" || !node) return;
       d.active = true;
       d.node = node;
+      if (node.arc) {
+        node.arc.tween.kill();
+        node.arc = null;
+      }
       this.dragLayer.addChild(node.c);
       gsap.killTweensOf(node.c.scale);
       gsap.to(node.c.scale, { x: 1.15, y: 1.15, duration: 0.12 * this.timeScale, ease: "back.out(3)" });

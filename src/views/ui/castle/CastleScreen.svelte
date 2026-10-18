@@ -168,7 +168,7 @@
 
     <RewardOverlay />
 
-    <button class="castle-to-merge-fab" onclick={() => { app().sfx.tap(); ui.screen = "merge"; }} title="합성 페이지로 들어가기">
+    <button class="castle-to-merge-fab" class:input-locked={ui.inputLocked} onclick={() => { app().sfx.tap(); ui.screen = "merge"; }} title="합성 페이지로 들어가기">
       {#if anyOrderReady}<span class="fab-order-badge">주문완성!</span>{/if}
       <div class="fab-icon-circle">{room.sectionIcon}</div>
       <div class="fab-text-col">

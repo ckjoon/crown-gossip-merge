@@ -27,6 +27,13 @@ export function openStyle(spotId: string): void {
     return;
   }
   app().sfx.tap();
+  // 지도 모드에서 카드로 열면 해당 구역 방으로 먼저 들어간다 (지도 장면에 가구를 그리지 않게)
+  const f = findSpot(spotId);
+  if (ui.castleMap || (f && s.currentThemeKey !== f.zoneKey)) {
+    if (!f || !goZone(f.zoneKey)) return;
+    setTimeout(() => openStyle(spotId), 250);
+    return;
+  }
   ui.stylePick = { spotId, styleIdx: st.styleIdx };
   getCastleView()?.previewSpot(spotId, st.styleIdx);
 }

@@ -389,13 +389,34 @@ const HOLIDAY_EVENTS = [
   },
 ];
 
-const CUSTOMERS = [
-  { name: "퀸 (Quinn)", face: "🕵️‍♀️", line: "하버 오션카페와 마녀의 공방을 멋지게 리모델링해 봐요!" },
-  { name: "루시안 공작", face: "🧛‍♂️", line: "특제 활력비약과 향긋한 홍차의 조합이 훌륭하군." },
-  { name: "올리비아", face: "👧", line: "화덕 오븐에서 갓 구운 크루아상이랑 케이크 냄새가 너무 좋아요!" },
-  { name: "해리슨", face: "🧔‍♂️", line: "별빛로드를 밝힐 마도서와 따뜻한 에스프레소 부탁하네!" },
-  { name: "카르멘", face: "👩‍🎨", line: "가마솥 같은 생성기도 2개를 합치면 황금 생성기로 진화한답니다!" },
-];
+// 주문을 맡기는 핵심 생산 체인 (보석/광석·수집 체인 제외)
+const CORE_CHAINS = ["potion", "grimoire", "herb", "bakery", "tea"];
+
+// 구역별 손님 명단 (현재 구역 명단에서 돌아가며 등장)
+const CUSTOMERS_BY_ZONE = {
+  alchemy: [
+    { name: "퀸 (Quinn)", face: "🕵️‍♀️", line: "하버 오션카페와 마녀의 공방을 멋지게 리모델링해 봐요!" },
+    { name: "루시안 공작", face: "🧛‍♂️", line: "마나물약 한 잔에 향긋한 홍차라니, 최고의 오후로군." },
+    { name: "올리비아", face: "👧", line: "화덕 오븐에서 갓 구운 크루아상이랑 케이크 냄새가 너무 좋아요!" },
+    { name: "해리슨", face: "🧔‍♂️", line: "별빛로드를 밝힐 마도서와 따뜻한 에스프레소 부탁하네!" },
+    { name: "카르멘", face: "👩‍🎨", line: "가마솥 같은 생성기도 2개를 합치면 더 높은 등급으로 진화한답니다!" },
+  ],
+  harbor: [
+    { name: "선장 마르코", face: "⚓", line: "항해 전엔 오션카페 크루아상이 최고지!" },
+    { name: "카페 단골 엘라", face: "☕", line: "바다가 보이는 테라스에서 밀크티 한 잔, 부탁해요!" },
+    { name: "갈매기 우편배달부 핍", face: "🐦", line: "끼룩! 성 해안 테라스로 배달 왔어요!" },
+  ],
+  garden: [
+    { name: "정원사 로완", face: "🧑‍🌾", line: "온실의 만드라고라가 또 노래를 부르네요." },
+    { name: "꽃의 요정 릴리", face: "🧚", line: "유리돔 안에 별빛 꽃이 피었어요!" },
+    { name: "식물학자 베르나", face: "👩‍🔬", line: "희귀 식물 표본이 더 필요해요!" },
+  ],
+  banquet: [
+    { name: "젊은 왕 아서", face: "🤴", line: "오늘 밤 대연회는 마녀의 성이 주인공이오!" },
+    { name: "시녀장 마가렛", face: "👵", line: "연회 준비엔 한 치의 실수도 없어야 해요." },
+    { name: "궁정 마술사 오베론", face: "🧙", line: "천문대의 별이 연회를 축복하는군." },
+  ],
+};
 
 // 사운드 엔진
 class SoundEngine {
@@ -825,23 +846,18 @@ function initCustomerOrders() {
   ];
 }
 
+// 현재 스토리 구역 (주문 상한·손님 명단 기준)
+function getCurrentZoneKey() {
+  return window.Interior3DEngine && Interior3DEngine.getZoneProgress
+    ? Interior3DEngine.getZoneProgress().currentZoneKey
+    : "alchemy";
+}
+
 function createOrder(slotIdx, customReqs = null) {
-  const cust = CUSTOMERS[(state.playerLv + slotIdx) % CUSTOMERS.length];
-  const core = ["potion", "grimoire", "herb", "bakery", "tea"];
-  let reqs = customReqs;
-
-  if (!reqs) {
-    const c1 = core[Math.floor(Math.random() * core.length)];
-    const maxLv = Math.min(5, 2 + Math.floor(state.playerLv / 2));
-    const lv1 = Math.max(2, Math.floor(Math.random() * maxLv) + 1);
-    reqs = [{ chain: c1, level: lv1 }];
-
-    if (Math.random() < 0.55) {
-      const c2 = core[Math.floor(Math.random() * core.length)];
-      const lv2 = Math.max(1, lv1 - 1);
-      reqs.push({ chain: c2, level: lv2 });
-    }
-  }
+  const zoneKey = getCurrentZoneKey();
+  const custList = CUSTOMERS_BY_ZONE[zoneKey] || CUSTOMERS_BY_ZONE.alchemy;
+  const cust = custList[(state.playerLv + slotIdx) % custList.length];
+  const reqs = customReqs || GameProgression.rollOrderReqs(zoneKey, CORE_CHAINS);
 
   const baseVal = reqs.reduce((s, r) => s + Math.pow(2, r.level) * 9, 0);
   return {
@@ -849,7 +865,7 @@ function createOrder(slotIdx, customReqs = null) {
     customer: cust,
     reqs,
     coins: baseVal + 20,
-    stars: reqs.some((r) => r.level >= 4) ? 2 : 1,
+    stars: reqs.some((r) => r.level >= 5) ? 2 : 1,
   };
 }
 
@@ -1516,8 +1532,7 @@ function gainXP(amount) {
     state.energy += rewardEnergy;
 
     // ★ 레벨업 시 생성기 진화 파츠(Lv.1 생성기)를 보드/가방에 지급하여 생성기 합성을 통한 성질 변화 지원!
-    const coreGenOrder = ["potion", "grimoire", "herb", "bakery", "tea"];
-    const rewardGenChain = coreGenOrder[(state.playerLv - 2) % coreGenOrder.length];
+    const rewardGenChain = CORE_CHAINS[(state.playerLv - 2) % CORE_CHAINS.length];
     grantGeneratorEvolutionPart(rewardGenChain, `Lv.${state.playerLv} 레벨업 보상`);
     const genMeta = getGeneratorTierMeta(rewardGenChain, 1);
 
@@ -2350,13 +2365,12 @@ function renderLevelModal() {
   if (!body) return;
   const reqXP = getRequiredXP(state.playerLv);
   const pct = Math.min(100, Math.round((state.xp / reqXP) * 100));
-  const coreGenOrder = ["potion", "grimoire", "herb", "bakery", "tea"];
 
   let milestonesHtml = "";
   for (let lv = 2; lv <= Math.max(8, state.playerLv + 3); lv++) {
     const unlocked = state.playerLv >= lv;
     const coinBonus = 40 * lv;
-    const rewardGenChain = coreGenOrder[(lv - 2) % coreGenOrder.length];
+    const rewardGenChain = CORE_CHAINS[(lv - 2) % CORE_CHAINS.length];
     const genMeta = getGeneratorTierMeta(rewardGenChain, 1);
 
     milestonesHtml += `

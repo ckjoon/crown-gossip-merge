@@ -1387,6 +1387,27 @@ window.Interior3DEngine = (function () {
     }
   }
 
+  // 구역 순차 해금·스토리 화수 판정 (규칙은 GameProgression에 위임)
+  function getZoneProgress() {
+    const rooms = Object.entries(ROOM_THEMES).map(([key, th]) => ({
+      key,
+      spots: th.spots.map((s) => ({ id: s.id, done: !!s.done })),
+    }));
+    return window.GameProgression.computeZoneProgress(rooms);
+  }
+
+  // 스토리 순서대로 정렬된 전체 장소 목록 (제N화)
+  function getStorySpots() {
+    const zp = getZoneProgress();
+    const list = [];
+    for (const [themeKey, theme] of Object.entries(ROOM_THEMES)) {
+      for (const spot of theme.spots) {
+        list.push({ themeKey, theme, spot, chapter: zp.chapterById[spot.id] });
+      }
+    }
+    return list;
+  }
+
   function getProgressStats() {
     const theme = ROOM_THEMES[currentThemeKey];
     const done = theme.spots.filter((s) => s.done).length;
@@ -1488,5 +1509,7 @@ window.Interior3DEngine = (function () {
     focusOnSpotForDesign,
     exportRoomsState,
     importRoomsState,
+    getZoneProgress,
+    getStorySpots,
   };
 })();

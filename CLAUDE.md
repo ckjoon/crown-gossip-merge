@@ -41,7 +41,9 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
     - CSS is the v2 stylesheet (`styles/legacy.css`, class names kept) plus `styles/v3.css`.
   - `board/`: Pixi board. `BoardView.ts` handles cells, tiles, input, slide tweens, and particles. `visuals.ts` maps state to `CellVisual`. `BoardCanvas.svelte` wires the main 7×8 or holiday 5×5 board.
   - `fx/`: `FxLayer` is a full-screen click-through Pixi canvas for flights between the board and the HTML UI. `juice.ts` maps events to effects.
-  - `castle/`: `CastleView.ts` (Three.js), `scenes.ts`/`furniture.ts` (ported v2 meshes), `ambience.ts` (room mood 0–5), `layout.ts` (3D positions).
+  - `castle/`: `CastleView.ts` (Three.js), `scenes.ts`/`furniture.ts` (room shell, procedural structures, recipe → meshes), `ambience.ts` (room mood 0–5), `layout.ts` (3D positions), `toon.ts` (toon materials + outlines).
+    - `castle/models/`: CC0 glTF models in `public/models` (credits in `public/models/CREDITS.md`). `manifest.ts` lists them, `recipes.ts` places them per spot (`SPOT_RECIPES`, 3 style variants), before-restore clutter (`CLUTTER`), and zone props that appear as more spots are restored (`ZONE_PROPS`). `library.ts` loads them per zone and clones synchronously; until loaded, spots fall back to procedural furniture.
+    - To change the model set, edit `PICK` in `tools/prepare-models.mjs`, rerun it against the downloaded packs (macOS `sips` + Pillow), and update `manifest.ts`. `recipes.test.ts` checks every referenced model exists.
   - `reward/RewardDirector.ts`: sequences a restore: 3D drop, ribbon, reaction, cutscene, then (on zone complete) the showcase, a gem flight, and the next-zone reveal. Input stays locked throughout.
   - `art/`: `sprites.ts` (SVG item art) and `textures.ts` (SVG → Pixi texture cache keyed by `item:chain:lv`, `gen:chain:lv`, `crate`, `event:lv`, `eventGen`).
 - `src/main.ts` wires everything together. `src/sw.ts` is the Workbox injectManifest service worker, built to `/sw.js`.
@@ -64,6 +66,6 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
 1. Add an entry at the top of `VERSION_HISTORY` in `src/core/rules/versionHistory.ts`, bump `APP_VERSION`, and move the `LATEST` badge. The changelog pops up once when `lastSeenVersion` differs.
 2. Bump `version` in `package.json`.
 3. Run `npm test && npm run check && npm run test:e2e`.
-4. Merge to `main` and push. Vercel builds it, and the service worker precache updates automatically. No manual cache-name bump is needed.
+4. Merge to `main` and push. Vercel builds it, and the service worker precache updates automatically. No manual cache-name bump is needed. Models under `/models/` are not precached; the SW caches them on first view (`crown-gossip-models-v1`) — bump that name if model files change in place.
 
 Commit messages follow `feat(vX.Y.Z): ...` in Korean.

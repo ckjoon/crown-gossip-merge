@@ -15,6 +15,9 @@ import { setApp } from "./views/ui/context";
 import { ui } from "./views/ui/ui.svelte";
 import { attachFeedback } from "./views/ui/feedback";
 import { preloadTextures } from "./views/art/textures";
+import { FxLayer } from "./views/fx/FxLayer";
+import { attachJuice } from "./views/fx/juice";
+import { getMainBoard } from "./views/board/registry";
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -49,11 +52,14 @@ async function boot(): Promise<void> {
   }, 1000);
 
   if (import.meta.env.DEV || location.search.includes("e2e")) {
-    (window as unknown as { __game: typeof store }).__game = store;
+    Object.assign(window as object, { __game: store, __board: () => getMainBoard() });
   }
 
   await preloadTextures();
   mount(App, { target: document.getElementById("app")! });
+  const fx = new FxLayer();
+  await fx.init();
+  attachJuice(store, fx, sfx);
 }
 
 void boot();

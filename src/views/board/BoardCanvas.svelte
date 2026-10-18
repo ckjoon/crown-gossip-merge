@@ -3,6 +3,7 @@
   import { app } from "../ui/context";
   import { ui, act } from "../ui/ui.svelte";
   import { BoardView } from "./BoardView";
+  import { setMainBoard } from "./registry";
   import { mainBoardVisuals, holidayBoardVisuals } from "./visuals";
   import { computeWanted } from "../../core/actions/orders";
   import { spawnFromGenerator, collectItem, moveOrMerge, getMergeTargets } from "../../core/actions/board";
@@ -24,11 +25,13 @@
       if (mode === "main") wireMain(view);
       else wireHoliday(view);
       bv = view;
+      if (mode === "main") setMainBoard(view);
       onReady?.(view);
     });
     return () => {
       alive = false;
       bv = null;
+      if (mode === "main") setMainBoard(null);
       view.destroy();
     };
   });

@@ -2,6 +2,8 @@
 // 원칙: render()는 항상 넘겨받은 최신 상태를 기준으로 전체를 맞춘다. 손맛 연출(views/fx)은 이 위에 임시 복제본으로 얹는다.
 
 import { Application, Container, Graphics, Sprite, Text, type FederatedPointerEvent } from "pixi.js";
+import { gsap } from "gsap";
+import { Particles } from "../fx/particles";
 import { getTexture, onTexturesReady } from "../art/textures";
 import type { CellVisual } from "./visuals";
 
@@ -33,6 +35,8 @@ export class BoardView {
   readonly app = new Application();
   readonly itemsLayer = new Container();
   readonly dragLayer = new Container();
+  particles!: Particles;
+  timeScale = 1; // 연출 줄이기: 0.5
   private readonly cellsG = new Graphics();
   readonly hintG = new Graphics();
   private readonly selG = new Graphics();
@@ -70,7 +74,10 @@ export class BoardView {
     });
     if (this.destroyed) return;
     this.host.appendChild(this.app.canvas);
-    this.app.stage.addChild(this.cellsG, this.hintG, this.selG, this.itemsLayer, this.dragLayer);
+    this.particles = new Particles(this.app.ticker);
+    this.app.stage.addChild(this.cellsG, this.hintG, this.selG, this.itemsLayer, this.particles.layer, this.dragLayer);
+    // 합칠 수 있는 칸은 숨 쉬듯 빛난다
+    gsap.to(this.hintG, { alpha: 0.35, duration: 0.8, yoyo: true, repeat: -1, ease: "sine.inOut" });
     this.app.stage.eventMode = "static";
     this.app.stage.hitArea = this.app.screen;
     this.app.stage.on("pointerdown", (e) => this.handleDown(e));
@@ -189,7 +196,13 @@ export class BoardView {
       node.cell = cell;
       if (this.drag?.node !== node) {
         const c = this.cellCenter(cell);
-        node.c.position.set(c.x, c.y);
+        const far = Math.hypot(node.c.x - c.x, node.c.y - c.y);
+        if (node.c.x === 0 && node.c.y === 0) node.c.position.set(c.x, c.y);
+        else if (far > 1) {
+          // 이동·교체·되돌아가기는 짧게 미끄러지며 "통" 자리잡기
+          gsap.killTweensOf(node.c.position);
+          gsap.to(node.c.position, { x: c.x, y: c.y, duration: 0.22 * this.timeScale, ease: "back.out(2.2)" });
+        }
       }
     });
     for (const [key, node] of this.nodes) {
@@ -318,9 +331,14 @@ export class BoardView {
       d.active = true;
       d.node = node;
       this.dragLayer.addChild(node.c);
+      gsap.killTweensOf(node.c.scale);
+      gsap.to(node.c.scale, { x: 1.15, y: 1.15, duration: 0.12 * this.timeScale, ease: "back.out(3)" });
       this.setHints(this.onDragStart(d.from));
     }
     if (d.node) {
+      // 이동 방향으로 살짝 기울기 (±12°)
+      const vx = e.global.x - d.node.c.x;
+      d.node.c.rotation = Math.max(-0.21, Math.min(0.21, d.node.c.rotation * 0.7 + vx * 0.012));
       d.node.c.position.set(e.global.x, e.global.y);
       this.onDragMove(this.toClient({ x: e.global.x, y: e.global.y }), d.node);
     }
@@ -333,6 +351,8 @@ export class BoardView {
     const at = this.toClient({ x: e.global.x, y: e.global.y });
     if (d.active && d.node) {
       this.itemsLayer.addChild(d.node.c);
+      gsap.to(d.node.c.scale, { x: 1, y: 1, duration: 0.2 * this.timeScale, ease: "back.out(3)" });
+      gsap.to(d.node.c, { rotation: 0, duration: 0.2 * this.timeScale });
       this.setHints(new Set());
       const to = this.cellAt(e.global.x, e.global.y);
       this.onDrop(d.from, to < 0 ? d.from : to, at);

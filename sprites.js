@@ -37,6 +37,8 @@ window.GameSprites = (function () {
         return getCoinSVG(level);
       case "energy":
         return getEnergySVG(level);
+      case "event":
+        return getEventSVG(level, false);
       default:
         return getGemSVG(1);
     }
@@ -762,34 +764,141 @@ window.GameSprites = (function () {
   function getEnergySVG(level) {
     const uid = `en_${level}`;
     if (level === 1) {
+      // Lv.1 작은 번개 스파크 (+5⚡)
       return svgWrap(
         `
-        <polygon points="35,12 20,34 31,34 28,52 44,30 33,30" fill="url(#${uid})" stroke="#ffffff" stroke-width="2"/>
+        <polygon points="35,12 20,34 31,34 28,52 44,30 33,30" fill="url(#${uid})" stroke="#92400e" stroke-width="2"/>
       `,
         uid,
-        "#67e8f9",
-        "#0284c7"
+        "#fef08a",
+        "#f59e0b"
       );
     }
     if (level === 2) {
+      // Lv.2 이중 번개 크리스탈 (+15⚡)
       return svgWrap(
         `
-        <polygon points="32,8 48,26 40,52 24,52 16,26" fill="url(#${uid})" stroke="#ffffff" stroke-width="2"/>
-        <polygon points="34,16 24,32 32,32 29,46 41,28 33,28" fill="#fef08a"/>
+        <polygon points="26,12 14,32 23,32 20,48 34,28 25,28" fill="#fde047" stroke="#92400e" stroke-width="1.8"/>
+        <polygon points="42,14 28,36 38,36 35,54 50,32 40,32" fill="url(#${uid})" stroke="#ffffff" stroke-width="2"/>
+      `,
+        uid,
+        "#fef08a",
+        "#ea580c"
+      );
+    }
+    if (level === 3) {
+      // Lv.3 번개 에너지 보틀 (+40⚡)
+      return svgWrap(
+        `
+        <rect x="24" y="8" width="16" height="6" rx="2" fill="#f59e0b" stroke="#78350f" stroke-width="1.5"/>
+        <circle cx="32" cy="36" r="18" fill="url(#${uid})" stroke="#fef08a" stroke-width="2.5"/>
+        <polygon points="35,18 22,36 31,36 28,50 42,32 33,32" fill="#fde047" stroke="#78350f" stroke-width="1.5"/>
       `,
         uid,
         "#38bdf8",
         "#1d4ed8"
       );
     }
+    // Lv.4 태고의 번개 코어 상자 (+100⚡)
     return svgWrap(
       `
-      <circle cx="32" cy="32" r="20" fill="url(#${uid})" stroke="#fde047" stroke-width="3"/>
-      <polygon points="35,12 20,34 31,34 28,52 44,30 33,30" fill="#fef08a" stroke="#ffffff" stroke-width="1.5"/>
+      <circle cx="32" cy="32" r="22" fill="url(#${uid})" stroke="#fde047" stroke-width="3"/>
+      <circle cx="32" cy="32" r="17" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="4 2"/>
+      <polygon points="36,10 18,34 31,34 27,54 46,28 33,28" fill="#fde047" stroke="#92400e" stroke-width="2"/>
     `,
       uid,
-      "#22d3ee",
+      "#a855f7",
       "#3b0764"
+    );
+  }
+
+  // 명절/시즌 팝업 이벤트 전용 아이콘 (생성기 + Lv.1~5)
+  function getEventSVG(level, isGen = false) {
+    const uid = `ev_${level}_${isGen ? "g" : "i"}`;
+    if (isGen) {
+      // 이벤트 생성기: 마법 호박 가마솥
+      return svgWrap(
+        `
+        <path d="M28 12 Q32 4 38 10" stroke="#15803d" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <ellipse cx="32" cy="36" rx="21" ry="16" fill="url(#${uid})" stroke="#7c2d12" stroke-width="2.5"/>
+        <polygon points="21,28 26,34 17,34" fill="#fde047"/>
+        <polygon points="43,28 47,34 38,34" fill="#fde047"/>
+        <path d="M20 42 L25 46 L32 42 L39 46 L44 42" fill="none" stroke="#fde047" stroke-width="3" stroke-linecap="round"/>
+      `,
+        uid,
+        "#f97316",
+        "#9a3412"
+      );
+    }
+    if (level === 1) {
+      // Lv.1 별사탕 캔디
+      return svgWrap(
+        `
+        <polygon points="10,22 22,32 10,42" fill="#f472b6" stroke="#9d174d" stroke-width="1.8"/>
+        <polygon points="54,22 42,32 54,42" fill="#f472b6" stroke="#9d174d" stroke-width="1.8"/>
+        <circle cx="32" cy="32" r="13" fill="url(#${uid})" stroke="#ffffff" stroke-width="2"/>
+        <path d="M25 26 Q32 32 39 26" stroke="#fde047" stroke-width="2.5" fill="none"/>
+      `,
+        uid,
+        "#a855f7",
+        "#ec4899"
+      );
+    }
+    if (level === 2) {
+      // Lv.2 소용돌이 롤리팝
+      return svgWrap(
+        `
+        <line x1="32" y1="34" x2="32" y2="56" stroke="#fef3c7" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="32" cy="24" r="15" fill="url(#${uid})" stroke="#ffffff" stroke-width="2.2"/>
+        <path d="M32 24 Q38 18 32 14 Q22 14 22 24 Q22 34 36 32" fill="none" stroke="#fde047" stroke-width="2.5" stroke-linecap="round"/>
+      `,
+        uid,
+        "#fb923c",
+        "#db2777"
+      );
+    }
+    if (level === 3) {
+      // Lv.3 잭오랜턴 호박등
+      return svgWrap(
+        `
+        <path d="M30 12 L34 6" stroke="#16a34a" stroke-width="4" stroke-linecap="round"/>
+        <ellipse cx="32" cy="34" rx="19" ry="16" fill="url(#${uid})" stroke="#7c2d12" stroke-width="2"/>
+        <polygon points="23,28 27,34 19,34" fill="#fef08a"/>
+        <polygon points="41,28 45,34 37,34" fill="#fef08a"/>
+        <path d="M22 41 Q32 48 42 41" fill="none" stroke="#fef08a" stroke-width="3"/>
+      `,
+        uid,
+        "#fb923c",
+        "#c2410c"
+      );
+    }
+    if (level === 4) {
+      // Lv.4 꼬마 유령 랜턴
+      return svgWrap(
+        `
+        <path d="M18 48 V26 A14 14 0 0 1 46 26 V48 L40 43 L32 49 L24 43 Z" fill="url(#${uid})" stroke="#c084fc" stroke-width="2.2"/>
+        <circle cx="27" cy="26" r="3" fill="#1e1b4b"/>
+        <circle cx="37" cy="26" r="3" fill="#1e1b4b"/>
+        <ellipse cx="32" cy="33" rx="4" ry="5" fill="#f43f5e"/>
+        <polygon points="20,16 32,4 44,16" fill="#4c1d95" stroke="#fde047" stroke-width="1.8"/>
+      `,
+        uid,
+        "#ffffff",
+        "#e9d5ff"
+      );
+    }
+    // Lv.5 명절 마녀의 황금 성배 (최고 단계 -> 본 게임 번개 & 고급 재료 대량 지급!)
+    return svgWrap(
+      `
+      <polygon points="22,12 27,5 32,11 37,5 42,12" fill="#fde047" stroke="#92400e" stroke-width="1.5"/>
+      <path d="M18 16 H46 L41 38 A10 10 0 0 1 23 38 Z" fill="url(#${uid})" stroke="#fde047" stroke-width="2.5"/>
+      <rect x="29" y="42" width="6" height="8" fill="#fbbf24"/>
+      <rect x="20" y="50" width="24" height="5" rx="2.5" fill="#d97706"/>
+      <polygon points="35,20 25,32 32,32 29,42 40,28 33,28" fill="#fef08a"/>
+    `,
+      uid,
+      "#f97316",
+      "#7e22ce"
     );
   }
 
@@ -811,6 +920,7 @@ window.GameSprites = (function () {
 
   return {
     getItemSVG,
+    getEventSVG,
     getCrateSVG,
   };
 })();

@@ -1,5 +1,5 @@
 // db.js — IndexedDB + LocalStorage 이중 영구 저장소 & 버전 호환 마이그레이션 엔진
-// 앱 업데이트나 새로고침, 재설치 시에도 유저의 진행도(레벨, 코인, 보드 타일, 3D 인테리어 복구 상태)가 절대 깨지지 않도록 보장합니다.
+// 앱 업데이트나 새로고침, 재설치 시에도 유저의 진행도(레벨, 코인, 번개, 보드 타일, 마녀의 성 3D 복구 상태, 명절 이벤트 보드)가 절대 깨지지 않도록 보장합니다.
 
 window.GameDB = (function () {
   const DB_NAME = "CrownGossipMergeDB";
@@ -7,6 +7,10 @@ window.GameDB = (function () {
   const STORE_NAME = "player_progress";
   const SAVE_KEY = "main_save_v1";
   const LS_BACKUP_KEY = "crown_gossip_save_backup_v1";
+
+  // Gossip Harbor 표준 번개(⚡) 자연 회복 규칙: 최대 100개까지 5분(300초)당 1개 충전
+  const NATURAL_ENERGY_CAP = 100;
+  const ENERGY_REGEN_INTERVAL_SEC = 300; // 5분 = 300초
 
   let dbInstance = null;
 
@@ -38,7 +42,7 @@ window.GameDB = (function () {
   async function saveProgress(payload) {
     const record = {
       id: SAVE_KEY,
-      schemaVersion: 2,
+      schemaVersion: 3,
       updatedAt: Date.now(),
       data: payload,
     };
@@ -104,7 +108,7 @@ window.GameDB = (function () {
     return chosen;
   }
 
-  // 스키마 마이그레이션 & 병합: 게임 코드가 업데이트되어 새로운 체인/방/필드가 추가되어도 기존 세이브 데이터를 안전하게 보존
+  // 스키마 마이그레이션 & 병합: 게임 코드가 업데이트되어 새로운 체인/방/이벤트가 추가되어도 기존 세이브 데이터를 안전하게 보존
   function mergeWithDefaultState(defaultState, savedRecord, validChains, totalCells) {
     if (!savedRecord || !savedRecord.data) return { merged: false };
     const saved = savedRecord.data;
@@ -116,9 +120,8 @@ window.GameDB = (function () {
     if (typeof saved.xp === "number" && saved.xp >= 0) {
       defaultState.xp = Math.floor(saved.xp);
     }
-    if (typeof saved.maxEnergy === "number" && saved.maxEnergy >= 100) {
-      defaultState.maxEnergy = Math.floor(saved.maxEnergy);
-    }
+    defaultState.maxEnergy = NATURAL_ENERGY_CAP; // 자연 회복 상한선 100⚡ 고정
+
     if (typeof saved.coins === "number" && saved.coins >= 0) {
       defaultState.coins = Math.floor(saved.coins);
     }
@@ -128,13 +131,29 @@ window.GameDB = (function () {
     if (typeof saved.energy === "number" && saved.energy >= 0) {
       defaultState.energy = Math.floor(saved.energy);
     }
+    if (typeof saved.energyCountdown === "number" && saved.energyCountdown > 0 && saved.energyCountdown <= ENERGY_REGEN_INTERVAL_SEC) {
+      defaultState.energyCountdown = Math.floor(saved.energyCountdown);
+    } else {
+      defaultState.energyCountdown = ENERGY_REGEN_INTERVAL_SEC;
+    }
 
-    // 오프라인 경과 시간 동안 에너지 자동 회복 계산 (15초당 +1 에너지)
+    // 오프라인 경과 시간 동안 번개(⚡) 자동 회복 계산 (5분=300초당 +1 번개, 최대 100개까지 자연 충전)
     const elapsedSec = Math.max(0, Math.floor((Date.now() - (savedRecord.updatedAt || Date.now())) / 1000));
-    const maxCap = defaultState.maxEnergy || 100 + (defaultState.playerLv - 1) * 10;
-    if (defaultState.energy < maxCap && elapsedSec >= 15) {
-      const recovered = Math.floor(elapsedSec / 15);
-      defaultState.energy = Math.min(maxCap, defaultState.energy + recovered);
+    if (defaultState.energy < NATURAL_ENERGY_CAP && elapsedSec > 0) {
+      const totalWaitNeeded = defaultState.energyCountdown;
+      if (elapsedSec >= totalWaitNeeded) {
+        const remainingAfterFirst = elapsedSec - totalWaitNeeded;
+        const recovered = 1 + Math.floor(remainingAfterFirst / ENERGY_REGEN_INTERVAL_SEC);
+        defaultState.energy = Math.min(NATURAL_ENERGY_CAP, defaultState.energy + recovered);
+        defaultState.energyCountdown =
+          defaultState.energy >= NATURAL_ENERGY_CAP
+            ? ENERGY_REGEN_INTERVAL_SEC
+            : ENERGY_REGEN_INTERVAL_SEC - (remainingAfterFirst % ENERGY_REGEN_INTERVAL_SEC);
+      } else {
+        defaultState.energyCountdown = Math.max(1, totalWaitNeeded - elapsedSec);
+      }
+    } else if (defaultState.energy >= NATURAL_ENERGY_CAP) {
+      defaultState.energyCountdown = ENERGY_REGEN_INTERVAL_SEC;
     }
 
     // 2. 보드 타일 안전 복원 (유효한 체인인지 검증하고, 필수 생성기가 누락되었으면 자동 보충!)
@@ -154,7 +173,7 @@ window.GameDB = (function () {
         }
       }
 
-      // 만약 업데이트로 새로 추가된 필수 생성기(potion, grimoire, herb, bakery, tea)가 보드에 없다면 빈 칸에 자동 지급!
+      // 필수 생성기(potion, grimoire, herb, bakery, tea)가 보드에 없다면 빈 칸에 자동 지급
       const requiredGenerators = ["potion", "grimoire", "herb", "bakery", "tea"];
       for (const reqGen of requiredGenerators) {
         const exists = restoredBoard.some((it) => it && it.isGenerator && it.chain === reqGen);
@@ -196,6 +215,14 @@ window.GameDB = (function () {
       }
     }
 
+    // 5. 명절 팝업 이벤트 상태(eventState) 복원
+    if (saved.eventState && typeof saved.eventState === "object") {
+      defaultState.eventState = {
+        ...defaultState.eventState,
+        ...saved.eventState,
+      };
+    }
+
     return {
       merged: true,
       interiorRooms: saved.interiorRooms || null,
@@ -223,6 +250,8 @@ window.GameDB = (function () {
   }
 
   return {
+    NATURAL_ENERGY_CAP,
+    ENERGY_REGEN_INTERVAL_SEC,
     saveProgress,
     loadProgress,
     mergeWithDefaultState,

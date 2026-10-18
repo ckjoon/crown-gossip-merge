@@ -1,7 +1,7 @@
 // sw.js — PWA Service Worker (Network-First + Cache Fallback)
 // 새 버전이 배포되면 즉시 최신 코드를 받아오되, 오프라인 상태에서는 캐시로 동작하며 IndexedDB/LocalStorage 세이브 데이터는 절대 건드리지 않습니다.
 
-const CACHE_NAME = "crown-gossip-pwa-v3";
+const CACHE_NAME = "crown-gossip-pwa-v4";
 const ASSETS = [
   "/",
   "/index.html",

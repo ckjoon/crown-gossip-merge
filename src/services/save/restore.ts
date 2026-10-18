@@ -1,7 +1,7 @@
 // restore.ts — 저장 기록 → 게임 상태. v2 기록은 마이그레이션(세이브 정리 포함), v4 기록은 검증만 한다
 // v2.5 db.js mergeWithDefaultState의 모든 안전장치(숫자 검증, 오프라인 번개 충전, 보드 검증, 필수 생성기 보충)를 포함
 
-import type { Ctx } from "../../core/ctx";
+import { newUid, type Ctx } from "../../core/ctx";
 import { initCustomerOrders, createOrder, getZoneProgress } from "../../core/actions/orders";
 import { initHolidayBoard } from "../../core/actions/holiday";
 import { createInitialState } from "../../core/state";
@@ -37,7 +37,7 @@ export function num(v: unknown, def: number, min = 0): number {
 }
 
 function isChain(v: unknown): v is ChainId {
-  return typeof v === "string" && v in CHAINS;
+  return typeof v === "string" && Object.hasOwn(CHAINS, v);
 }
 
 export function restoreBoardItem(raw: unknown, fallbackUid: string): BoardItem | null {
@@ -60,13 +60,40 @@ export function restoreBoard(s: GameState, raw: unknown, now: number): void {
   s.board = raw.map((c, i) => restoreBoardItem(c, `restored_${i}_${now}`));
 }
 
-// 필수 생성기(5종)가 보드에 없으면 빈칸에 자동 지급
+// 필수 생성기(5종)가 보드에도 보관함에도 없으면 빈칸에 자동 지급 (보관함에 넣어 두고 새로고침해 공짜로 받는 것 방지)
 export function ensureGenerators(s: GameState): void {
   for (const chain of CORE_CHAINS) {
-    if (s.board.some((it) => it && it.isGenerator && it.chain === chain)) continue;
+    const owned = [...s.board, ...s.bag].some((it) => it && it.isGenerator && it.chain === chain);
+    if (owned) continue;
     const empty = s.board.findIndex((it) => it === null);
-    if (empty !== -1) s.board[empty] = { uid: `gen_auto_${chain}`, state: "active", isGenerator: true, chain, level: 1 };
+    if (empty !== -1) s.board[empty] = { uid: newUid(s), state: "active", isGenerator: true, chain, level: 1 };
   }
+}
+
+// 같은 uid(또는 주문 id)가 두 번 나오면 뒤의 것에 새 uid를 준다 (보드 표시·주문 매칭이 uid 기준이라 중복이면 아이템이 안 보임)
+export function dedupeUids(s: GameState): void {
+  const seen = new Set<string>();
+  const fresh = (uid: string) => {
+    if (!seen.has(uid)) {
+      seen.add(uid);
+      return uid;
+    }
+    const n = newUid(s);
+    seen.add(n);
+    return n;
+  };
+  s.board.forEach((c) => c && (c.uid = fresh(c.uid)));
+  s.bag.forEach((c) => (c.uid = fresh(c.uid)));
+  s.holiday.board.forEach((c) => c && (c.uid = fresh(c.uid)));
+  s.orders.forEach((o) => (o.id = fresh(o.id)));
+}
+
+// 모든 아이템·주문에 새 uid 발급 (v2 uid는 실행할 때마다 순번이 다시 시작돼 겹칠 수 있음)
+export function reassignAllUids(s: GameState): void {
+  s.board.forEach((c) => c && (c.uid = newUid(s)));
+  s.bag.forEach((c) => (c.uid = newUid(s)));
+  s.holiday.board.forEach((c) => c && (c.uid = newUid(s)));
+  s.orders.forEach((o) => (o.id = newUid(s)));
 }
 
 export function restoreBag(s: GameState, raw: unknown, now: number): void {
@@ -184,10 +211,8 @@ function restoreV4(data: Raw, updatedAt: number, now: number, ctx: Ctx): GameSta
   s.energyCountdown = cd <= ENERGY_REGEN_SEC ? cd : ENERGY_REGEN_SEC;
   applyOfflineEnergy(s, updatedAt, now);
   restoreBoard(s, data.board, now);
-  ensureGenerators(s);
   restoreBag(s, data.bag, now);
   restoreOrders(s, data.orders);
-  regenerateComboOrders(s, ctx);
   restoreHoliday(s, data.holiday);
   restoreRooms(s, data.rooms);
   s.boostMultiplier = sanitizeBoost(data.boostMultiplier);
@@ -197,6 +222,9 @@ function restoreV4(data: Raw, updatedAt: number, now: number, ctx: Ctx): GameSta
   s.cauldronPartGranted = data.cauldronPartGranted !== false;
   fixCurrentTheme(s, data.currentThemeKey);
   fixUidSeq(s, data.uidSeq);
+  dedupeUids(s);
+  ensureGenerators(s);
+  regenerateComboOrders(s, ctx);
   return s;
 }
 

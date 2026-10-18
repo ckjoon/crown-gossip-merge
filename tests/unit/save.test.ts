@@ -103,3 +103,52 @@ describe("백업 코드", () => {
     expect(decodeBackup("not base64 !!")).toBeNull();
   });
 });
+
+describe("리뷰 수정: uid 고유성·공짜 생성기·이상한 체인 이름", () => {
+  const allUids = (s: ReturnType<typeof restoreState>["state"]) => [
+    ...s.board.filter(Boolean).map((c) => c!.uid),
+    ...s.bag.map((c) => c.uid),
+    ...s.holiday.board.filter(Boolean).map((c) => c!.uid),
+    ...s.orders.map((o) => o.id),
+  ];
+  test("v2 세이브의 중복 uid는 마이그레이션에서 모두 새로 발급", () => {
+    const rec = clone(v24) as SaveRecord & { data: { board: Array<{ uid: string } | null> } };
+    rec.data.board[24]!.uid = "dup";
+    rec.data.board[25]!.uid = "dup";
+    const { state } = restoreState(rec, NOW, fixedCtx());
+    const uids = allUids(state);
+    expect(new Set(uids).size).toBe(uids.length);
+  });
+  test("v4 기록의 중복 uid도 복원 시 정리", () => {
+    const s = createInitialState(fixedCtx());
+    s.board[10] = { uid: "same", state: "active", isGenerator: false, chain: "tea", level: 1 };
+    s.board[11] = { uid: "same", state: "active", isGenerator: false, chain: "tea", level: 1 };
+    const { state } = restoreState({ id: "main_save_v1", schemaVersion: 4, updatedAt: NOW, data: clone(s) }, NOW, fixedCtx());
+    const uids = allUids(state);
+    expect(new Set(uids).size).toBe(uids.length);
+    expect(state.board[10]?.chain).toBe("tea");
+    expect(state.board[11]?.chain).toBe("tea");
+  });
+  test("보관함에 넣어 둔 생성기가 있으면 새로 지급하지 않음 (공짜 생성기 방지)", () => {
+    const s = createInitialState(fixedCtx());
+    const idx = s.board.findIndex((c) => c?.isGenerator && c.chain === "herb");
+    s.bag.push(s.board[idx]!);
+    s.board[idx] = null;
+    const { state } = restoreState({ id: "main_save_v1", schemaVersion: 4, updatedAt: NOW, data: clone(s) }, NOW, fixedCtx());
+    const herbGens = [...state.board, ...state.bag].filter((c) => c?.isGenerator && c.chain === "herb").length;
+    expect(herbGens).toBe(1);
+  });
+  test("자동 지급 생성기 uid도 고유", () => {
+    const s = createInitialState(fixedCtx());
+    s.board = s.board.map((c) => (c?.isGenerator ? null : c));
+    const { state } = restoreState({ id: "main_save_v1", schemaVersion: 4, updatedAt: NOW, data: clone(s) }, NOW, fixedCtx());
+    const uids = allUids(state);
+    expect(new Set(uids).size).toBe(uids.length);
+  });
+  test("상속 키 이름의 체인(constructor 등)은 버리고 오류 없이 복원", () => {
+    const s = createInitialState(fixedCtx()) as unknown as { board: unknown[] };
+    s.board[30] = { uid: "x", state: "active", isGenerator: false, chain: "constructor", level: 2 };
+    const { state } = restoreState({ id: "main_save_v1", schemaVersion: 4, updatedAt: NOW, data: clone(s) }, NOW, fixedCtx());
+    expect(state.board[30]).toBeNull();
+  });
+});

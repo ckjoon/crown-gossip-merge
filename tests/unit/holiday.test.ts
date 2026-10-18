@@ -64,3 +64,15 @@ test("명절 종류 선택: 존재하는 명절만", () => {
   selectHoliday(s, fixedCtx(), { id: "nope" });
   expect(s.holiday.activeHolidayId).toBe("christmas");
 });
+
+test("본게임 보드·보관함이 모두 가득이면 보내기/미션을 거부하고 아이템을 지킴", () => {
+  s.board = s.board.map((c, i) => c ?? { uid: `f${i}`, state: "active" as const, isGenerator: false, chain: "tea" as const, level: 1 });
+  s.bag = new Array(6).fill(0).map((_, i) => ({ uid: `b${i}`, state: "active" as const, isGenerator: false, chain: "tea" as const, level: 1 }));
+  expect(holidaySendToMain(s, fixedCtx(), { cell: 6 })).toEqual([{ type: "rejected", reason: "boardFull" }]);
+  expect(s.holiday.board[6]).not.toBeNull();
+  s.holiday.board[0] = { uid: "m", isGenerator: false, level: 3 };
+  const gems = s.gems;
+  expect(holidayClaimMission(s, fixedCtx(), undefined)).toEqual([{ type: "rejected", reason: "boardFull" }]);
+  expect(s.holiday.board[0]).not.toBeNull();
+  expect(s.gems).toBe(gems);
+});

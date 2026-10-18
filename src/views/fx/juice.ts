@@ -47,7 +47,8 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
     }
     afterRender(() => {
       const node = board.nodeAt(e.to);
-      if (!node) return;
+      // 그 사이 사용자가 집었거나 다른 칸으로 옮겼다면 포물선을 생략
+      if (!node || node.cell !== e.to || board.isDragging(node)) return;
       const a = board.cellCenter(e.from);
       const b = board.cellCenter(e.to);
       const arc = Math.max(24, Math.hypot(b.x - a.x, b.y - a.y) * 0.4);
@@ -57,7 +58,7 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
       node.c.scale.set(0.4);
       const prog = { p: 0 };
       let frame = 0;
-      gsap.to(prog, {
+      const tween = gsap.to(prog, {
         p: 1,
         duration: 0.35 * board.timeScale,
         ease: "power1.inOut",
@@ -68,11 +69,13 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
           if (trail && frame++ % 2 === 0) board.particles.burst(node.c.x, node.c.y, { count: amount(2), colors: trail, speed: 0.8, size: 2.2, life: 18, gravity: 0, shape: "dot" });
         },
         onComplete: () => {
+          node.arc = null;
           node.c.position.set(b.x, b.y);
           gsap.fromTo(node.c.scale, { x: 1.18, y: 0.82 }, { x: 1, y: 1, duration: 0.3, ease: "elastic.out(1,0.35)" });
           board.particles.burst(b.x, b.y + board.cellSize().h * 0.3, { count: amount(5), colors: [0xffffff, 0xe2e8f0], speed: 1.6, size: 2, life: 16, shape: "dot" });
         },
       });
+      node.arc = { tween, cell: e.to };
     });
   }
 

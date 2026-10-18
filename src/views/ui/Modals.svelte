@@ -17,7 +17,9 @@
   import LevelUpBanner from "./modals/LevelUpBanner.svelte";
 
   const report = app().migrationReport;
-  let showReport = $state(!!report);
+  // 세이브 정리 안내도 ui.modal로 띄워, 서비스 워커 교체 새로고침이 열린 안내를 지우지 않게 한다
+  if (report) ui.modal = "migration";
+  const showReport = $derived(ui.modal === "migration");
   // 새 버전 첫 실행이면 (세이브 정리 안내를 닫은 뒤) 패치노트를 한 번만 띄운다
   let changelogPending = app().store.get().lastSeenVersion !== APP_VERSION;
 
@@ -35,8 +37,8 @@
   };
 </script>
 
-{#if showReport && report}
-  <MigrationReport {report} onclose={() => (showReport = false)} />
+{#if ui.modal === "migration" && report}
+  <MigrationReport {report} onclose={close} />
 {:else if ui.modal === "codex"}
   <Codex onclose={close} />
 {:else if ui.modal === "bag"}

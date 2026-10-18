@@ -197,7 +197,10 @@ export class CastleView {
 
   // 🔨 복구 순간: 방을 어둡게 → 스포트라이트 → 카메라 다가감 → 가구가 떨어지며 쿵 + 반짝임 → 조명 복귀와 함께 분위기 한 단계 상승
   async playRestore(spotId: string, rooms: Record<string, SpotState>): Promise<void> {
-    if (this.mode !== "room") return;
+    if (this.mode !== "room") {
+      this.holdSpot = null;
+      return;
+    }
     this.rooms = rooms;
     const layout = SPOT_LAYOUT[spotId];
     const amb = this.ambientLight;

@@ -21,11 +21,15 @@ export function initHolidayBoard(s: GameState, _ctx: Ctx): void {
   s.holiday.freeSpawns = 12;
 }
 
+function hasMainSpace(s: GameState): boolean {
+  return s.board.some((c) => c === null) || s.bag.length < BAG_SIZE;
+}
+
 function sendToMainGame(s: GameState, chain: ChainId, level: number): void {
   const it = { uid: newUid(s), state: "active" as const, isGenerator: false, chain, level };
   const cell = findNearestEmptyCell(s, 27, () => 0);
   if (cell !== -1) s.board[cell] = it;
-  else if (s.bag.length < BAG_SIZE) s.bag.push(it);
+  else s.bag.push(it);
 }
 
 export const holidaySpawn: Action<void> = (s, ctx) => {
@@ -68,6 +72,7 @@ export const holidayClaimMission: Action<void> = (s) => {
   const h = getHolidayConfig(s.holiday.activeHolidayId);
   const idx = s.holiday.board.findIndex((it) => it && !it.isGenerator && it.level >= s.holiday.targetLv);
   if (idx === -1) return [rejected("missionNotReady")];
+  if (!hasMainSpace(s)) return [rejected("boardFull")];
   const it = s.holiday.board[idx]!;
   const meta = h.items[Math.min(it.level - 1, h.items.length - 1)];
   s.holiday.board[idx] = null;
@@ -84,6 +89,7 @@ export const holidayClaimMission: Action<void> = (s) => {
 export const holidaySendToMain: Action<{ cell: number }> = (s, _ctx, { cell }) => {
   const it = s.holiday.board[cell];
   if (!it || it.isGenerator) return [rejected("nothingSelected")];
+  if (!hasMainSpace(s)) return [rejected("boardFull")];
   const h = getHolidayConfig(s.holiday.activeHolidayId);
   const meta = h.items[Math.min(it.level - 1, h.items.length - 1)];
   s.holiday.board[cell] = null;

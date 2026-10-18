@@ -30,7 +30,7 @@
   };
 </script>
 
-<header class="gh-topbar">
+<header class="gh-topbar" class:input-locked={ui.inputLocked}>
   <button class="gh-level-widget" onclick={open("level")} title="연금술사 레벨 및 성장 보상 보기">
     <div class="lv-circle">
       <span class="lv-crown">👑</span>

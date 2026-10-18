@@ -36,7 +36,20 @@ async function boot(): Promise<void> {
   const ctx = createCtx();
   const repo = createRepository(typeof indexedDB !== "undefined" ? indexedDB : null, safeLocalStorage());
   const record = await repo.load();
-  const { state, report, isNew } = restoreState(record, Date.now(), ctx);
+  let restored: ReturnType<typeof restoreState>;
+  try {
+    restored = restoreState(record, Date.now(), ctx);
+  } catch (err) {
+    // 복원 중 예외가 나도 빈 화면이 되지 않게 새 게임으로 시작하되, 원래 기록은 따로 보관한다
+    console.error("세이브 복원 실패, 새 게임으로 시작", err);
+    try {
+      localStorage.setItem("crown_gossip_save_broken_backup", JSON.stringify(record));
+    } catch {
+      // 보관 실패는 무시
+    }
+    restored = restoreState(null, Date.now(), ctx);
+  }
+  const { state, report, isNew } = restored;
   const store = createStore(state, ctx);
   const sfx = new SoundEngine();
   sfx.enabled = state.settings.sound;

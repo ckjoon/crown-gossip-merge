@@ -14,6 +14,7 @@ import {
   fixUidSeq,
   newGame,
   num,
+  reassignAllUids,
   regenerateComboOrders,
   restoreBag,
   restoreBoard,
@@ -66,6 +67,9 @@ export function migrateV2ToV4(data: Record<string, unknown>, updatedAt: number, 
   applyOfflineEnergy(s, updatedAt, now);
 
   restoreBoard(s, data.board, now);
+  restoreBag(s, data.bag, now);
+  fixUidSeq(s, 0);
+  reassignAllUids(s);
   ensureGenerators(s);
   // v2.4: 가마솥이 1개뿐이고 아직 보조 가마솥을 받지 않았다면 지급
   const cauldrons = s.board.filter((it) => it && it.isGenerator && it.chain === "potion");
@@ -75,9 +79,9 @@ export function migrateV2ToV4(data: Record<string, unknown>, updatedAt: number, 
   }
   s.cauldronPartGranted = true;
 
-  restoreBag(s, data.bag, now);
   restoreOrders(s, data.orders);
   restoreHoliday(s, data.eventState);
+  reassignAllUids(s);
 
   const rooms = asObj(data.interiorRooms);
   if (rooms) {
@@ -136,6 +140,5 @@ export function migrateV2ToV4(data: Record<string, unknown>, updatedAt: number, 
   }
 
   fixCurrentTheme(s, data.currentThemeKey);
-  fixUidSeq(s, 0);
   return { state: s, report };
 }

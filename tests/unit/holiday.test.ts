@@ -55,3 +55,12 @@ describe("명절 이벤트", () => {
     expect(s.holiday.board[6]).toBeNull();
   });
 });
+
+import { selectHoliday } from "../../src/core/actions/holiday";
+
+test("명절 종류 선택: 존재하는 명절만", () => {
+  selectHoliday(s, fixedCtx(), { id: "christmas" });
+  expect(s.holiday.activeHolidayId).toBe("christmas");
+  selectHoliday(s, fixedCtx(), { id: "nope" });
+  expect(s.holiday.activeHolidayId).toBe("christmas");
+});

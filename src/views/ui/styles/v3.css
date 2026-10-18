@@ -65,3 +65,30 @@ button.gh-res-pill {
   50% { transform: scale(1.08); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.55); }
   100% { transform: scale(1); }
 }
+
+/* 명절 모달 안 Pixi 5×5 보드 */
+.holiday-pixi-wrap {
+  height: min(300px, 62vw);
+  display: flex;
+}
+
+.holiday-pixi-wrap .board-host {
+  flex: 1;
+}
+
+.ev-claim-btn.is-short {
+  opacity: 0.55;
+}
+
+.story-log-item {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.migration-line {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 8px;
+  border: 1px solid #a7f3d0;
+}

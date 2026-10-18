@@ -2,6 +2,7 @@
   import TopBar from "./components/TopBar.svelte";
   import MergeScreen from "./components/MergeScreen.svelte";
   import Toasts from "./components/Toasts.svelte";
+  import Modals from "./Modals.svelte";
   import { ui } from "./ui.svelte";
 
 </script>
@@ -14,5 +15,6 @@
       <button class="gh-castle-btn" onclick={() => (ui.screen = "merge")}>합성 보드로 돌아가기</button>
     </section>
   {/if}
+  <Modals />
   <Toasts />
 </div>

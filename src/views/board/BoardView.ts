@@ -95,8 +95,10 @@ export class BoardView {
     this.destroyed = true;
     this.ro?.disconnect();
     this.offReady?.();
+    gsap.killTweensOf(this.hintG);
     try {
-      this.app.destroy(true, { children: true });
+      // 텍스처·그래픽 컨텍스트는 다른 보드·fx 캔버스와 공유하므로 남기고 이 앱만 정리
+      this.app.destroy({ removeView: true }, { children: true, texture: false, textureSource: false, context: false });
     } catch {
       // init 전에 파괴되면 무시
     }

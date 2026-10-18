@@ -90,3 +90,9 @@ export const holidaySendToMain: Action<{ cell: number }> = (s, _ctx, { cell }) =
   sendToMainGame(s, meta.mainChain, meta.mainLv);
   return [{ type: "holidaySent", cell, mainChain: meta.mainChain, mainLv: meta.mainLv }];
 };
+
+export const selectHoliday: Action<{ id: string }> = (s, _ctx, { id }) => {
+  if (getHolidayConfig(id).id !== id) return [];
+  s.holiday.activeHolidayId = id;
+  return [];
+};

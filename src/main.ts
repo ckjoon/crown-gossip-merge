@@ -18,6 +18,7 @@ import { preloadTextures } from "./views/art/textures";
 import { FxLayer } from "./views/fx/FxLayer";
 import { attachJuice } from "./views/fx/juice";
 import { getMainBoard } from "./views/board/registry";
+import { captureInstallPrompt } from "./views/ui/install";
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -28,6 +29,7 @@ function safeLocalStorage(): Storage | null {
 }
 
 async function boot(): Promise<void> {
+  captureInstallPrompt();
   const ctx = createCtx();
   const repo = createRepository(typeof indexedDB !== "undefined" ? indexedDB : null, safeLocalStorage());
   const record = await repo.load();

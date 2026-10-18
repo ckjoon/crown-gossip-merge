@@ -7,6 +7,7 @@
   import { findSpot, ROOMS } from "../../../core/rules/rooms";
   import { CHARACTERS } from "../../../core/rules/characters";
   import Portrait from "../components/Portrait.svelte";
+  import { expressionFor } from "../../../core/rules/expressions";
 
   const cs = $derived(ui.cutscene!);
   const found = $derived(findSpot(cs.spotId)!);
@@ -40,7 +41,7 @@
       </div>
       {#key cs.step}
         <div class="cutscene-dialogue-card" in:fly={{ y: 12, duration: 220 }}>
-          <div class="cutscene-avatar"><Portrait characterId={d.characterId} size={44} /></div>
+          <div class="cutscene-avatar"><Portrait characterId={d.characterId} size={48} expression={expressionFor(d.line)} /></div>
           <div class="cutscene-speech-box">
             <div class="cutscene-speaker">{ch?.name ?? "대마녀 셀레네"}</div>
             <p class="cutscene-line">"{d.line}"</p>

@@ -1,4 +1,4 @@
-// characters.ts — 이야기·손님 캐릭터 목록. portraitKey가 있으면 초상화, 없으면 face 이모지를 보여 준다 (v3.1에서 초상화 추가)
+// characters.ts — 이야기·손님 캐릭터 목록. portraitKey로 치비 초상화(views/art/portraits)를 그리고, 없으면 face 이모지를 보여 준다
 
 export interface Character {
   id: string;
@@ -9,23 +9,23 @@ export interface Character {
 }
 
 export const CHARACTERS: Record<string, Character> = {
-  selene: { id: "selene", name: "대마녀 셀레네", role: "마녀의 성 주인", face: "🧙‍♀️", portraitKey: null },
-  quinn: { id: "quinn", name: "조사관 퀸", role: "왕실 조사관", face: "🕵️‍♀️", portraitKey: null },
-  nero: { id: "nero", name: "사역마 네로", role: "셀레네의 고양이 사역마", face: "🐈‍⬛", portraitKey: null },
-  quinn_nero: { id: "quinn_nero", name: "조사관 퀸 & 네로", role: "조사관과 사역마", face: "🕵️‍♀️", portraitKey: null },
-  lucian: { id: "lucian", name: "루시안 공작", role: "성의 오랜 후원자", face: "🧛‍♂️", portraitKey: null },
-  olivia: { id: "olivia", name: "올리비아", role: "베이커리 단골 소녀", face: "👧", portraitKey: null },
-  harrison: { id: "harrison", name: "해리슨", role: "별빛로드 상인", face: "🧔‍♂️", portraitKey: null },
-  carmen: { id: "carmen", name: "건축가 카르멘", role: "성 복원 건축가", face: "👩‍🎨", portraitKey: null },
-  marco: { id: "marco", name: "선장 마르코", role: "하버 선장", face: "⚓", portraitKey: null },
-  ella: { id: "ella", name: "카페 단골 엘라", role: "오션카페 단골", face: "☕", portraitKey: null },
-  pip: { id: "pip", name: "갈매기 우편배달부 핍", role: "갈매기 우편배달부", face: "🐦", portraitKey: null },
-  rowan: { id: "rowan", name: "정원사 로완", role: "온실 정원사", face: "🧑‍🌾", portraitKey: null },
-  lily: { id: "lily", name: "꽃의 요정 릴리", role: "꽃의 요정", face: "🧚", portraitKey: null },
-  verna: { id: "verna", name: "식물학자 베르나", role: "식물학자", face: "👩‍🔬", portraitKey: null },
-  arthur: { id: "arthur", name: "젊은 왕 아서", role: "왕국의 젊은 왕", face: "🤴", portraitKey: null },
-  margaret: { id: "margaret", name: "시녀장 마가렛", role: "궁정 시녀장", face: "👵", portraitKey: null },
-  oberon: { id: "oberon", name: "궁정 마술사 오베론", role: "궁정 마술사", face: "🧙", portraitKey: null },
+  selene: { id: "selene", name: "대마녀 셀레네", role: "마녀의 성 주인", face: "🧙‍♀️", portraitKey: "selene" },
+  quinn: { id: "quinn", name: "조사관 퀸", role: "왕실 조사관", face: "🕵️‍♀️", portraitKey: "quinn" },
+  nero: { id: "nero", name: "사역마 네로", role: "셀레네의 고양이 사역마", face: "🐈‍⬛", portraitKey: "nero" },
+  quinn_nero: { id: "quinn_nero", name: "조사관 퀸 & 네로", role: "조사관과 사역마", face: "🕵️‍♀️", portraitKey: "quinn_nero" },
+  lucian: { id: "lucian", name: "루시안 공작", role: "성의 오랜 후원자", face: "🧛‍♂️", portraitKey: "lucian" },
+  olivia: { id: "olivia", name: "올리비아", role: "베이커리 단골 소녀", face: "👧", portraitKey: "olivia" },
+  harrison: { id: "harrison", name: "해리슨", role: "별빛로드 상인", face: "🧔‍♂️", portraitKey: "harrison" },
+  carmen: { id: "carmen", name: "건축가 카르멘", role: "성 복원 건축가", face: "👩‍🎨", portraitKey: "carmen" },
+  marco: { id: "marco", name: "선장 마르코", role: "하버 선장", face: "⚓", portraitKey: "marco" },
+  ella: { id: "ella", name: "카페 단골 엘라", role: "오션카페 단골", face: "☕", portraitKey: "ella" },
+  pip: { id: "pip", name: "갈매기 우편배달부 핍", role: "갈매기 우편배달부", face: "🐦", portraitKey: "pip" },
+  rowan: { id: "rowan", name: "정원사 로완", role: "온실 정원사", face: "🧑‍🌾", portraitKey: "rowan" },
+  lily: { id: "lily", name: "꽃의 요정 릴리", role: "꽃의 요정", face: "🧚", portraitKey: "lily" },
+  verna: { id: "verna", name: "식물학자 베르나", role: "식물학자", face: "👩‍🔬", portraitKey: "verna" },
+  arthur: { id: "arthur", name: "젊은 왕 아서", role: "왕국의 젊은 왕", face: "🤴", portraitKey: "arthur" },
+  margaret: { id: "margaret", name: "시녀장 마가렛", role: "궁정 시녀장", face: "👵", portraitKey: "margaret" },
+  oberon: { id: "oberon", name: "궁정 마술사 오베론", role: "궁정 마술사", face: "🧙", portraitKey: "oberon" },
 };
 
 const NAME_TO_ID: Record<string, string> = {

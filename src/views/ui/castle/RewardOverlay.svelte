@@ -19,7 +19,7 @@
   </div>
 {:else if r?.kind === "reaction"}
   <div class="reaction-bubble" in:fly={{ y: 24, duration: 320, easing: backOut }} out:fade={{ duration: 180 }}>
-    <div class="reaction-face"><Portrait characterId={r.characterId} size={40} /></div>
+    <div class="reaction-face"><Portrait characterId={r.characterId} size={44} expression="happy" /></div>
     <div>
       <strong>{CHARACTERS[r.characterId]?.name}</strong>
       <p>"{r.line}"</p>

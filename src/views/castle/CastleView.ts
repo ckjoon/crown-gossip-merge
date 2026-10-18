@@ -11,6 +11,7 @@ import { buildRubble, buildSpotFurniture } from "./furniture";
 import { Ambience } from "./ambience";
 import { addOutline, disposeGroup, toonify } from "./toon";
 import { buildZoneDecor, setDecorGlow } from "./decor";
+import { Resident } from "./resident";
 
 const DEFAULT_CAM = new THREE.Vector3(10, 10.5, 10);
 
@@ -126,8 +127,11 @@ export class CastleView {
   }
 
   private decor: THREE.Group | null = null;
+  resident: Resident | null = null;
 
   private clearGroup(): void {
+    this.resident?.dispose();
+    this.resident = null;
     for (const child of [...this.roomGroup.children]) {
       this.roomGroup.remove(child);
       disposeGroup(child);
@@ -169,6 +173,8 @@ export class CastleView {
     for (const spot of ROOMS[zone].spots) this.renderSpot(spot.id);
     legacyLightCompensate(this.roomGroup);
     this.ambience = new Ambience(this.ambientLight, (step) => this.decor && setDecorGlow(this.decor, step));
+    this.resident = new Resident(zone);
+    this.roomGroup.add(this.resident.group);
     this.roomGroup.add(this.ambience.group);
     this.ambience.apply(this.doneCount(), false);
     this.resetCamera(false);
@@ -219,6 +225,7 @@ export class CastleView {
       gsap.fromTo(g.position, { y: layout.pos[1] + 2.8 }, { y: layout.pos[1], duration: 0.65, ease: "bounce.out" });
       gsap.fromTo(g.scale, { x: 0.4, y: 0.4, z: 0.4 }, { x: 1, y: 1, z: 1, duration: 0.55, ease: "elastic.out(1, 0.5)" });
     }
+    this.resident?.cheer();
     await wait(450);
     this.constructionBurst(spotId, 22);
     await wait(250);
@@ -394,6 +401,7 @@ export class CastleView {
       }
     }
     this.ambience?.tick(dt);
+    this.resident?.tick(dt);
     for (const fn of this.frameHooks) fn(dt);
   }
 }

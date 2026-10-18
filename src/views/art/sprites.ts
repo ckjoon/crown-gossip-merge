@@ -213,6 +213,7 @@ const HIGH_TIER_ART: Record<string, Record<number, { c1: string; c2: string; inn
     },
   },
 };
+// v3.1 스티커 스타일: 짙은 보라 외곽선 + 바닥 그림자 + 광택 하이라이트 (모든 아이템·생성기 공통)
 function svgWrap(inner: string, bgGradId: string, c1: string, c2: string): string {
   return `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
     <defs>
@@ -223,13 +224,48 @@ function svgWrap(inner: string, bgGradId: string, c1: string, c2: string): strin
       <filter id="dropGlow" x="-15%" y="-15%" width="130%" height="130%">
         <feDropShadow dx="0" dy="1.8" stdDeviation="1.6" flood-color="#000" flood-opacity="0.32"/>
       </filter>
+      <filter id="stk" x="-20%" y="-20%" width="140%" height="140%">
+        <feMorphology in="SourceAlpha" operator="dilate" radius="1.5" result="grow"/>
+        <feFlood flood-color="#2a1240"/>
+        <feComposite in2="grow" operator="in" result="outline"/>
+        <feMerge><feMergeNode in="outline"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <radialGradient id="auraGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="55%" stop-color="#fde68a" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#fde68a" stop-opacity="0.55"/>
+      </radialGradient>
     </defs>
-    <g filter="url(#dropGlow)">${inner}</g>
+    <!--AURA-->
+    <ellipse cx="32" cy="59" rx="17" ry="3.2" fill="#1e1030" opacity="0.2"/>
+    <g filter="url(#dropGlow)"><g filter="url(#stk)">${inner}</g></g>
+    <ellipse cx="22" cy="17" rx="7.5" ry="3.6" fill="#ffffff" opacity="0.32" transform="rotate(-32 22 17)"/>
+    <!--SPARKLE-->
   </svg>`;
+}
+
+// 레벨 장식: Lv.5+ 금빛 오라, Lv.7+ 반짝이는 별
+function sparkleStar(x: number, y: number, r: number): string {
+  return `<path data-sparkle d="M${x} ${y - r} Q${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y} Q${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r} Q${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y} Q${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r} Z" fill="#fffbeb" stroke="#f59e0b" stroke-width="0.6"/>`;
+}
+
+function decorate(svg: string, level: number): string {
+  let out = svg;
+  if (level >= 5) {
+    out = out.replace(
+      "<!--AURA-->",
+      `<circle data-aura cx="32" cy="33" r="30" fill="url(#auraGlow)"/><circle cx="32" cy="33" r="29" fill="none" stroke="#fcd34d" stroke-width="1.2" stroke-dasharray="2.5 3" opacity="0.85"/>`
+    );
+  }
+  if (level >= 7) out = out.replace("<!--SPARKLE-->", sparkleStar(52, 10, 5) + sparkleStar(9, 20, 3.6) + (level >= 8 ? sparkleStar(55, 44, 3.2) : ""));
+  return out;
 }
 
 export function getItemSVG(chain: string, level: number, isGenerator = false): string {
   if (isGenerator) return getGeneratorSVG(chain, level || 1);
+  return decorate(baseItemSVG(chain, level), level);
+}
+
+function baseItemSVG(chain: string, level: number): string {
   const highArt = HIGH_TIER_ART[chain] && HIGH_TIER_ART[chain][level];
   if (highArt) {
     const uid = `hi_${chain}_${level}`;

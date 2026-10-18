@@ -71,22 +71,22 @@ const CHAINS = {
     css: "chain-potion",
     generator: {
       name: "마법 가마솥",
-      desc: "탭하면 물약 재료(⚡1)와 보석 원석을 생성합니다. 같은 가마솥끼리 합성하면 성질이 진화합니다!",
+      desc: "탭하면 물약 재료와 가끔 마법 광석을 생성합니다(⚡). 같은 가마솥끼리 합성하면 등급이 올라갑니다!",
       tiers: [
         {
           level: 1,
           name: "수습 마법 가마솥",
-          desc: "[Lv.1 기본 성질] 물약 재료(Lv.1~2)와 20% 확률로 보석 원석(Lv.1)을 생성합니다. 가마솥 2개를 합치면 황금 가마솥으로 진화합니다!",
+          desc: "[★ 기본] 물약 재료(Lv.1~2)와 20% 확률로 마법 광석을 생성합니다. 배속을 써도 최대 Lv.3까지 나와요. 가마솥 2개를 합치면 ★★로 진화합니다!",
         },
         {
           level: 2,
           name: "황금 연금술 가마솥",
-          desc: "[Lv.2 진화 성질] 고농축 물약(Lv.2~3) 배출률이 대폭 오르고, 세공된 사파이어(Lv.2) 및 활력비약 조합용 달버섯을 함께 연성합니다!",
+          desc: "[★★ 진화] 물약(Lv.2~3)과 가끔 마법 광석(Lv.2)을 생성합니다. 배속을 쓰면 최대 Lv.5까지 바로 나와요!",
         },
         {
           level: 3,
           name: "태고의 성배 가마솥",
-          desc: "[Lv.3 신화 성질] 상급 비약(Lv.2~4)과 문스톤 보석을 생성하며, 20% 확률로 완제품 [특제 활력비약]을 즉시 연성합니다!",
+          desc: "[★★★ 신화] 상급 비약(Lv.2~4)과 가끔 마법 광석(Lv.3)을 생성합니다. 배속을 쓰면 최대 Lv.6까지 바로 나와요!",
         },
       ],
     },
@@ -110,22 +110,22 @@ const CHAINS = {
     css: "chain-grimoire",
     generator: {
       name: "고대 마법책장",
-      desc: "탭하면 마도서 재료(⚡1)를 생성합니다. 책장끼리 합성하면 성질이 진화합니다!",
+      desc: "탭하면 마도서 재료를 생성합니다(⚡). 책장끼리 합성하면 등급이 올라갑니다!",
       tiers: [
         {
           level: 1,
           name: "고대 마법책장",
-          desc: "[Lv.1 기본 성질] 마력 깃펜(Lv.1)과 봉인 주문서(Lv.2)를 생성합니다.",
+          desc: "[★ 기본] 마력 깃펜(Lv.1)과 봉인 주문서(Lv.2)를 생성합니다. 배속을 써도 최대 Lv.3까지 나와요.",
         },
         {
           level: 2,
           name: "비전 아카이브 서가",
-          desc: "[Lv.2 진화 성질] 주문서와 화염 마도서(Lv.2~3)를 생성하며, 룬스톤 조합용 사파이어(Lv.2)를 추가 배출합니다!",
+          desc: "[★★ 진화] 주문서와 화염 마도서(Lv.2~3)를 생성합니다. 배속을 쓰면 최대 Lv.5까지 바로 나와요!",
         },
         {
           level: 3,
           name: "신화 아카식 서고",
-          desc: "[Lv.3 신화 성질] 고위 마도서(Lv.2~4) 및 완제품 [마력 각인룬스톤]을 직접 배출합니다!",
+          desc: "[★★★ 신화] 고위 마도서(Lv.2~4)를 생성합니다. 배속을 쓰면 최대 Lv.6까지 바로 나와요!",
         },
       ],
     },
@@ -147,22 +147,22 @@ const CHAINS = {
     css: "chain-herb",
     generator: {
       name: "달빛 온실화분",
-      desc: "탭하면 마법식물 재료(⚡1)를 생성합니다. 화분끼리 합성하면 성질이 진화합니다!",
+      desc: "탭하면 마법식물 재료를 생성합니다(⚡). 화분끼리 합성하면 등급이 올라갑니다!",
       tiers: [
         {
           level: 1,
           name: "달빛 온실화분",
-          desc: "[Lv.1 기본 성질] 야광 포자(Lv.1)와 몽환 달버섯(Lv.2)을 생성합니다.",
+          desc: "[★ 기본] 야광 포자(Lv.1)와 몽환 달버섯(Lv.2)을 생성합니다. 배속을 써도 최대 Lv.3까지 나와요.",
         },
         {
           level: 2,
           name: "에메랄드 테라리움",
-          desc: "[Lv.2 진화 성질] 달버섯과 만드라고라(Lv.2~3)를 생성하며, 활력비약 조합용 초급 마나물약을 공명 생성합니다!",
+          desc: "[★★ 진화] 달버섯과 만드라고라(Lv.2~3)를 생성합니다. 배속을 쓰면 최대 Lv.5까지 바로 나와요!",
         },
         {
           level: 3,
           name: "세계수의 성소 화단",
-          desc: "[Lv.3 신화 성질] 희귀 환수 식물(Lv.2~4) 및 완제품 [특제 활력비약]을 직접 배출합니다!",
+          desc: "[★★★ 신화] 희귀 환수 식물(Lv.2~4)을 생성합니다. 배속을 쓰면 최대 Lv.6까지 바로 나와요!",
         },
       ],
     },
@@ -184,22 +184,22 @@ const CHAINS = {
     css: "chain-bakery",
     generator: {
       name: "마법 화로오븐",
-      desc: "탭하면 베이커리 재료(⚡1)를 생성합니다. 오븐끼리 합성하면 성질이 진화합니다!",
+      desc: "탭하면 베이커리 재료를 생성합니다(⚡). 오븐끼리 합성하면 등급이 올라갑니다!",
       tiers: [
         {
           level: 1,
           name: "마법 화로오븐",
-          desc: "[Lv.1 기본 성질] 밀가루 반죽(Lv.1)과 버터 크루아상(Lv.2)을 구워냅니다.",
+          desc: "[★ 기본] 밀가루 반죽(Lv.1)과 버터 크루아상(Lv.2)을 구워냅니다. 배속을 써도 최대 Lv.3까지 나와요.",
         },
         {
           level: 2,
           name: "황금 파티시에 화덕",
-          desc: "[Lv.2 진화 성질] 크루아상과 베리 타르트(Lv.2~3)를 구워내며, 브런치 조합용 에스프레소(Lv.3)를 함께 배출합니다!",
+          desc: "[★★ 진화] 크루아상과 베리 타르트(Lv.2~3)를 구워냅니다. 배속을 쓰면 최대 Lv.5까지 바로 나와요!",
         },
         {
           level: 3,
           name: "로얄 블랑제리 신화오븐",
-          desc: "[Lv.3 신화 성질] 고급 디저트(Lv.2~4) 및 완제품 [모닝 브런치세트]를 즉시 배출합니다!",
+          desc: "[★★★ 신화] 고급 디저트(Lv.2~4)를 구워냅니다. 배속을 쓰면 최대 Lv.6까지 바로 나와요!",
         },
       ],
     },
@@ -221,22 +221,22 @@ const CHAINS = {
     css: "chain-tea",
     generator: {
       name: "황실 티포트",
-      desc: "탭하면 차/커피 재료(⚡1)를 생성합니다. 티포트끼리 합성하면 성질이 진화합니다!",
+      desc: "탭하면 차/커피 재료를 생성합니다(⚡). 티포트끼리 합성하면 등급이 올라갑니다!",
       tiers: [
         {
           level: 1,
           name: "황실 티포트",
-          desc: "[Lv.1 기본 성질] 향긋한 찻잎(Lv.1)과 캐모마일 티(Lv.2)를 우려냅니다.",
+          desc: "[★ 기본] 향긋한 찻잎(Lv.1)과 캐모마일 티(Lv.2)를 우려냅니다. 배속을 써도 최대 Lv.3까지 나와요.",
         },
         {
           level: 2,
           name: "오로라 바리스타 포트",
-          desc: "[Lv.2 진화 성질] 에스프레소(Lv.3)와 밀크티를 빠르게 추출하며 브런치용 크루아상을 함께 제공합니다!",
+          desc: "[★★ 진화] 캐모마일 티와 에스프레소(Lv.2~3)를 추출합니다. 배속을 쓰면 최대 Lv.5까지 바로 나와요!",
         },
         {
           level: 3,
           name: "여왕의 신화 티메이커",
-          desc: "[Lv.3 신화 성질] 최고급 음료(Lv.2~4)와 완제품 [모닝 브런치세트]를 즉시 생성합니다!",
+          desc: "[★★★ 신화] 최고급 음료(Lv.2~4)를 추출합니다. 배속을 쓰면 최대 Lv.6까지 바로 나와요!",
         },
       ],
     },
@@ -496,6 +496,7 @@ const state = {
   lastTapCell: null,
   lastTapTime: 0,
   soundEnabled: true,
+  boostMultiplier: 1,
   cauldronPartGranted: true,
   lastSeenVersion: APP_VERSION,
   isLoaded: false,
@@ -526,6 +527,12 @@ window.addEventListener("beforeinstallprompt", (e) => {
 
 function getRequiredXP(lv) {
   return 50 + (lv - 1) * 20;
+}
+
+// 생성기 등급 표기 (재료와 헷갈리지 않도록 Lv. 대신 ★ 사용)
+function formatGeneratorStars(lv) {
+  const t = Math.min(3, Math.max(1, lv || 1));
+  return "★".repeat(t) + "☆".repeat(3 - t);
 }
 
 function getGeneratorTierMeta(chain, level = 1) {
@@ -700,13 +707,13 @@ function grantGeneratorEvolutionPart(chain, reasonText) {
     state.board[emptyIdx] = newGenPart;
     setDialogue(
       "🔥 생성기 진화 파츠 획득",
-      `${reasonText}으로 [${genMeta.name} Lv.1]을 획득했습니다! 같은 생성기끼리 드래그해 합치면 상위 성질로 진화합니다!`
+      `${reasonText}으로 [${genMeta.name} ★]을 획득했습니다! 같은 생성기끼리 드래그해 합치면 등급이 올라갑니다!`
     );
   } else if (state.bag.length < 6) {
     state.bag.push(newGenPart);
     setDialogue(
       "🎒 보관함 지급",
-      `보드가 가득 차서 [${genMeta.name} Lv.1] 진화 파츠가 보관함(🎒)으로 지급되었습니다!`
+      `보드가 가득 차서 [${genMeta.name} ★] 진화 파츠가 보관함(🎒)으로 지급되었습니다!`
     );
   }
 }
@@ -1545,14 +1552,14 @@ function gainXP(amount) {
   }
 }
 
-// ★ 생성기 작동: 생성기의 합성 진화 레벨(Lv.1 / Lv.2 / Lv.3)에 따라 배출 성질이 완전히 달라짐!
+// ★ 생성기 작동: 등급(★)별 기본 배출 + 배속 부스트(×2/×4)로 상위 재료를 바로 생성 (등급 상한까지만, 번개는 실제 오른 단계만큼)
 function triggerGenerator(cellIdx, clientX, clientY) {
   const gen = state.board[cellIdx];
   if (!gen || !gen.isGenerator) return;
 
   if (state.energy < 1) {
     sfx.warn();
-    floatText("⚡ 번개가 부족합니다! 5분마다 충전되거나 이벤트로 얻으세요!", clientX, clientY, "#ef4444");
+    floatText("⚡ 번개가 부족합니다! 5분마다 충전되거나 💎 상점에서 구매하세요!", clientX, clientY, "#ef4444");
     return;
   }
 
@@ -1563,72 +1570,28 @@ function triggerGenerator(cellIdx, clientX, clientY) {
     return;
   }
 
-  state.energy -= 1;
-  sfx.spawn();
-
-  const genLv = Math.max(1, gen.level || 1);
+  const tier = Math.max(1, gen.level || 1);
   const chDef = CHAINS[gen.chain];
-  let spawnChain = gen.chain;
-  let spawnLv = 1;
+  const base = GameProgression.rollBaseSpawn(tier, chDef.rareDropChain ? chDef.rareChance : 0);
+  const spawnChain = base.rare ? chDef.rareDropChain : gen.chain;
+  const cap = Math.min(GameProgression.getGeneratorTierCap(tier), CHAINS[spawnChain].items.length);
+  const boost = GameProgression.resolveBoost(base.level, state.boostMultiplier, cap, state.energy);
 
-  if (genLv === 1) {
-    // [Lv.1 기본 생성기 성질]: Lv.1(82%) 또는 Lv.2(18%) 생성 + 가마솥은 20% 보석 원석(Lv.1)
-    spawnLv = Math.random() < 0.18 ? 2 : 1;
-    if (chDef.rareDropChain && Math.random() < chDef.rareChance) {
-      spawnChain = chDef.rareDropChain;
-      spawnLv = 1;
-    }
-  } else if (genLv === 2) {
-    // [Lv.2 진화 생성기 성질]: 고급 재료(Lv.2~3) 대폭 상승 + 이종 조합 파트너 재료나 2단계 사파이어 보석 배출!
-    const roll = Math.random();
-    if (roll < 0.22) {
-      // 이종 조합용 파트너 재료 자동 공명 생성!
-      if (gen.chain === "potion") {
-        spawnChain = "herb";
-        spawnLv = 2;
-      } else if (gen.chain === "herb") {
-        spawnChain = "potion";
-        spawnLv = 2;
-      } else if (gen.chain === "bakery") {
-        spawnChain = "tea";
-        spawnLv = 3;
-      } else if (gen.chain === "tea") {
-        spawnChain = "bakery";
-        spawnLv = 2;
-      } else {
-        spawnChain = "gem";
-        spawnLv = 2;
-      }
-      floatText(`✨ Lv.2 각성 효과! 조합 파트너 재료 공명 생성!`, clientX, clientY, "#34d399");
-    } else if (chDef.rareDropChain && roll < 0.42) {
-      spawnChain = chDef.rareDropChain;
-      spawnLv = 2; // 원석이 아닌 Lv.2 사파이어 즉시 배출!
-    } else {
-      spawnLv = Math.random() < 0.35 ? 3 : 2;
-    }
-  } else {
-    // [Lv.3 신화 생성기 성질]: Lv.2~4 상급 재료 배출 + 20% 확률로 스페셜 이종 조합 완제품 즉시 연성!
-    const roll = Math.random();
-    if (roll < 0.2) {
-      spawnChain = "combo";
-      spawnLv = gen.chain === "potion" || gen.chain === "herb" ? 1 : gen.chain === "bakery" || gen.chain === "tea" ? 2 : 3;
-      floatText(`👑 Lv.3 신화 성질 발동! 스페셜 조합품 직접 연성!`, clientX, clientY, "#fde047");
-    } else if (chDef.rareDropChain && roll < 0.42) {
-      spawnChain = chDef.rareDropChain;
-      spawnLv = 3; // Lv.3 문스톤 결정 즉시 배출!
-    } else {
-      spawnLv = Math.random() < 0.3 ? 4 : Math.random() < 0.7 ? 3 : 2;
-    }
-  }
+  state.energy -= boost.cost;
+  sfx.spawn();
 
   state.board[targetIdx] = {
     uid: newUid(),
     state: "active",
     isGenerator: false,
     chain: spawnChain,
-    level: spawnLv,
+    level: boost.level,
     justSpawned: true,
   };
+
+  if (boost.steps > 0) {
+    floatText(`⚡${boost.cost} 배속! Lv.${boost.level} 바로 생성`, clientX, clientY, "#38bdf8");
+  }
 
   renderAll();
 }
@@ -1700,8 +1663,8 @@ function executeBoardDrop(srcIdx, dstIdx, clientX, clientY) {
     sfx.serve();
     gainXP(25);
     state.selectedIdx = dstIdx;
-    setDialogue("🔥 생성기 합성 진화 성공!", `${nextGenMeta.name}(Lv.${nextGenLv})으로 진화하여 새로운 성질을 획득했습니다!`);
-    floatText(`🔥 생성기 진화! [${nextGenMeta.name} Lv.${nextGenLv}]`, clientX, clientY, "#fde047");
+    setDialogue("🔥 생성기 합성 진화 성공!", `${nextGenMeta.name}(${"★".repeat(nextGenLv)})으로 진화! 이제 한 번에 최대 Lv.${GameProgression.getGeneratorTierCap(nextGenLv)}까지 나옵니다!`);
+    floatText(`🔥 생성기 진화! [${nextGenMeta.name} ${"★".repeat(nextGenLv)}]`, clientX, clientY, "#fde047");
     renderAll();
     return;
   }
@@ -1980,6 +1943,7 @@ function triggerAutoSave() {
     orders: state.orders,
     eventState: state.eventState,
     soundEnabled: sfx.enabled,
+    boostMultiplier: state.boostMultiplier,
     cauldronPartGranted: state.cauldronPartGranted,
     lastSeenVersion: state.lastSeenVersion || APP_VERSION,
     interiorRooms: roomState ? roomState.rooms : null,
@@ -1998,8 +1962,17 @@ function triggerAutoSave() {
   }
 }
 
+function updateBoostButtonUI() {
+  const label = document.getElementById("boost-label");
+  const btn = document.getElementById("btn-boost-toggle");
+  if (!label || !btn) return;
+  label.textContent = `⚡×${state.boostMultiplier}`;
+  btn.classList.toggle("boost-active", state.boostMultiplier > 1);
+}
+
 function renderAll() {
   updateTopBarUI();
+  updateBoostButtonUI();
   const { wantedBoardUids, orderStatus } = computeWantedMap();
   renderOrdersUI(orderStatus);
   renderBoardUI(wantedBoardUids);
@@ -2196,7 +2169,7 @@ function renderBoardUI(wantedBoardUids) {
         tile.innerHTML = `
           <div class="tile-svg-wrap">${GameSprites.getItemSVG(item.chain, genLv, true)}</div>
           <span class="tile-label">${genTier.name}</span>
-          <span class="tile-lv-pill">Lv.${genLv}⚡</span>
+          <span class="tile-lv-pill">${"★".repeat(genLv)}</span>
         `;
       } else {
         const meta = getItemMeta(item.chain, item.level);
@@ -2233,7 +2206,7 @@ function renderInspectorUI() {
     iconEl.innerHTML = GameSprites.getItemSVG("potion", 2, true);
     nameEl.textContent = "타일을 탭하거나 드래그해 합성하세요";
     lvEl.textContent = "안내";
-    descEl.textContent = "같은 생성기끼리도 합성(Lv.1➔Lv.2➔Lv.3)하여 새로운 성질로 진화시킬 수 있습니다!";
+    descEl.textContent = "같은 생성기끼리 합성(★➔★★➔★★★)하면 더 높은 재료가 한 번에 나와요!";
     return;
   }
 
@@ -2250,12 +2223,12 @@ function renderInspectorUI() {
     const genTier = getGeneratorTierMeta(item.chain, genLv);
     iconEl.innerHTML = GameSprites.getItemSVG(item.chain, genLv, true);
     nameEl.textContent = genTier.name;
-    lvEl.textContent = `생성기 Lv.${genLv}/3`;
-    descEl.textContent = genTier.desc;
+    lvEl.textContent = `생성기 ${formatGeneratorStars(genLv)}`;
+    descEl.textContent = `${genTier.desc} (현재 배속 ×${state.boostMultiplier})`;
 
     const btn = document.createElement("button");
     btn.className = "insp-btn spawn-btn";
-    btn.textContent = "⚡ 생성";
+    btn.textContent = `⚡ 생성 ×${state.boostMultiplier}`;
     btn.addEventListener("click", (e) => triggerGenerator(state.selectedIdx, e.clientX, e.clientY));
     actionsEl.appendChild(btn);
 
@@ -2380,7 +2353,7 @@ function renderLevelModal() {
         <div>
           <strong style="font-size:12.5px;color:#3b0764">👑 레벨 ${lv} 달성 혜택</strong>
           <p style="font-size:11px;color:#475569;margin-top:2px">
-            보상: <b>+${coinBonus}🪙 · +25⚡ · +1🌟 · 🔥[${genMeta.name} Lv.1] 진화 파츠</b>
+            보상: <b>+${coinBonus}🪙 · +25⚡ · +1🌟 · 🔥[${genMeta.name} ★] 진화 파츠</b>
           </p>
         </div>
         <span style="font-size:11px;font-weight:900;padding:4px 8px;border-radius:8px;background:${
@@ -2421,8 +2394,8 @@ function renderCodexModal() {
   genEvoCard.style.borderColor = "#9333ea";
   const potTiers = CHAINS.potion.generator.tiers;
   genEvoCard.innerHTML = `
-    <h4>🔥 생성기 합성 진화 (Lv.1 ➔ Lv.2 ➔ Lv.3 성질 변화)</h4>
-    <p style="font-size:11px;color:#475569;margin-bottom:6px">레벨업이나 퀘스트 완료로 얻은 같은 생성기 2개를 합치면 새로운 성질로 진화합니다!</p>
+    <h4>🔥 생성기 합성 진화 (★ ➔ ★★ ➔ ★★★)</h4>
+    <p style="font-size:11px;color:#475569;margin-bottom:6px">레벨업이나 퀘스트 완료로 얻은 같은 생성기 2개를 합치면 등급이 올라 더 높은 재료가 한 번에 나옵니다!</p>
     <div class="codex-flow">
       ${potTiers
         .map(
@@ -2430,7 +2403,7 @@ function renderCodexModal() {
         <div class="codex-node" style="flex:1">
           <div class="codex-svg-mini">${GameSprites.getItemSVG("potion", t.level, true)}</div>
           <strong style="font-size:9.5px">${t.name}</strong>
-          <small style="font-size:8.5px;color:#6d28d9">Lv.${t.level}</small>
+          <small style="font-size:8.5px;color:#6d28d9">${"★".repeat(t.level)} · 최대 Lv.${GameProgression.getGeneratorTierCap(t.level)}</small>
         </div>
         ${idx < potTiers.length - 1 ? '<span style="color:#9333ea;font-weight:900">➔</span>' : ""}
       `
@@ -2549,6 +2522,12 @@ function updateSoundButtonUI() {
 }
 
 function bindUIEvents() {
+  document.getElementById("btn-boost-toggle").addEventListener("click", () => {
+    state.boostMultiplier = GameProgression.nextBoost(state.boostMultiplier);
+    sfx.tap();
+    renderAll();
+  });
+
   document.getElementById("btn-go-castle").addEventListener("click", () => {
     switchScreen("castle");
   });

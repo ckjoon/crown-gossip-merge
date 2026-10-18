@@ -1331,6 +1331,12 @@ body {
   white-space: nowrap;
 }
 
+.gh-mini-booster.boost-toggle.boost-active {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+  border-color: #0369a1;
+  color: #ffffff;
+}
+
 .gh-mini-booster small {
   font-size: 8px;
   color: #d97706;

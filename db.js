@@ -250,6 +250,11 @@ window.GameDB = (function () {
       defaultState.soundEnabled = saved.soundEnabled;
     }
 
+    // v2.5.0 배속 부스트 선택값 (1·2·4 외 값은 1로)
+    defaultState.boostMultiplier = window.GameProgression
+      ? window.GameProgression.sanitizeBoost(saved.boostMultiplier)
+      : 1;
+
     return {
       merged: true,
       interiorRooms: saved.interiorRooms || null,

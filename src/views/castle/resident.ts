@@ -6,14 +6,13 @@ import { portraitDataUrl } from "../art/portraits";
 import type { Expression } from "../../core/rules/expressions";
 import type { ZoneKey } from "../../core/types";
 
-export const ZONE_RESIDENT: Record<ZoneKey, { id: string; robe: string }> = {
-  alchemy: { id: "selene", robe: "#5b21b6" },
-  harbor: { id: "quinn", robe: "#155e75" },
-  garden: { id: "nero", robe: "#1f2937" },
-  banquet: { id: "lucian", robe: "#7f1d1d" },
+// 위치는 그 구역 가구를 가리지 않는 앞쪽 빈 바닥
+export const ZONE_RESIDENT: Record<ZoneKey, { id: string; robe: string; pos: [number, number, number] }> = {
+  alchemy: { id: "selene", robe: "#5b21b6", pos: [3.6, 0, 3.4] },
+  harbor: { id: "quinn", robe: "#155e75", pos: [-3.4, 0, 2.8] },
+  garden: { id: "nero", robe: "#1f2937", pos: [-3.4, 0, 2.8] },
+  banquet: { id: "lucian", robe: "#7f1d1d", pos: [-3.4, 0, 2.8] },
 };
-
-const SPOT: [number, number, number] = [3.6, 0, 3.4];
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -56,32 +55,40 @@ export class Resident {
   private textures: Partial<Record<Expression, THREE.CanvasTexture>> = {};
   private t = Math.random() * 10;
   private cheering = false;
+  private disposed = false;
+  private cheerTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(zone: ZoneKey) {
-    const { id, robe } = ZONE_RESIDENT[zone];
+    const { id, robe, pos } = ZONE_RESIDENT[zone];
     this.sprite = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false }));
     this.sprite.scale.set(1.6, 2.4, 1);
     this.sprite.center.set(0.5, 0);
+    // 그림이 준비되기 전엔 흰 사각형이 보이지 않게 숨김
+    this.sprite.visible = false;
     const shadow = new THREE.Mesh(new THREE.CircleGeometry(0.5, 20), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.25 }));
     shadow.rotation.x = -Math.PI / 2;
     shadow.position.y = 0.02;
     this.group.add(shadow, this.sprite);
-    this.group.position.set(...SPOT);
+    this.group.position.set(...pos);
     for (const ex of ["neutral", "happy"] as Expression[]) {
-      void drawChibi(id, robe, ex).then((canvas) => {
-        const tex = new THREE.CanvasTexture(canvas);
-        tex.colorSpace = THREE.SRGBColorSpace;
-        this.textures[ex] = tex;
-        if (ex === "neutral" && !this.cheering) this.show("neutral");
-      });
+      drawChibi(id, robe, ex)
+        .then((canvas) => {
+          if (this.disposed) return;
+          const tex = new THREE.CanvasTexture(canvas);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          this.textures[ex] = tex;
+          if (ex === "neutral" && !this.cheering) this.show("neutral");
+        })
+        .catch(() => {});
     }
   }
 
   private show(ex: Expression): void {
     const tex = this.textures[ex];
-    if (!tex) return;
+    if (!tex || this.disposed) return;
     (this.sprite.material as THREE.SpriteMaterial).map = tex;
     (this.sprite.material as THREE.SpriteMaterial).needsUpdate = true;
+    this.sprite.visible = true;
   }
 
   tick(dt: number): void {
@@ -93,13 +100,15 @@ export class Resident {
 
   // 복구 순간: 기쁜 표정으로 바꾸고 두 번 점프
   cheer(): void {
+    if (this.cheerTimer) clearTimeout(this.cheerTimer);
     this.cheering = true;
     this.show("happy");
     gsap.killTweensOf(this.sprite.position);
     gsap
       .timeline({
         onComplete: () => {
-          setTimeout(() => {
+          this.cheerTimer = setTimeout(() => {
+            this.cheerTimer = null;
             this.cheering = false;
             this.show("neutral");
           }, 900);
@@ -116,6 +125,9 @@ export class Resident {
   }
 
   dispose(): void {
+    this.disposed = true;
+    if (this.cheerTimer) clearTimeout(this.cheerTimer);
+    gsap.killTweensOf(this.sprite.position);
     for (const t of Object.values(this.textures)) t?.dispose();
     (this.sprite.material as THREE.SpriteMaterial).dispose();
   }

@@ -2,7 +2,7 @@
 
 export type Expression = "neutral" | "happy" | "surprised" | "worried";
 
-const WORRIED = ["걱정", "하지만", "…", "큰일"];
+const WORRIED = ["걱정", "하지만", "…", "...", "큰일", "침입", "잠깐"];
 
 export function expressionFor(line: string): Expression {
   if (WORRIED.some((w) => line.includes(w))) return "worried";

@@ -48,12 +48,19 @@ export function toonify(root: THREE.Object3D): void {
 
 const OUTLINE_MAT = new THREE.MeshBasicMaterial({ color: 0x1b1028, side: THREE.BackSide });
 
-// 메쉬마다 살짝 키운 뒷면 복제를 붙여 외곽선처럼 보이게 한다 (기하는 공유, 이미 붙어 있으면 건너뜀)
+// 크기 비례로 키우면 고리 모양은 외곽선이 원래 몸통에서 떨어져 보이므로 제외
+function skipOutline(mesh: THREE.Mesh): boolean {
+  const mat = mesh.material as THREE.Material | THREE.Material[];
+  if (Array.isArray(mat) ? mat.some((m) => m.transparent) : mat.transparent) return true;
+  return (mesh.geometry as THREE.BufferGeometry).type === "TorusGeometry";
+}
+
+// 메쉬마다 살짝 키운 뒷면 복제를 붙여 외곽선처럼 보이게 한다 (기하는 공유, 이미 붙어 있으면 건너뜀, 유리·고리는 제외)
 export function addOutline(root: THREE.Object3D, thickness = 0.03): void {
   const targets: THREE.Mesh[] = [];
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
-    if (mesh.isMesh && !mesh.userData.outline && !mesh.children.some((c) => c.userData.outline)) targets.push(mesh);
+    if (mesh.isMesh && !mesh.userData.outline && !skipOutline(mesh) && !mesh.children.some((c) => c.userData.outline)) targets.push(mesh);
   });
   for (const mesh of targets) {
     const outline = new THREE.Mesh(mesh.geometry, OUTLINE_MAT);

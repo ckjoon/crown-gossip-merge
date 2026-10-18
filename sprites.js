@@ -1,6 +1,219 @@
-// sprites.js — 모든 체인의 모든 레벨(Lv.1~Lv.6)이 100% 서로 다른 고유 디자인을 갖는 커스텀 SVG 일러스트 렌더러
+// sprites.js — 모든 체인의 모든 레벨(Lv.1~Lv.8)이 100% 서로 다른 고유 디자인을 갖는 커스텀 SVG 일러스트 렌더러
 
 window.GameSprites = (function () {
+  // v2.5.0 Lv.8 확장: 기존 함수에 없는 고레벨 그림 (potion·grimoire·herb·bakery Lv.7~8, tea·gem Lv.6~8)
+  const HIGH_TIER_ART = {
+    potion: {
+      7: {
+        c1: "#c4b5fd",
+        c2: "#6d28d9",
+        // Lv.7 시간의 모래 비약 (황금 모래가 흐르는 마법 모래시계)
+        inner: `
+        <rect x="18" y="8" width="28" height="5" rx="2.5" fill="#b45309" stroke="#fde047" stroke-width="1.5"/>
+        <rect x="18" y="51" width="28" height="5" rx="2.5" fill="#b45309" stroke="#fde047" stroke-width="1.5"/>
+        <path d="M21 13 H43 C43 24 35 28 33 32 C35 36 43 40 43 51 H21 C21 40 29 36 31 32 C29 28 21 24 21 13 Z" fill="url(#UID)" stroke="#ffffff" stroke-width="2"/>
+        <path d="M25 46 Q32 38 39 46 L40 50 H24 Z" fill="#fde047"/>
+        <line x1="32" y1="32" x2="32" y2="44" stroke="#fde047" stroke-width="1.6" stroke-dasharray="2 2"/>
+        <circle cx="44" cy="22" r="2" fill="#ffffff"/>
+        <circle cx="20" cy="40" r="1.6" fill="#ffffff"/>`,
+      },
+      8: {
+        c1: "#f472b6",
+        c2: "#7e22ce",
+        // Lv.8 마녀왕의 불로약 (왕관을 쓴 둥근 플라스크 + 별빛 후광)
+        inner: `
+        <circle cx="32" cy="34" r="22" fill="none" stroke="#fde047" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <rect x="27" y="12" width="10" height="9" rx="2" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1.5"/>
+        <circle cx="32" cy="36" r="15" fill="url(#UID)" stroke="#fde047" stroke-width="2.5"/>
+        <path d="M19 38 Q32 46 45 38 A15 15 0 0 1 19 38 Z" fill="#f0abfc" opacity="0.85"/>
+        <polygon points="24,11 27,4 32,8 37,4 40,11" fill="#fde047" stroke="#b45309" stroke-width="1.2"/>
+        <polygon points="32,28 34,33 39,33 35,36 37,41 32,38 27,41 29,36 25,33 30,33" fill="#ffffff"/>
+        <circle cx="25" cy="31" r="2.5" fill="rgba(255,255,255,0.75)"/>`,
+      },
+    },
+    grimoire: {
+      7: {
+        c1: "#4b5563",
+        c2: "#111827",
+        // Lv.7 금단의 고문서 (쇠사슬에 묶인 검은 책과 붉은 눈)
+        inner: `
+        <rect x="14" y="12" width="36" height="42" rx="4" fill="url(#UID)" stroke="#7f1d1d" stroke-width="2"/>
+        <rect x="14" y="12" width="6" height="42" rx="2" fill="#450a0a"/>
+        <ellipse cx="34" cy="30" rx="9" ry="6" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+        <circle cx="34" cy="30" r="3.5" fill="#dc2626"/>
+        <circle cx="34" cy="30" r="1.4" fill="#111827"/>
+        <path d="M10 22 L54 44 M54 22 L10 44" stroke="#9ca3af" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 2"/>
+        <rect x="28" y="40" width="12" height="9" rx="2" fill="#fbbf24" stroke="#78350f" stroke-width="1.5"/>`,
+      },
+      8: {
+        c1: "#a5b4fc",
+        c2: "#3730a3",
+        // Lv.8 셀레네의 창세록 (빛을 뿜는 펼친 책 + 초승달)
+        inner: `
+        <path d="M32 6 L33 14 M18 10 L23 17 M46 10 L41 17 M10 22 L18 25 M54 22 L46 25" stroke="#fde047" stroke-width="2" stroke-linecap="round"/>
+        <path d="M8 30 Q20 24 32 30 L32 54 Q20 48 8 54 Z" fill="url(#UID)" stroke="#ffffff" stroke-width="2"/>
+        <path d="M56 30 Q44 24 32 30 L32 54 Q44 48 56 54 Z" fill="url(#UID)" stroke="#ffffff" stroke-width="2"/>
+        <path d="M36 16 A9 9 0 1 0 36 32 A7 7 0 1 1 36 16 Z" fill="#fde047" stroke="#b45309" stroke-width="1.2"/>
+        <line x1="14" y1="38" x2="26" y2="40" stroke="#ffffff" stroke-width="1.5"/>
+        <line x1="14" y1="44" x2="26" y2="46" stroke="#ffffff" stroke-width="1.5"/>
+        <line x1="38" y1="40" x2="50" y2="38" stroke="#ffffff" stroke-width="1.5"/>
+        <line x1="38" y1="46" x2="50" y2="44" stroke="#ffffff" stroke-width="1.5"/>`,
+      },
+    },
+    herb: {
+      7: {
+        c1: "#bae6fd",
+        c2: "#0e7490",
+        // Lv.7 월광 세계수 (달빛을 머금은 은빛 나무)
+        inner: `
+        <circle cx="47" cy="12" r="6" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.2"/>
+        <ellipse cx="32" cy="54" rx="16" ry="3" fill="#334155"/>
+        <rect x="29" y="34" width="6" height="19" rx="2" fill="#475569"/>
+        <path d="M29 44 L22 50 M35 42 L42 48" stroke="#475569" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="32" cy="26" r="14" fill="url(#UID)" stroke="#e0f2fe" stroke-width="2"/>
+        <circle cx="20" cy="32" r="8" fill="url(#UID)" stroke="#e0f2fe" stroke-width="1.5"/>
+        <circle cx="44" cy="32" r="8" fill="url(#UID)" stroke="#e0f2fe" stroke-width="1.5"/>
+        <circle cx="27" cy="22" r="1.8" fill="#ffffff"/>
+        <circle cx="38" cy="27" r="1.5" fill="#ffffff"/>
+        <circle cx="21" cy="33" r="1.3" fill="#ffffff"/>`,
+      },
+      8: {
+        c1: "#4ade80",
+        c2: "#15803d",
+        // Lv.8 생명의 세계수 (뿌리를 뻗은 황금 거목과 빛나는 열매)
+        inner: `
+        <path d="M14 56 Q24 48 28 40 M50 56 Q40 48 36 40" stroke="#92400e" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M27 56 L29 30 H35 L37 56 Z" fill="#b45309" stroke="#78350f" stroke-width="1.5"/>
+        <ellipse cx="32" cy="22" rx="24" ry="15" fill="url(#UID)" stroke="#fef9c3" stroke-width="2"/>
+        <ellipse cx="32" cy="16" rx="14" ry="8" fill="#86efac" opacity="0.8"/>
+        <circle cx="20" cy="24" r="3" fill="#fde047" stroke="#ffffff" stroke-width="1"/>
+        <circle cx="44" cy="22" r="3" fill="#f472b6" stroke="#ffffff" stroke-width="1"/>
+        <circle cx="32" cy="30" r="3" fill="#fde047" stroke="#ffffff" stroke-width="1"/>
+        <circle cx="38" cy="12" r="2.4" fill="#ffffff"/>`,
+      },
+    },
+    bakery: {
+      7: {
+        c1: "#fce7f3",
+        c2: "#db2777",
+        // Lv.7 왕실 디저트 타워 (마카롱을 쌓은 원뿔 타워)
+        inner: `
+        <rect x="16" y="52" width="32" height="4" rx="2" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1.2"/>
+        <path d="M32 9 L48 52 H16 Z" fill="url(#UID)" stroke="#ffffff" stroke-width="2"/>
+        <circle cx="24" cy="44" r="4" fill="#f9a8d4"/>
+        <circle cx="32" cy="46" r="4" fill="#a7f3d0"/>
+        <circle cx="40" cy="44" r="4" fill="#fde68a"/>
+        <circle cx="27" cy="33" r="3.5" fill="#c4b5fd"/>
+        <circle cx="37" cy="33" r="3.5" fill="#f9a8d4"/>
+        <circle cx="32" cy="22" r="3.2" fill="#a7f3d0"/>
+        <polygon points="32,3 35,9 29,9" fill="#fde047" stroke="#b45309" stroke-width="1"/>`,
+      },
+      8: {
+        c1: "#fde047",
+        c2: "#d97706",
+        // Lv.8 황금 축제 케이크 (촛불을 꽂은 2단 황금 케이크)
+        inner: `
+        <rect x="12" y="38" width="40" height="16" rx="4" fill="url(#UID)" stroke="#b45309" stroke-width="2"/>
+        <rect x="19" y="24" width="26" height="14" rx="3" fill="url(#UID)" stroke="#b45309" stroke-width="2"/>
+        <path d="M12 44 Q22 48 32 44 Q42 48 52 44" stroke="#ffffff" stroke-width="2.5" fill="none"/>
+        <path d="M19 30 Q26 33 32 30 Q38 33 45 30" stroke="#ffffff" stroke-width="2" fill="none"/>
+        <rect x="24" y="14" width="3" height="10" fill="#f9a8d4"/>
+        <rect x="31" y="12" width="3" height="12" fill="#a5b4fc"/>
+        <rect x="38" y="14" width="3" height="10" fill="#86efac"/>
+        <ellipse cx="25.5" cy="12" rx="1.8" ry="3" fill="#f97316"/>
+        <ellipse cx="32.5" cy="10" rx="1.8" ry="3" fill="#f97316"/>
+        <ellipse cx="39.5" cy="12" rx="1.8" ry="3" fill="#f97316"/>
+        <circle cx="32" cy="47" r="3" fill="#dc2626" stroke="#ffffff" stroke-width="1"/>`,
+      },
+    },
+    tea: {
+      6: {
+        c1: "#fde68a",
+        c2: "#d97706",
+        // Lv.6 금빛 애프터눈티 (김이 오르는 황금 찻잔과 받침)
+        inner: `
+        <ellipse cx="32" cy="50" rx="22" ry="5" fill="#fef3c7" stroke="#b45309" stroke-width="1.8"/>
+        <path d="M14 28 H46 L42 46 Q32 52 22 46 Z" fill="url(#UID)" stroke="#b45309" stroke-width="2"/>
+        <path d="M46 32 Q56 32 54 40 Q52 46 43 44" stroke="#b45309" stroke-width="3" fill="none"/>
+        <ellipse cx="30" cy="28" rx="16" ry="3.5" fill="#92400e"/>
+        <path d="M24 22 Q20 16 26 12 M32 22 Q28 14 34 9 M40 22 Q36 16 42 12" stroke="#e5e7eb" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <path d="M20 36 Q30 40 40 36" stroke="#ffffff" stroke-width="1.5" fill="none"/>`,
+      },
+      7: {
+        c1: "#6366f1",
+        c2: "#1e1b4b",
+        // Lv.7 별무리 찻주전자 세트 (별이 박힌 밤하늘 찻주전자)
+        inner: `
+        <ellipse cx="30" cy="55" rx="22" ry="3.5" fill="#1e1b4b" opacity="0.5"/>
+        <path d="M14 30 Q14 52 30 52 Q46 52 46 30 Z" fill="url(#UID)" stroke="#e0e7ff" stroke-width="2"/>
+        <path d="M46 34 L56 26 L54 32 L47 42" fill="url(#UID)" stroke="#e0e7ff" stroke-width="1.8"/>
+        <path d="M14 34 Q4 36 8 44 Q10 48 15 46" stroke="#e0e7ff" stroke-width="3" fill="none"/>
+        <ellipse cx="30" cy="30" rx="16" ry="4" fill="#312e81" stroke="#e0e7ff" stroke-width="1.5"/>
+        <circle cx="30" cy="23" r="3.5" fill="#fde047" stroke="#b45309" stroke-width="1"/>
+        <polygon points="24,38 25.5,41 29,41 26.3,43 27.3,46.5 24,44.5 20.7,46.5 21.7,43 19,41 22.5,41" fill="#fde047"/>
+        <circle cx="36" cy="40" r="1.6" fill="#ffffff"/>
+        <circle cx="33" cy="46" r="1.2" fill="#ffffff"/>
+        <circle cx="40" cy="45" r="1.3" fill="#fde047"/>`,
+      },
+      8: {
+        c1: "#fde047",
+        c2: "#b45309",
+        // Lv.8 여왕의 만찬 티파티 (왕관 아래 황금 쟁반 위 세 찻잔)
+        inner: `
+        <rect x="6" y="48" width="52" height="6" rx="3" fill="url(#UID)" stroke="#b45309" stroke-width="1.8"/>
+        <path d="M8 32 H22 L20 46 H10 Z" fill="#ffffff" stroke="#d97706" stroke-width="1.6"/>
+        <path d="M25 26 H39 L37 46 H27 Z" fill="#fde68a" stroke="#d97706" stroke-width="1.6"/>
+        <path d="M42 32 H56 L54 46 H44 Z" fill="#ffffff" stroke="#d97706" stroke-width="1.6"/>
+        <ellipse cx="15" cy="32" rx="7" ry="1.8" fill="#92400e"/>
+        <ellipse cx="32" cy="26" rx="7" ry="1.8" fill="#92400e"/>
+        <ellipse cx="49" cy="32" rx="7" ry="1.8" fill="#92400e"/>
+        <polygon points="24,19 27,11 32,16 37,11 40,19" fill="#fde047" stroke="#b45309" stroke-width="1.3"/>
+        <circle cx="32" cy="38" r="2.5" fill="#f472b6"/>`,
+      },
+    },
+    gem: {
+      6: {
+        c1: "#a855f7",
+        c2: "#581c87",
+        // Lv.6 왕관 보석함 (보석이 넘치는 열린 보석함)
+        inner: `
+        <path d="M12 30 L18 14 H46 L52 30 Z" fill="#7c3aed" stroke="#fde047" stroke-width="1.8"/>
+        <rect x="10" y="30" width="44" height="22" rx="3" fill="url(#UID)" stroke="#fde047" stroke-width="2"/>
+        <circle cx="22" cy="30" r="4" fill="#38bdf8" stroke="#ffffff" stroke-width="1.2"/>
+        <circle cx="32" cy="28" r="5" fill="#f43f5e" stroke="#ffffff" stroke-width="1.2"/>
+        <circle cx="42" cy="30" r="4" fill="#4ade80" stroke="#ffffff" stroke-width="1.2"/>
+        <rect x="28" y="38" width="8" height="8" rx="1.5" fill="#fde047" stroke="#92400e" stroke-width="1.2"/>`,
+      },
+      7: {
+        c1: "#fbbf24",
+        c2: "#b45309",
+        // Lv.7 별의 왕홀 (별 장식이 달린 황금 홀)
+        inner: `
+        <rect x="29" y="24" width="6" height="30" rx="3" fill="url(#UID)" stroke="#78350f" stroke-width="1.5"/>
+        <rect x="25" y="50" width="14" height="4" rx="2" fill="#fde047" stroke="#78350f" stroke-width="1.2"/>
+        <path d="M22 26 Q32 32 42 26" stroke="#fde047" stroke-width="3" fill="none"/>
+        <polygon points="32,4 36,14 46,14 38,20 41,30 32,24 23,30 26,20 18,14 28,14" fill="#fde047" stroke="#ffffff" stroke-width="1.8"/>
+        <circle cx="32" cy="17" r="3.2" fill="#38bdf8" stroke="#ffffff" stroke-width="1"/>
+        <circle cx="14" cy="10" r="1.6" fill="#ffffff"/>
+        <circle cx="50" cy="8" r="1.4" fill="#ffffff"/>`,
+      },
+      8: {
+        c1: "#9333ea",
+        c2: "#3b0764",
+        // Lv.8 마녀 여왕의 왕관 (초승달을 얹은 거대한 왕관)
+        inner: `
+        <path d="M10 46 L8 20 L20 32 L32 14 L44 32 L56 20 L54 46 Z" fill="url(#UID)" stroke="#fde047" stroke-width="2.2"/>
+        <rect x="9" y="44" width="46" height="9" rx="3" fill="#b45309" stroke="#fde047" stroke-width="1.8"/>
+        <circle cx="8" cy="19" r="3" fill="#f0abfc"/>
+        <circle cx="56" cy="19" r="3" fill="#f0abfc"/>
+        <path d="M35 4 A6 6 0 1 0 35 16 A4.5 4.5 0 1 1 35 4 Z" fill="#fde047"/>
+        <circle cx="20" cy="48.5" r="2.5" fill="#38bdf8"/>
+        <circle cx="32" cy="48.5" r="3" fill="#f43f5e"/>
+        <circle cx="44" cy="48.5" r="2.5" fill="#4ade80"/>
+        <circle cx="32" cy="32" r="4" fill="#ffffff" opacity="0.85"/>`,
+      },
+    },
+  };
   function svgWrap(inner, bgGradId, c1, c2) {
     return `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -18,6 +231,11 @@ window.GameSprites = (function () {
 
   function getItemSVG(chain, level, isGenerator = false) {
     if (isGenerator) return getGeneratorSVG(chain, level || 1);
+    const highArt = HIGH_TIER_ART[chain] && HIGH_TIER_ART[chain][level];
+    if (highArt) {
+      const uid = `hi_${chain}_${level}`;
+      return svgWrap(highArt.inner.replace(/UID/g, uid), uid, highArt.c1, highArt.c2);
+    }
     switch (chain) {
       case "potion":
         return getPotionSVG(level);

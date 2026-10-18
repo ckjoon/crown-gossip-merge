@@ -7,7 +7,7 @@ import type { SpotState, ZoneKey } from "../../core/types";
 import { ROOMS, STYLE_PALETTES } from "../../core/rules/rooms";
 import { SPOT_LAYOUT, ZONE_LOOK } from "./layout";
 import { buildCastleOverview, buildRoomShell } from "./scenes";
-import { buildFurniture, buildRubble } from "./furniture";
+import { buildRubble, buildSpotFurniture } from "./furniture";
 import { Ambience } from "./ambience";
 import { addOutline, disposeGroup, toonify } from "./toon";
 import { buildZoneDecor, setDecorGlow } from "./decor";
@@ -282,7 +282,7 @@ export class CastleView {
     group.position.set(...layout.pos);
     if (st.done || previewing) {
       const pal = STYLE_PALETTES[styleIdx] ?? STYLE_PALETTES[0];
-      buildFurniture(group, layout.type, pal);
+      buildSpotFurniture(spotId, group, pal, layout.type);
       const pt = new THREE.PointLight(pal.accent, 0.85, 5.5);
       pt.position.set(0, 2, 0);
       group.add(pt);

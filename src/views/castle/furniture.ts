@@ -191,3 +191,206 @@ export function buildFurniture(group: THREE.Group, type: string, pal: StylePalet
     group.add(fireGlow);
   }
 }
+
+// ==================== v3.1: 장소별 고유 가구 ====================
+
+interface Mats {
+  primary: THREE.MeshStandardMaterial;
+  secondary: THREE.MeshStandardMaterial;
+  accent: THREE.MeshStandardMaterial;
+  wood: THREE.MeshStandardMaterial;
+  gold: THREE.MeshStandardMaterial;
+  white: THREE.MeshStandardMaterial;
+}
+
+function mats(pal: StylePalette): Mats {
+  return {
+    primary: new THREE.MeshStandardMaterial({ color: pal.primary, roughness: 0.4, metalness: 0.15 }),
+    secondary: new THREE.MeshStandardMaterial({ color: pal.secondary, roughness: 0.35 }),
+    accent: new THREE.MeshStandardMaterial({ color: pal.accent, emissive: pal.accent, emissiveIntensity: 0.4, roughness: 0.25 }),
+    wood: new THREE.MeshStandardMaterial({ color: pal.wood, roughness: 0.7 }),
+    gold: new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.55, roughness: 0.3 }),
+    white: new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.5 }),
+  };
+}
+
+function put(group: THREE.Group, geo: THREE.BufferGeometry, mat: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0): THREE.Mesh {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  m.rotation.set(rx, ry, rz);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  group.add(m);
+  return m;
+}
+
+// 하버: 달빛 가든 에스프레소 바 — 곡선 카운터 + 황동 에스프레소 머신 + 컵 탑
+function espressoBar(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.CylinderGeometry(1.4, 1.4, 1.0, 24, 1, false, 0, Math.PI), M.wood, 0, 0.5, 0, 0, Math.PI / 2);
+  put(g, new THREE.CylinderGeometry(1.5, 1.5, 0.12, 24, 1, false, 0, Math.PI), M.primary, 0, 1.06, 0, 0, Math.PI / 2);
+  put(g, new THREE.BoxGeometry(0.7, 0.75, 0.5), M.gold, -0.35, 1.5, -0.4);
+  put(g, new THREE.SphereGeometry(0.22, 14, 10), M.gold, -0.35, 2.0, -0.4);
+  put(g, new THREE.CylinderGeometry(0.05, 0.05, 0.25, 8), M.secondary, -0.15, 1.3, -0.1, Math.PI / 2);
+  for (let i = 0; i < 3; i++) put(g, new THREE.CylinderGeometry(0.13 - i * 0.02, 0.1 - i * 0.02, 0.14, 12), M.white, 0.55, 1.2 + i * 0.15, -0.3);
+  put(g, new THREE.TorusGeometry(0.16, 0.03, 8, 16), M.accent, 0.55, 1.75, -0.3, Math.PI / 2);
+}
+
+// 하버: 마녀의 성 달빛 정문 아치 — 돌 아치 + 초승달 장식 + 덩굴
+function moonArch(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.BoxGeometry(0.45, 2.4, 0.4), M.white, -1.2, -0.3, 0);
+  put(g, new THREE.BoxGeometry(0.45, 2.4, 0.4), M.white, 1.2, -0.3, 0);
+  put(g, new THREE.TorusGeometry(1.2, 0.22, 10, 24, Math.PI), M.primary, 0, 0.9, 0);
+  const moon = put(g, new THREE.TorusGeometry(0.38, 0.1, 10, 20, Math.PI * 1.3), M.accent, 0, 1.25, 0.2, 0, 0, -0.6);
+  moon.castShadow = false;
+  for (let i = 0; i < 5; i++) put(g, new THREE.SphereGeometry(0.12, 8, 6), M.secondary, -1.2 + i * 0.6, 2.0 - Math.abs(i - 2) * 0.25, 0.25);
+}
+
+// 온실: 에메랄드 수련 분수 연못 — 낮은 원형 연못 + 수면 + 연잎 + 작은 물줄기
+function lilyPond(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.TorusGeometry(1.3, 0.2, 10, 32), M.white, 0, 0.18, 0, Math.PI / 2);
+  put(g, new THREE.CylinderGeometry(1.25, 1.25, 0.08, 32), M.accent, 0, 0.12, 0);
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    put(g, new THREE.CylinderGeometry(0.22, 0.22, 0.03, 12, 1, false, 0.4, Math.PI * 1.8), M.secondary, Math.cos(a) * 0.8, 0.18, Math.sin(a) * 0.8);
+  }
+  put(g, new THREE.ConeGeometry(0.15, 0.35, 8), M.primary, 0.8, 0.32, 0);
+  put(g, new THREE.CylinderGeometry(0.06, 0.12, 0.7, 10), M.white, 0, 0.5, 0);
+  put(g, new THREE.SphereGeometry(0.16, 12, 10), M.accent, 0, 0.92, 0);
+}
+
+// 온실: 로얄 티타임 가제보 테이블 — 기둥 4개 + 돔 지붕 + 원탁
+function gazebo(g: THREE.Group, M: Mats): void {
+  for (const [x, z] of [[-0.75, -0.75], [0.75, -0.75], [-0.75, 0.75], [0.75, 0.75]]) put(g, new THREE.CylinderGeometry(0.07, 0.07, 1.8, 10), M.white, x, 0.9, z);
+  put(g, new THREE.SphereGeometry(1.08, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), M.primary, 0, 1.8, 0);
+  put(g, new THREE.ConeGeometry(0.1, 0.35, 8), M.gold, 0, 2.95, 0);
+  put(g, new THREE.CylinderGeometry(0.6, 0.6, 0.08, 20), M.wood, 0, 0.75, 0);
+  put(g, new THREE.CylinderGeometry(0.08, 0.15, 0.72, 10), M.wood, 0, 0.37, 0);
+  put(g, new THREE.SphereGeometry(0.16, 12, 10), M.accent, 0.2, 0.9, 0.1);
+}
+
+// 온실: 세계수 묘목 화단 — 육각 화단 + 은빛 묘목 + 빛나는 잎
+function saplingBed(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.CylinderGeometry(1.1, 1.2, 0.45, 6), M.wood, 0, 0.22, 0);
+  put(g, new THREE.CylinderGeometry(1.0, 1.0, 0.05, 6), M.secondary, 0, 0.47, 0);
+  put(g, new THREE.CylinderGeometry(0.07, 0.12, 1.3, 8), M.wood, 0, 1.1, 0);
+  put(g, new THREE.IcosahedronGeometry(0.55, 0), M.accent, 0, 1.9, 0);
+  put(g, new THREE.IcosahedronGeometry(0.32, 0), M.primary, 0.45, 1.6, 0.2);
+  put(g, new THREE.IcosahedronGeometry(0.3, 0), M.primary, -0.4, 1.65, -0.2);
+}
+
+// 온실: 연금술 허브티 브루잉 바 — 바 + 큰 유리 주전자 + 매달린 허브 다발
+function herbTeaBar(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.BoxGeometry(2.2, 1.0, 0.9), M.wood, 0, 0.5, 0);
+  put(g, new THREE.BoxGeometry(2.35, 0.1, 1.0), M.secondary, 0, 1.05, 0);
+  put(g, new THREE.SphereGeometry(0.38, 16, 12), M.accent, -0.45, 1.45, 0);
+  put(g, new THREE.CylinderGeometry(0.1, 0.16, 0.3, 10), M.gold, -0.45, 1.9, 0);
+  put(g, new THREE.CylinderGeometry(0.2, 0.15, 0.3, 12), M.primary, 0.5, 1.25, 0.1);
+  put(g, new THREE.BoxGeometry(2.2, 0.06, 0.06), M.wood, 0, 2.4, -0.3);
+  for (let i = 0; i < 4; i++) put(g, new THREE.ConeGeometry(0.12, 0.45, 6), M.secondary, -0.8 + i * 0.55, 2.1, -0.3, Math.PI);
+}
+
+// 온실: 크리스탈 보타니컬 아치창 — 뾰족 아치 창틀 + 잎 모양 유리 칸
+function crystalArch(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.BoxGeometry(2.4, 1.6, 0.22), M.white, 0, -0.3, 0);
+  put(g, new THREE.ConeGeometry(1.2, 1.1, 4, 1, false, Math.PI / 4), M.white, 0, 1.05, 0, 0, 0, 0);
+  put(g, new THREE.BoxGeometry(2.1, 1.35, 0.26), M.accent, 0, -0.3, 0);
+  for (let i = 0; i < 3; i++) put(g, new THREE.OctahedronGeometry(0.25), M.secondary, -0.7 + i * 0.7, -0.3, 0.18);
+  put(g, new THREE.TorusGeometry(0.3, 0.05, 8, 16), M.gold, 0, 0.85, 0.15);
+}
+
+// 연회장: 황금 천문대 천구의 — 받침 + 기울어진 혼천의 고리 3개 + 별 구슬
+function astrolabe(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.CylinderGeometry(0.7, 0.9, 0.4, 16), M.primary, 0, 0.2, 0);
+  put(g, new THREE.CylinderGeometry(0.1, 0.14, 1.0, 10), M.gold, 0, 0.9, 0);
+  put(g, new THREE.TorusGeometry(0.9, 0.05, 8, 40), M.gold, 0, 1.9, 0, Math.PI / 2);
+  put(g, new THREE.TorusGeometry(0.8, 0.05, 8, 40), M.gold, 0, 1.9, 0, 0.5, 0.6);
+  put(g, new THREE.TorusGeometry(0.7, 0.04, 8, 40), M.secondary, 0, 1.9, 0, -0.4, 0, 0.8);
+  put(g, new THREE.SphereGeometry(0.28, 16, 12), M.accent, 0, 1.9, 0);
+}
+
+// 연회장: 황실 비전 기록보관소 — 높은 아치 서가 2단 + 사다리 + 두루마리 통
+function archive(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.BoxGeometry(1.0, 2.8, 0.6), M.wood, -0.55, 1.4, 0);
+  put(g, new THREE.BoxGeometry(1.0, 2.8, 0.6), M.wood, 0.55, 1.4, 0);
+  for (let r = 0; r < 4; r++) {
+    put(g, new THREE.BoxGeometry(0.85, 0.42, 0.45), r % 2 ? M.primary : M.secondary, -0.55, 0.45 + r * 0.65, 0.1);
+    put(g, new THREE.BoxGeometry(0.85, 0.42, 0.45), r % 2 ? M.secondary : M.primary, 0.55, 0.45 + r * 0.65, 0.1);
+  }
+  put(g, new THREE.TorusGeometry(1.05, 0.1, 8, 20, Math.PI), M.gold, 0, 2.8, 0);
+  put(g, new THREE.BoxGeometry(0.08, 2.6, 0.08), M.gold, 1.25, 1.3, 0.45, 0.25);
+  put(g, new THREE.CylinderGeometry(0.15, 0.15, 0.5, 10), M.accent, -1.3, 0.25, 0.4);
+}
+
+// 연회장: 대리석 황실 만찬 테이블 — 긴 대리석 상판 + 촛대 + 접시 + 의자
+function feastTable(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.BoxGeometry(2.6, 0.12, 1.0), M.white, 0, 0.85, 0);
+  put(g, new THREE.BoxGeometry(2.4, 0.06, 0.4), M.primary, 0, 0.93, 0);
+  for (const x of [-1.1, 1.1]) for (const z of [-0.4, 0.4]) put(g, new THREE.CylinderGeometry(0.06, 0.06, 0.8, 8), M.gold, x, 0.4, z);
+  for (const x of [-0.7, 0, 0.7]) put(g, new THREE.CylinderGeometry(0.2, 0.2, 0.03, 16), M.white, x, 0.97, 0.25);
+  put(g, new THREE.CylinderGeometry(0.05, 0.08, 0.5, 8), M.gold, 0, 1.2, -0.15);
+  put(g, new THREE.SphereGeometry(0.08, 8, 6), M.accent, 0, 1.5, -0.15);
+  for (const x of [-0.8, 0.8]) put(g, new THREE.BoxGeometry(0.45, 0.9, 0.1), M.secondary, x, 0.95, -0.85);
+}
+
+// 연회장: 드래곤 브레스 황금 화로 — 돌 화로 + 용머리 + 불꽃
+function dragonHearth(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.BoxGeometry(2.0, 1.6, 0.9), M.primary, 0, 0.8, 0);
+  put(g, new THREE.BoxGeometry(1.1, 0.8, 0.95), M.wood, 0, 0.45, 0.05);
+  put(g, new THREE.ConeGeometry(0.4, 0.8, 5), M.accent, 0, 0.5, 0.25);
+  put(g, new THREE.BoxGeometry(0.7, 0.45, 0.6), M.gold, 0, 1.85, 0.2);
+  put(g, new THREE.ConeGeometry(0.12, 0.45, 6), M.gold, -0.25, 2.2, 0.1, 0, 0, 0.4);
+  put(g, new THREE.ConeGeometry(0.12, 0.45, 6), M.gold, 0.25, 2.2, 0.1, 0, 0, -0.4);
+  put(g, new THREE.SphereGeometry(0.07, 8, 6), M.accent, -0.15, 1.95, 0.52);
+  put(g, new THREE.SphereGeometry(0.07, 8, 6), M.accent, 0.15, 1.95, 0.52);
+}
+
+// 연회장: 차원 성운 스테인드글라스 — 원형 창 + 소용돌이 성운 고리
+function nebulaPortal(g: THREE.Group, M: Mats): void {
+  put(g, new THREE.TorusGeometry(1.15, 0.16, 12, 40), M.gold, 0, 0, 0);
+  put(g, new THREE.CircleGeometry(1.05, 40), M.primary, 0, 0, 0.02);
+  put(g, new THREE.TorusGeometry(0.75, 0.06, 8, 40, Math.PI * 1.5), M.accent, 0, 0, 0.08, 0, 0, 0.3);
+  put(g, new THREE.TorusGeometry(0.45, 0.05, 8, 40, Math.PI * 1.4), M.secondary, 0, 0, 0.1, 0, 0, 2.1);
+  put(g, new THREE.SphereGeometry(0.16, 12, 10), M.accent, 0, 0, 0.14);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    put(g, new THREE.OctahedronGeometry(0.07), M.white, Math.cos(a) * 0.95, Math.sin(a) * 0.95, 0.12);
+  }
+}
+
+const TYPE_OF: Record<string, string> = {
+  alc_cauldron: "cauldron",
+  alc_bookcase: "bookcase",
+  alc_herbtable: "planter",
+  alc_window: "window",
+  alc_counter: "counter",
+  hb_parasol: "parasol",
+  hb_fountain: "fountain",
+  hb_bakery: "oven",
+};
+
+const UNIQUE: Record<string, (g: THREE.Group, M: Mats) => void> = {
+  hb_espresso: espressoBar,
+  hb_arch: moonArch,
+  gd_pond: lilyPond,
+  gd_gazebo: gazebo,
+  gd_planter: saplingBed,
+  gd_teabar: herbTeaBar,
+  gd_dome: crystalArch,
+  bq_astrolabe: astrolabe,
+  bq_library: archive,
+  bq_feast: feastTable,
+  bq_hearth: dragonHearth,
+  bq_portal: nebulaPortal,
+};
+
+// 장소 id → 가구 빌더 (첫 구역의 8곳은 원래 종류별 모델, 나머지 12곳은 장소 전용 모델)
+export const SPOT_BUILDERS: Record<string, (g: THREE.Group, pal: StylePalette) => void> = {
+  ...Object.fromEntries(Object.entries(TYPE_OF).map(([id, type]) => [id, (g: THREE.Group, pal: StylePalette) => buildFurniture(g, type, pal)])),
+  ...Object.fromEntries(Object.entries(UNIQUE).map(([id, fn]) => [id, (g: THREE.Group, pal: StylePalette) => fn(g, mats(pal))])),
+};
+
+export function buildSpotFurniture(spotId: string, group: THREE.Group, pal: StylePalette, fallbackType = "counter"): void {
+  const b = SPOT_BUILDERS[spotId];
+  if (b) b(group, pal);
+  else buildFurniture(group, fallbackType, pal);
+}

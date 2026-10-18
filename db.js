@@ -125,8 +125,13 @@ window.GameDB = (function () {
     if (typeof saved.coins === "number" && saved.coins >= 0) {
       defaultState.coins = Math.floor(saved.coins);
     }
-    if (typeof saved.stars === "number" && saved.stars >= 0) {
-      defaultState.stars = Math.floor(saved.stars);
+    // v2.5.0: 🌟 별 폐지 — 남아 있던 별은 1🌟 = 100🪙로 환산 (환산 후 저장본엔 stars가 없으므로 한 번만 일어남)
+    const convertedStarCoins = window.GameProgression ? window.GameProgression.convertLegacyStars(saved.stars) : 0;
+    if (convertedStarCoins > 0) {
+      defaultState.coins += convertedStarCoins;
+    }
+    if (typeof saved.gems === "number" && saved.gems >= 0) {
+      defaultState.gems = Math.floor(saved.gems);
     }
     if (typeof saved.energy === "number" && saved.energy >= 0) {
       defaultState.energy = Math.floor(saved.energy);
@@ -257,6 +262,7 @@ window.GameDB = (function () {
 
     return {
       merged: true,
+      convertedStarCoins,
       interiorRooms: saved.interiorRooms || null,
       currentThemeKey: saved.currentThemeKey || "alchemy",
       lastSeenVersion: saved.lastSeenVersion || null,

@@ -488,7 +488,7 @@ const state = {
   energy: 100,
   energyCountdown: ENERGY_REGEN_SEC,
   coins: 350,
-  stars: 4,
+  gems: GameProgression.STARTING_GEMS,
   selectedIdx: null,
   board: new Array(TOTAL_CELLS).fill(null),
   bag: [],
@@ -592,6 +592,11 @@ async function init() {
       if (res && res.merged) {
         savedInterior = res;
         previousSeenVersion = res.lastSeenVersion;
+        if (res.convertedStarCoins > 0) {
+          setTimeout(() => {
+            setDialogue("🌟➔🪙 재화 통합", `기존 마력별이 ${res.convertedStarCoins}🪙 코인으로 바뀌었어요! 이제 코인으로 스토리를 진행해요.`);
+          }, 400);
+        }
       }
     }
   }
@@ -610,22 +615,21 @@ async function init() {
   // Three.js 3D 아이소메트릭 마녀의 성 & 인테리어 엔진 초기화
   if (window.Interior3DEngine) {
     Interior3DEngine.init("three-canvas-mount", "three-pins-overlay", {
-      getStars: () => state.stars,
+      getCoins: () => state.coins,
       onSelectRoomFromMap: (themeKey) => {
         selectCastleThemeTab(themeKey);
       },
       onRenovate: (spot, wasAlreadyDone, currentThemeObj) => {
         if (!wasAlreadyDone) {
-          state.stars = Math.max(0, state.stars - spot.cost);
-          state.coins += 100;
-          state.energy += 20;
+          const coinCost = GameProgression.getSpotCoinCost(currentThemeObj ? currentThemeObj.id : "alchemy", spot.cost);
+          state.coins = Math.max(0, state.coins - coinCost);
           gainXP(35);
 
           // ★ 퀘스트 완료 시 생성기 진화 파츠(Lv.1 생성기) 보너스 지급! (합성하여 생성기 성질 진화 가능)
           const genPartChain = getGeneratorChainForTheme(currentThemeObj ? currentThemeObj.id : "alchemy");
           grantGeneratorEvolutionPart(genPartChain, `퀘스트 완료 보상`);
 
-          floatText(`🎉 [${spot.name}] 시공 완료! +100🪙 +20⚡ +생성기파츠!`, window.innerWidth / 2, 160, "#10b981");
+          floatText(`🎉 [${spot.name}] 복구 완료! -${coinCost}🪙 · +생성기파츠!`, window.innerWidth / 2, 160, "#10b981");
         } else {
           floatText(`🎨 [${spot.name}] 스타일 변경 완료!`, window.innerWidth / 2, 160, "#c084fc");
         }
@@ -872,7 +876,6 @@ function createOrder(slotIdx, customReqs = null) {
     customer: cust,
     reqs,
     coins: baseVal + 20,
-    stars: reqs.some((r) => r.level >= 5) ? 2 : 1,
   };
 }
 
@@ -937,13 +940,12 @@ function serveOrder(orderIdx, event) {
   }
 
   state.coins += ord.coins;
-  state.stars += ord.stars;
   gainXP(25);
   sfx.serve();
 
-  // 주문 완료 시 번개 조각 드롭은 과도하지 않게 15% 확률로만 등장
+  // 주문 완료 시 번개 조각 드롭은 8% 확률로만 등장
   let bonusMsg = "";
-  if (Math.random() < 0.15) {
+  if (Math.random() < 0.08) {
     const bonusCell = findNearestEmptyCell(27);
     if (bonusCell !== -1) {
       state.board[bonusCell] = {
@@ -960,7 +962,7 @@ function serveOrder(orderIdx, event) {
 
   setDialogue(ord.customer.face + " " + ord.customer.name, ord.customer.line);
   floatText(
-    `🎉 주문 완료! +${ord.coins}🪙 +${ord.stars}🌟${bonusMsg}`,
+    `🎉 주문 완료! +${ord.coins}🪙${bonusMsg}`,
     event ? event.clientX : window.innerWidth / 2,
     event ? event.clientY : 160,
     "#10b981"
@@ -1032,7 +1034,7 @@ function renderCutsceneStep() {
   if (cur < total) {
     nextBtn.textContent = "다음 대화 ▶";
   } else {
-    nextBtn.textContent = cutsceneState.giveBonusOnFinish ? "스토리 완료 & +15⚡ 받기 ✔" : "스토리 닫기 ✔";
+    nextBtn.textContent = "이야기 닫기 ✔";
   }
 }
 
@@ -1047,11 +1049,6 @@ function closeOrAdvanceCutscene(skipAll = false) {
   }
 
   document.getElementById("modal-story-cutscene").classList.add("hidden");
-  if (cutsceneState.giveBonusOnFinish) {
-    state.energy += 15;
-    sfx.serve();
-    floatText("🎬 퀘스트 스토리 감상 보상! +15⚡ 번개 획득!", window.innerWidth / 2, 180, "#38bdf8");
-  }
   cutsceneState.active = false;
   renderAll();
 }
@@ -1338,12 +1335,10 @@ function executeEventMergeOrMove(srcIdx, dstIdx, clientX, clientY) {
     b[dstIdx] = { uid: newUid(), isGenerator: false, level: nextLv };
     state.eventState.selectedIdx = dstIdx;
 
-    const instantBolt = nextLv * 3;
-    state.energy += instantBolt;
     const nextMeta = h.items[Math.min(nextLv - 1, h.items.length - 1)];
     sfx.merge(nextLv, true);
     floatText(
-      `${h.icon} [${nextMeta.name} Lv.${nextLv}] 합성 성공! +${instantBolt}⚡`,
+      `${h.icon} [${nextMeta.name} Lv.${nextLv}] 합성 성공!`,
       clientX,
       clientY,
       "#fde047"
@@ -1439,8 +1434,9 @@ function claimHolidayMissionOrder(e) {
   const meta = h.items[Math.min(intLv(item.level) - 1, h.items.length - 1)];
   state.eventState.board[foundIdx] = null;
 
-  const boltGain = targetLv * 15;
+  const boltGain = targetLv * 5;
   state.energy += boltGain;
+  state.gems += GameProgression.GEM_REWARDS.holidayMission;
   sendRewardItemToMainGame(meta.mainChain, meta.mainLv);
 
   state.eventState.completedCount = (state.eventState.completedCount || 0) + 1;
@@ -1450,7 +1446,7 @@ function claimHolidayMissionOrder(e) {
   sfx.serve();
   const mainMeta = getItemMeta(meta.mainChain, meta.mainLv);
   floatText(
-    `🎃 이벤트 미션 달성! +${boltGain}⚡ & 본게임 [${mainMeta.name}] 획득!`,
+    `🎃 이벤트 미션 달성! +${boltGain}⚡ +💎${GameProgression.GEM_REWARDS.holidayMission} & 본게임 [${mainMeta.name}] 획득!`,
     e.clientX,
     e.clientY,
     "#10b981"
@@ -1507,14 +1503,14 @@ function sendRewardItemToMainGame(chain, level) {
 
 let lvBannerTimer = null;
 
-function showLevelUpBanner(newLv, rewardCoins, rewardEnergy, genName) {
+function showLevelUpBanner(newLv, rewardCoins, rewardEnergy, rewardGems, genName) {
   const banner = document.getElementById("levelup-banner");
   const titleEl = document.getElementById("lv-banner-title");
   const subEl = document.getElementById("lv-banner-sub");
   if (!banner) return;
 
   titleEl.textContent = `👑 연금술사 레벨 업! Lv.${newLv} 달성!`;
-  subEl.textContent = `보상: +${rewardCoins}🪙 · +${rewardEnergy}⚡ · [${genName} Lv.1] 진화 파츠 지급!`;
+  subEl.textContent = `보상: +${rewardCoins}🪙 · +${rewardEnergy}⚡ · +💎${rewardGems} · [${genName} ★] 진화 파츠 지급!`;
   banner.classList.remove("hidden");
 
   if (lvBannerTimer) clearTimeout(lvBannerTimer);
@@ -1533,9 +1529,10 @@ function gainXP(amount) {
     state.maxEnergy = NATURAL_ENERGY_CAP;
 
     const rewardCoins = 40 * state.playerLv;
-    const rewardEnergy = 25;
+    const rewardEnergy = 10;
+    const rewardGems = GameProgression.GEM_REWARDS.levelUp;
     state.coins += rewardCoins;
-    state.stars += 1;
+    state.gems += rewardGems;
     state.energy += rewardEnergy;
 
     // ★ 레벨업 시 생성기 진화 파츠(Lv.1 생성기)를 보드/가방에 지급하여 생성기 합성을 통한 성질 변화 지원!
@@ -1544,7 +1541,7 @@ function gainXP(amount) {
     const genMeta = getGeneratorTierMeta(rewardGenChain, 1);
 
     leveledUp = true;
-    showLevelUpBanner(state.playerLv, rewardCoins, rewardEnergy, genMeta.name);
+    showLevelUpBanner(state.playerLv, rewardCoins, rewardEnergy, rewardGems, genMeta.name);
   }
 
   if (leveledUp) {
@@ -1937,7 +1934,7 @@ function triggerAutoSave() {
     energy: state.energy,
     energyCountdown: state.energyCountdown,
     coins: state.coins,
-    stars: state.stars,
+    gems: state.gems,
     board: state.board,
     bag: state.bag,
     orders: state.orders,
@@ -2005,7 +2002,7 @@ function updateTopBarUI() {
   document.getElementById("energy-timer").textContent =
     state.energy >= NATURAL_ENERGY_CAP ? `MAX(100)` : formatMMSS(state.energyCountdown);
   document.getElementById("res-coins").textContent = state.coins;
-  document.getElementById("res-stars").textContent = state.stars;
+  document.getElementById("res-gems").textContent = state.gems;
 
   const verLabel = document.getElementById("top-version-label");
   if (verLabel) verLabel.textContent = APP_VERSION;
@@ -2034,7 +2031,7 @@ function updateCastleViewUI(orderStatus = null) {
     if (fabBadge) fabBadge.classList.toggle("hidden", !anyOrderReady);
   }
 
-  const canRenovateAny = stats.nextSpot && state.stars >= stats.nextSpot.cost;
+  const canRenovateAny = stats.nextSpot && state.coins >= GameProgression.getSpotCoinCost(stats.currentThemeKey, stats.nextSpot.cost);
   const castleDot = document.getElementById("castle-ready-dot");
   if (castleDot) castleDot.classList.toggle("hidden", !canRenovateAny);
 
@@ -2052,7 +2049,8 @@ function updateCastleViewUI(orderStatus = null) {
   stripEl.innerHTML = "";
 
   currentRoom.spots.forEach((spot) => {
-    const canAfford = state.stars >= spot.cost;
+    const spotCost = GameProgression.getSpotCoinCost(currentRoom.id, spot.cost);
+    const canAfford = state.coins >= spotCost;
     const card = document.createElement("div");
     card.className = `castle-quest-card ${
       spot.done ? "quest-done" : canAfford ? "quest-ready" : "quest-locked"
@@ -2061,7 +2059,7 @@ function updateCastleViewUI(orderStatus = null) {
     card.innerHTML = `
       <div class="cq-name">${spot.name}</div>
       <div class="cq-btn-tag">
-        ${spot.done ? "💬 스토리" : `🔨 🌟${spot.cost}`}
+        ${spot.done ? "💬 스토리" : `🔨 🪙${spotCost}`}
       </div>
     `;
 
@@ -2111,7 +2109,7 @@ function renderOrdersUI(orderStatus) {
           <div class="cust-avatar">${ord.customer.face}</div>
           <div class="cust-name">${ord.customer.name}</div>
         </div>
-        <span class="order-reward-tag">+${ord.coins}🪙 +${ord.stars}🌟</span>
+        <span class="order-reward-tag">+${ord.coins}🪙</span>
       </div>
       <div class="order-items-row">
         <div class="order-req-list">${reqBoxesHtml}</div>
@@ -2353,7 +2351,7 @@ function renderLevelModal() {
         <div>
           <strong style="font-size:12.5px;color:#3b0764">👑 레벨 ${lv} 달성 혜택</strong>
           <p style="font-size:11px;color:#475569;margin-top:2px">
-            보상: <b>+${coinBonus}🪙 · +25⚡ · +1🌟 · 🔥[${genMeta.name} ★] 진화 파츠</b>
+            보상: <b>+${coinBonus}🪙 · +10⚡ · +💎3 · 🔥[${genMeta.name} ★] 진화 파츠</b>
           </p>
         </div>
         <span style="font-size:11px;font-weight:900;padding:4px 8px;border-radius:8px;background:${
@@ -2532,17 +2530,6 @@ function bindUIEvents() {
     switchScreen("castle");
   });
 
-  document.getElementById("btn-next-reno").addEventListener("click", () => {
-    if (state.activeScreen !== "castle") {
-      switchScreen("castle");
-      setTimeout(() => {
-        if (window.Interior3DEngine) Interior3DEngine.triggerNextSpot();
-      }, 120);
-    } else if (window.Interior3DEngine) {
-      Interior3DEngine.triggerNextSpot();
-    }
-  });
-
   document.getElementById("btn-enter-merge").addEventListener("click", () => {
     switchScreen("merge");
   });
@@ -2640,20 +2627,6 @@ function bindUIEvents() {
       sfx.warn();
       floatText("⚠️ 올바른 백업 코드가 아닙니다!", e.clientX, e.clientY, "#ef4444");
     }
-  });
-
-  document.getElementById("btn-refill-energy").addEventListener("click", (e) => {
-    if (state.coins >= 25) {
-      state.coins -= 25;
-      state.energy += 30;
-      sfx.serve();
-      floatText("⚡ 번개 +30 충전! (-25🪙)", e.clientX, e.clientY, "#38bdf8");
-    } else {
-      state.energy += 15;
-      sfx.serve();
-      floatText("⚡ 마녀의 축복! 무료 번개 +15 충전!", e.clientX, e.clientY, "#38bdf8");
-    }
-    renderAll();
   });
 
   document.getElementById("btn-unlock-web").addEventListener("click", (e) => {

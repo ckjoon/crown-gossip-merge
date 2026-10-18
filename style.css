@@ -212,10 +212,10 @@ body {
   white-space: nowrap;
 }
 
-.gh-res-pill.stars {
+.gh-res-pill.gems {
   cursor: pointer;
-  background: linear-gradient(135deg, #d97706, #b45309);
-  border-color: #fde047;
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+  border-color: #c4b5fd;
 }
 
 .res-val-wrap {

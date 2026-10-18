@@ -543,7 +543,7 @@ window.Interior3DEngine = (function () {
   let previewStyleIdx = 0;
   let onRenovateCallback = null;
   let onSelectRoomFromMapCallback = null;
-  let getStarsCallback = null;
+  let getCoinsCallback = null;
   let isExpanded = false;
   let animFrameId = null;
 
@@ -556,7 +556,7 @@ window.Interior3DEngine = (function () {
     pinsContainerEl = document.getElementById(pinsId);
     onRenovateCallback = callbacks.onRenovate;
     onSelectRoomFromMapCallback = callbacks.onSelectRoomFromMap;
-    getStarsCallback = callbacks.getStars;
+    getCoinsCallback = callbacks.getCoins;
 
     if (!window.THREE || !containerEl) return;
 
@@ -1149,7 +1149,7 @@ window.Interior3DEngine = (function () {
 
     // 2. 개별 방 인테리어 모드일 때
     const theme = ROOM_THEMES[currentThemeKey];
-    const stars = getStarsCallback ? getStarsCallback() : 0;
+    const coins = getCoinsCallback ? getCoinsCallback() : 0;
 
     if (activeInspectSpot) return;
 
@@ -1164,9 +1164,9 @@ window.Interior3DEngine = (function () {
 
       const pin = document.createElement("button");
       if (!spot.done) {
-        const canAfford = stars >= spot.cost;
-        pin.className = `room-pin ${canAfford ? "pin-ready" : "pin-locked"}`;
-        pin.innerHTML = `🔨 <span>${spot.name}</span> <b>🌟${spot.cost}</b>`;
+        const cost = getSpotCost(currentThemeKey, spot);
+        pin.className = `room-pin ${coins >= cost ? "pin-ready" : "pin-locked"}`;
+        pin.innerHTML = `🔨 <span>${spot.name}</span> <b>🪙${cost}</b>`;
       } else {
         pin.className = "room-pin pin-customize";
         pin.innerHTML = `🎨 <span>${spot.name}</span>`;
@@ -1218,8 +1218,9 @@ window.Interior3DEngine = (function () {
     if (!bar) return;
     bar.classList.remove("hidden");
 
-    const stars = getStarsCallback ? getStarsCallback() : 0;
-    const canAfford = spot.done || stars >= spot.cost;
+    const coins = getCoinsCallback ? getCoinsCallback() : 0;
+    const cost = getSpotCost(currentThemeKey, spot);
+    const canAfford = spot.done || coins >= cost;
 
     const swatchesHtml = STYLE_PALETTES.map(
       (p, idx) => `
@@ -1242,8 +1243,8 @@ window.Interior3DEngine = (function () {
             spot.done
               ? "✨ 이 스타일로 변경 & 스토리 다시보기 (무료)"
               : canAfford
-              ? `🔨 시공 확정 & 스토리 보기 (🌟 ${spot.cost} 소모)`
-              : `🌟 마력별 ${spot.cost}개 필요 (주문 완료로 획득)`
+              ? `🔨 복구하고 이야기 보기 (🪙${cost} 소모)`
+              : `🪙${cost} 필요 (주문을 완료해 코인을 모으세요)`
           }
         </button>
       </div>
@@ -1388,6 +1389,10 @@ window.Interior3DEngine = (function () {
   }
 
   // 구역 순차 해금·스토리 화수 판정 (규칙은 GameProgression에 위임)
+  function getSpotCost(themeKey, spot) {
+    return window.GameProgression.getSpotCoinCost(themeKey, spot.cost);
+  }
+
   function getZoneProgress() {
     const rooms = Object.entries(ROOM_THEMES).map(([key, th]) => ({
       key,

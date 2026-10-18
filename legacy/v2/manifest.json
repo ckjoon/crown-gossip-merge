@@ -1,0 +1,39 @@
+{
+  "id": "/",
+  "name": "크라운 & 가십: 마녀의 성 3D 인테리어 & 머지",
+  "short_name": "크라운&가십",
+  "description": "마녀의 성 3D 인테리어 빌딩 & 멀티 체인 합성(Merge) 게임",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#110a21",
+  "theme_color": "#271545",
+  "categories": ["games", "casual"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -968,6 +968,7 @@ function serveOrder(orderIdx, event) {
     "#10b981"
   );
 
+  if (selectedOrderIdx === orderIdx) selectedOrderIdx = null;
   state.orders[orderIdx] = createOrder(orderIdx);
   renderAll();
 }
@@ -2076,6 +2077,8 @@ function updateCastleViewUI(orderStatus = null) {
 }
 
 // ★ 손님 주문(Quest) 렌더링: 각 요구 재료가 어떤 조합이나 생성기에서 나오는지 카드 하단에 즉시 표시!
+let selectedOrderIdx = null;
+
 function renderOrdersUI(orderStatus) {
   const strip = document.getElementById("orders-strip");
   strip.innerHTML = "";
@@ -2116,10 +2119,22 @@ function renderOrdersUI(orderStatus) {
         ${st.allReady ? `<button class="gh-serve-btn">완성!</button>` : ""}
       </div>
       <div class="order-recipe-hint" title="클릭하면 상세 조합법을 안내합니다">💡 ${recipeSummaryText}</div>
+      ${selectedOrderIdx === idx && !st.allReady ? `<div class="order-buy-row">${ord.reqs
+        .map((req, rIdx) => (st.reqFulfilled[rIdx] ? "" : `<button class="order-buy-btn" data-req="${rIdx}" ${state.gems < GameProgression.getItemGemPrice(req.level) ? "disabled" : ""}>Lv.${req.level} 💎${GameProgression.getItemGemPrice(req.level)} 구매</button>`))
+        .join("")}</div>` : ""}
     `;
 
     card.addEventListener("click", () => {
+      selectedOrderIdx = selectedOrderIdx === idx ? null : idx;
       explainOrderRecipe(ord);
+      renderAll();
+    });
+
+    card.querySelectorAll(".order-buy-btn").forEach((btn) => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        buyOrderRequirement(idx, parseInt(btn.dataset.req, 10), e);
+      });
     });
 
     const serveBtn = card.querySelector(".gh-serve-btn");
@@ -2436,6 +2451,75 @@ function renderCodexModal() {
   }
 }
 
+// 💎 보석 상점: 번개 충전 상품
+function renderGemShopModal() {
+  const body = document.getElementById("gem-shop-body");
+  if (!body) return;
+  document.getElementById("gem-shop-balance").textContent = `보유 💎${state.gems}`;
+  body.innerHTML = GameProgression.GEM_SHOP_ENERGY.map(
+    (p, i) => `
+    <button class="insp-btn spawn-btn gem-pack-btn" data-pack="${i}" ${state.gems < p.gems ? "disabled" : ""}>
+      ⚡ 번개 +${p.energy} <small>💎${p.gems}</small>
+    </button>`
+  ).join("");
+  body.querySelectorAll(".gem-pack-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => buyEnergyPack(parseInt(btn.dataset.pack, 10), e));
+  });
+}
+
+function openGemShop() {
+  sfx.tap();
+  renderGemShopModal();
+  document.getElementById("modal-gem-shop").classList.remove("hidden");
+}
+
+function buyEnergyPack(idx, e) {
+  const pack = GameProgression.GEM_SHOP_ENERGY[idx];
+  if (!pack) return;
+  if (state.gems < pack.gems) {
+    sfx.warn();
+    floatText("💎 보석이 부족해요", e.clientX, e.clientY, "#ef4444");
+    return;
+  }
+  state.gems -= pack.gems;
+  state.energy += pack.energy;
+  sfx.serve();
+  floatText(`⚡ 번개 +${pack.energy} 충전! (-💎${pack.gems})`, e.clientX, e.clientY, "#38bdf8");
+  renderAll();
+  renderGemShopModal();
+}
+
+// 주문 카드에서 부족한 재료를 💎로 바로 구매 (보드 빈칸 → 보관함 순, 둘 다 가득 차면 구매 불가)
+function buyOrderRequirement(orderIdx, reqIdx, e) {
+  const ord = state.orders[orderIdx];
+  const req = ord && ord.reqs[reqIdx];
+  if (!req) return;
+  const price = GameProgression.getItemGemPrice(req.level);
+  const meta = getItemMeta(req.chain, req.level);
+  if (state.gems < price) {
+    sfx.warn();
+    floatText("💎 보석이 부족해요", e.clientX, e.clientY, "#ef4444");
+    return;
+  }
+  const item = { uid: newUid(), state: "active", isGenerator: false, chain: req.chain, level: req.level, justSpawned: true };
+  const cell = findNearestEmptyCell(null);
+  let where = "보드";
+  if (cell !== -1) {
+    state.board[cell] = item;
+  } else if (state.bag.length < 6) {
+    state.bag.push(item);
+    where = "보관함";
+  } else {
+    sfx.warn();
+    floatText("보드와 보관함이 가득 찼어요!", e.clientX, e.clientY, "#f59e0b");
+    return;
+  }
+  state.gems -= price;
+  sfx.serve();
+  floatText(`💎-${price} [${meta.name}] 구매 → ${where}`, e.clientX, e.clientY, "#a78bfa");
+  renderAll();
+}
+
 function renderBagModal() {
   const grid = document.getElementById("bag-grid");
   grid.innerHTML = "";
@@ -2520,6 +2604,9 @@ function updateSoundButtonUI() {
 }
 
 function bindUIEvents() {
+  document.getElementById("btn-refill-energy").addEventListener("click", openGemShop);
+  document.getElementById("btn-open-gem-shop").addEventListener("click", openGemShop);
+
   document.getElementById("btn-boost-toggle").addEventListener("click", () => {
     state.boostMultiplier = GameProgression.nextBoost(state.boostMultiplier);
     sfx.tap();

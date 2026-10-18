@@ -384,6 +384,23 @@
          모달 6: 🆕 버전 업데이트 알림 팝업 & 버전 Progression 기록 (Changelog Modal)
          - 새 버전으로 업데이트될 때 자동으로 팝업되어 어떤 기능이 새로 추가되었는지 안내합니다!
     ========================================================================== -->
+    <!-- 모달: 💎 보석 상점 (번개 충전) -->
+    <div class="gh-modal-backdrop hidden" id="modal-gem-shop">
+      <div class="gh-modal">
+        <div class="gh-modal-header" style="background:linear-gradient(90deg,#4c1d95,#7c3aed)">
+          <div>
+            <h2>💎 보석 상점</h2>
+            <small style="color:#ede9fe;font-size:10.5px" id="gem-shop-balance">보유 💎0</small>
+          </div>
+          <button class="gh-close-btn" data-close="modal-gem-shop">✕</button>
+        </div>
+        <div class="gh-modal-body">
+          <p style="font-size:11.5px;color:#475569;margin-bottom:8px">보석은 명절 이벤트 미션·구역 완성·레벨업으로 얻을 수 있어요. 주문 카드를 누르면 부족한 재료를 보석으로 바로 살 수도 있어요!</p>
+          <div id="gem-shop-body" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="gh-modal-backdrop hidden" id="modal-changelog">
       <div class="gh-modal">
         <div class="gh-modal-header" style="background:linear-gradient(90deg,#1e3a8a,#5b21b6)">

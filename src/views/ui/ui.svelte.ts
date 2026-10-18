@@ -23,6 +23,9 @@ export const ui = $state({
   inputLocked: false,
   cutscene: null as CutsceneView | null,
   clock: Date.now(),
+  castleMap: false,
+  stylePick: null as { spotId: string; styleIdx: number } | null,
+  revealZone: null as string | null,
 });
 
 export interface Toast {

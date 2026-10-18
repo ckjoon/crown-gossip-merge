@@ -92,3 +92,36 @@ button.gh-res-pill {
   padding: 6px 8px;
   border: 1px solid #a7f3d0;
 }
+
+/* 성 화면: Three.js 캔버스와 핀 오버레이 */
+.castle-host {
+  position: absolute;
+  inset: 0;
+}
+
+.castle-host canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.castle-pins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.castle-pins .room-pin {
+  pointer-events: auto;
+}
+
+.style-confirm-btn.is-short {
+  opacity: 0.6;
+}
+
+.story-action-row {
+  display: flex;
+  gap: 6px;
+  margin: 4px 0 6px;
+}

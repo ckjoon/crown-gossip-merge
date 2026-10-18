@@ -66,6 +66,6 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
 1. Add an entry at the top of `VERSION_HISTORY` in `src/core/rules/versionHistory.ts`, bump `APP_VERSION`, and move the `LATEST` badge. The changelog pops up once when `lastSeenVersion` differs.
 2. Bump `version` in `package.json`.
 3. Run `npm test && npm run check && npm run test:e2e`.
-4. Merge to `main` and push. Vercel builds it, and the service worker precache updates automatically. No manual cache-name bump is needed. Models under `/models/` are not precached; the SW caches them on first view (`crown-gossip-models-v1`) — bump that name if model files change in place.
+4. Merge to `main` and push. Vercel builds it, and the service worker precache updates automatically. No manual cache-name bump is needed. Models under `/models/` are not precached; the SW caches them on first view (`MODEL_CACHE` in `src/sw.ts`). If you change model files at the same path, bump `MODEL_CACHE` (older model caches are deleted on activate).
 
 Commit messages follow `feat(vX.Y.Z): ...` in Korean.

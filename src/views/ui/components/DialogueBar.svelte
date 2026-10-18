@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ui } from "../ui.svelte";
 
-  // 말풍선은 4초 뒤 사라지고, 누르면 바로 닫힌다
+  // 말풍선은 4초 뒤 저절로 사라진다 (아래 화면 터치를 막지 않음)
   let shownSeq = $state(0);
   $effect(() => {
     const seq = ui.dialogue.seq;
@@ -15,8 +15,8 @@
 </script>
 
 {#if shownSeq && ui.dialogue.text}
-  <button class="speech-bubble" onclick={() => (shownSeq = 0)}>
+  <div class="speech-bubble" role="status">
     <span class="speaker-tag">{ui.dialogue.speaker}</span>
     <span class="speech-text">{ui.dialogue.text}</span>
-  </button>
+  </div>
 {/if}

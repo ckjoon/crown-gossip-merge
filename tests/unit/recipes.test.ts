@@ -44,3 +44,18 @@ test("구역 분위기 소품은 4구역 모두 있고 1~5단계에 고루 나�
     expect([...steps].sort(), z).toEqual([1, 2, 3, 4, 5]);
   }
 });
+
+test("작은 소품은 그림자·외곽선을 끄고(그리기 호출 절약), 큰 가구는 유지", async () => {
+  const { markSmallProp } = await import("../../src/views/castle/furniture");
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial()));
+  (g.children[0] as THREE.Mesh).castShadow = true;
+  markSmallProp(g, 0.5);
+  expect((g.children[0] as THREE.Mesh).castShadow).toBe(false);
+  expect(g.children[0].userData.noOutline).toBe(true);
+  const big = new THREE.Group();
+  big.add(new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshStandardMaterial()));
+  (big.children[0] as THREE.Mesh).castShadow = true;
+  markSmallProp(big, 2.0);
+  expect((big.children[0] as THREE.Mesh).castShadow).toBe(true);
+});

@@ -511,6 +511,17 @@ function tint(obj: THREE.Object3D, hex: number): void {
   });
 }
 
+// 작은 소품(촛불·물약·책·음식)은 그림자와 외곽선을 생략해 그리기 호출을 줄인다
+export function markSmallProp(obj: THREE.Object3D, size: number): void {
+  if (size >= 0.8) return;
+  obj.traverse((o) => {
+    if ((o as THREE.Mesh).isMesh) {
+      (o as THREE.Mesh).castShadow = false;
+      o.userData.noOutline = true;
+    }
+  });
+}
+
 // 배치표의 크기를 방 비율에 맞춰 한꺼번에 키운다
 const MODEL_SCALE = 1.2;
 
@@ -531,6 +542,7 @@ function placeItems(group: THREE.Group, items: RecipeItem[], pal: StylePalette):
     const obj = ModelLibrary.clone(it.m, (it.s ?? 1) * MODEL_SCALE);
     if (!obj) continue;
     if (it.tint) tint(obj, pal[it.tint as TintKey]);
+    markSmallProp(obj, it.s ?? 1);
     let baseY = y;
     if (it.on !== undefined && placed[it.on]) {
       group.updateMatrixWorld(true);

@@ -54,6 +54,7 @@ const OUTLINE_MAT = new THREE.MeshBasicMaterial({ color: 0x1b1028, side: THREE.B
 
 // 크기 비례로 키우면 고리 모양은 외곽선이 원래 몸통에서 떨어져 보이므로 제외
 function skipOutline(mesh: THREE.Mesh): boolean {
+  if (mesh.userData.noOutline) return true;
   const mat = mesh.material as THREE.Material | THREE.Material[];
   // 유리(투명)·나뭇잎(알파 컷)은 뒤 껍데기가 구멍으로 비쳐 보인다
   const seeThrough = (m: THREE.Material) => m.transparent || m.alphaTest > 0;

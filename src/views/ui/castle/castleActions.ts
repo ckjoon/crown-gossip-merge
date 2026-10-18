@@ -23,7 +23,7 @@ export function openStyle(spotId: string): void {
   if (!st.done && zp.nextSpotId !== spotId) {
     const f = findSpot(spotId);
     app().sfx.warn();
-    say(`🔒 제${f?.chapter}화`, `[${f?.spot.name}]은(는) 앞 이야기를 먼저 진행해야 복구할 수 있어요. [📖 다음 이야기 진행]을 눌러 보세요!`);
+    say(`🔒 제${f?.chapter}화`, `[${f?.spot.name}]은(는) 앞 이야기를 먼저 진행해야 복구할 수 있어요. 아래 📖 버튼으로 이야기를 차례대로 진행해 보세요!`);
     return;
   }
   app().sfx.tap();

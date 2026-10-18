@@ -152,7 +152,8 @@ button.gh-res-pill {
   text-align: left;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
   animation: bubbleIn 0.22s ease-out;
-  cursor: pointer;
+  /* 말풍선은 아래 보드·방을 누르는 것을 막지 않는다 (4초 뒤 저절로 사라짐) */
+  pointer-events: none;
 }
 .speech-bubble .speaker-tag {
   display: block;

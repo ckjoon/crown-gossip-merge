@@ -100,7 +100,7 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
     sfx.serve();
     const card = () => document.querySelector(`[data-order-idx="${e.orderIdx}"]`);
     const target = elementCenter(card()) ?? { x: window.innerWidth / 2, y: 140 };
-    const size = Math.min(board.cellSize().w, board.cellSize().h) * 0.66;
+    const size = Math.min(board.cellSize().w, board.cellSize().h) * 0.94;
     e.cells.forEach((cell, i) => {
       const node = board.nodeAt(cell);
       const tex = node ? getTexture(node.vis.tex) : null;

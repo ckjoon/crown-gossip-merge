@@ -86,9 +86,14 @@
   function panDown(e: PointerEvent) {
     if (ui.castleMap || ui.inputLocked || ui.stylePick) return;
     panFrom = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   }
   function panMove(e: PointerEvent) {
     if (!panFrom || e.pointerId !== panFrom.id) return;
+    if (e.pointerType === "mouse" && e.buttons === 0) {
+      panFrom = null;
+      return;
+    }
     const dx = e.clientX - panFrom.x;
     const dy = e.clientY - panFrom.y;
     if (!panFrom.moved && Math.hypot(dx, dy) < 6) return;

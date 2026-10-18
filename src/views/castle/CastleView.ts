@@ -75,6 +75,8 @@ export class CastleView {
     this.renderer.setSize(w, h);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    // 그림자는 장면이 바뀔 때만 다시 그린다 (가구가 많아져 매 프레임 그리면 휴대폰에 부담)
+    this.renderer.shadowMap.autoUpdate = false;
     this.host.innerHTML = "";
     this.host.appendChild(this.renderer.domElement);
     this.scene.add(this.roomGroup);
@@ -152,7 +154,9 @@ export class CastleView {
     this.roomGroup.add(g);
     this.zoneProps = g;
     this.zonePropsCount = count;
+    this.refreshShadows();
     if (animate) {
+      this.refreshShadowsFor(800 + 150 * g.children.length);
       g.children.slice(prevKids).forEach((c, i) => {
         gsap.fromTo(c.scale, { x: 0.01, y: 0.01, z: 0.01 }, { x: c.scale.x, y: c.scale.y, z: c.scale.z, duration: 0.5, delay: 0.15 * i, ease: "back.out(2.5)" });
       });
@@ -183,6 +187,7 @@ export class CastleView {
     legacyLightCompensate(this.roomGroup);
     toonify(this.roomGroup);
     addOutline(this.roomGroup, 0.012);
+    this.refreshShadows();
     this.resetCamera(false);
     this.resize();
   }
@@ -213,20 +218,34 @@ export class CastleView {
     this.resetCamera(false);
     this.resize();
     this.loadZoneModels(zone);
+    this.refreshShadows();
+  }
+
+  private restoring = false;
+  private rerenderAfterRestore = false;
+  private modelsReady: Promise<void> = Promise.resolve();
+
+  private rerenderModels(): void {
+    for (const sp of ROOMS[this.zone].spots) if (sp.id !== this.holdSpot) this.renderSpot(sp.id);
+    this.zonePropsCount = -1;
+    this.renderZoneProps(false);
   }
 
   // 구역 모델을 불러오는 동안은 절차적 가구를 보여 주고, 다 오면 장소를 모델로 다시 그린다 (이미 캐시에 있으면 즉시)
   private loadZoneModels(zone: ZoneKey): void {
     const names = [...ROOMS[zone].spots.flatMap((sp) => spotModelNames(sp.id)), ...CLUTTER_MODELS, ...zonePropModels(zone)];
-    if (ModelLibrary.hasAll(names)) return;
-    void ModelLibrary.preload(names).then(() => {
+    if (ModelLibrary.hasAll(names)) {
+      this.modelsReady = Promise.resolve();
+      return;
+    }
+    this.modelsReady = ModelLibrary.preload(names).then(() => {
       if (this.mode !== "room" || this.zone !== zone) return;
-      for (const sp of ROOMS[zone].spots) if (sp.id !== this.holdSpot) this.renderSpot(sp.id);
-      this.zonePropsCount = -1;
-      this.renderZoneProps(false);
-      // 다른 구역 모델도 미리 받아 둔다
-      const rest = (Object.keys(ROOMS) as ZoneKey[]).filter((z) => z !== zone).flatMap((z) => [...ROOMS[z].spots.flatMap((sp) => spotModelNames(sp.id)), ...zonePropModels(z)]);
-      void ModelLibrary.preload(rest);
+      // 복구 연출 중에는 떨어지는 가구를 바꾸지 않고, 연출이 끝난 뒤 다시 그린다
+      if (this.restoring) {
+        this.rerenderAfterRestore = true;
+        return;
+      }
+      this.rerenderModels();
     });
   }
 
@@ -258,6 +277,7 @@ export class CastleView {
       return;
     }
     this.rooms = rooms;
+    this.restoring = true;
     const layout = SPOT_LAYOUT[spotId];
     const amb = this.ambientLight;
     const prevIntensity = amb?.intensity ?? 1;
@@ -268,7 +288,8 @@ export class CastleView {
     this.roomGroup.add(spot, spot.target);
     this.spot = spot;
     gsap.to(spot, { intensity: 9 * Math.PI, duration: 0.6 });
-    await this.focusSpot(spotId, 1.5, 0.6);
+    // 모델이 오는 중이면 어두워지는 동안 조금 기다려, 떨어지는 가구가 최종 모습이 되게 한다
+    await Promise.all([this.focusSpot(spotId, 1.5, 0.6), Promise.race([this.modelsReady, wait(1200)])]);
     const g = this.renderSpot(spotId);
     this.holdSpot = null;
     if (g) {
@@ -287,6 +308,11 @@ export class CastleView {
     this.renderZoneProps(true);
     this.resetCamera(true);
     await wait(700);
+    this.restoring = false;
+    if (this.rerenderAfterRestore && this.mode === "room") {
+      this.rerenderAfterRestore = false;
+      this.rerenderModels();
+    }
   }
 
   // 🎉 구역 완성: 복구 전(0단계) 모습을 잠깐 보여 준 뒤 완성된 모습(5단계)으로 밝아지고, 카메라가 좌우로 둘러본다
@@ -295,13 +321,15 @@ export class CastleView {
       if (this.mode !== "room") return resolve();
       this.resetCamera(false);
       this.ambience?.apply(0, false);
-      const radius = Math.hypot(DEFAULT_CAM.x, DEFAULT_CAM.z);
-      const base = Math.atan2(DEFAULT_CAM.z, DEFAULT_CAM.x);
+      // 방 구도(ROOM_CAM_OFFSET·확대) 그대로 좌우로 둘러본다
+      const radius = Math.hypot(ROOM_CAM_OFFSET.x, ROOM_CAM_OFFSET.z);
+      const base = Math.atan2(ROOM_CAM_OFFSET.z, ROOM_CAM_OFFSET.x);
+      const z0 = this.baseZoom();
       const orbit = { a: 0, zoom: 1 };
       const apply = () => {
         const ang = base + orbit.a;
-        this.camera.position.set(Math.cos(ang) * radius, DEFAULT_CAM.y, Math.sin(ang) * radius);
-        this.camera.zoom = orbit.zoom;
+        this.camera.position.set(this.lookTarget.x + Math.cos(ang) * radius, this.lookTarget.y + ROOM_CAM_OFFSET.y, this.lookTarget.z + Math.sin(ang) * radius);
+        this.camera.zoom = orbit.zoom * z0;
         this.camera.updateProjectionMatrix();
         this.camera.lookAt(this.lookTarget);
       };
@@ -314,7 +342,7 @@ export class CastleView {
       const tl = gsap.timeline({ onUpdate: apply, onComplete: finish });
       tl.to({}, { duration: 1.0 })
         .call(() => this.ambience?.apply(5, true))
-        .to(orbit, { a: 0.75, zoom: 1.18, duration: 1.6, ease: "sine.inOut" })
+        .to(orbit, { a: 0.75, zoom: 1.12, duration: 1.6, ease: "sine.inOut" })
         .to(orbit, { a: -0.75, duration: 1.8, ease: "sine.inOut" })
         .to(orbit, { a: 0, zoom: 1, duration: 0.8, ease: "sine.inOut" });
       this.showcase = tl;
@@ -353,6 +381,7 @@ export class CastleView {
     addOutline(group, 0.025);
     this.roomGroup.add(group);
     this.furniture.set(spotId, group);
+    this.refreshShadows();
     return group;
   }
 
@@ -365,6 +394,7 @@ export class CastleView {
     this.preview = { spotId, styleIdx };
     const g = this.renderSpot(spotId);
     if (g) gsap.fromTo(g.scale, { x: 0.7, y: 0.7, z: 0.7 }, { x: 1, y: 1, z: 1, duration: 0.38, ease: "back.out(2)" });
+    this.refreshShadowsFor(600);
     if (first) this.focusSpot(spotId);
   }
 
@@ -462,7 +492,18 @@ export class CastleView {
     }
   }
 
+  private refreshShadows(): void {
+    if (this.renderer) this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  // 가구가 튀어나오는 동안은 그림자도 따라가게 잠깐 매 프레임 갱신
+  private shadowBusyUntil = 0;
+  private refreshShadowsFor(ms: number): void {
+    this.shadowBusyUntil = Math.max(this.shadowBusyUntil, performance.now() + ms);
+  }
+
   private step(dt: number): void {
+    if (this.restoring || this.showcase || performance.now() < this.shadowBusyUntil) this.refreshShadows();
     for (let i = this.bursts.length - 1; i >= 0; i--) {
       const b = this.bursts[i];
       b.mesh.position.addScaledVector(b.v, dt);

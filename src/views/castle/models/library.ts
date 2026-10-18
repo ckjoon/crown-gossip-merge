@@ -2,7 +2,7 @@
 // 불러오는 동안·실패 시에는 has()가 false라서 가구는 절차적 모델로 대체된다
 
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import type { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { modelUrl, type ModelName } from "./manifest";
 
 interface Template {
@@ -13,11 +13,34 @@ interface Template {
 // 흰색+알파 마스크로 바꾼 나뭇잎 재질은 원래 엔진 셰이더가 주던 잎 색을 여기서 입힌다
 const LEAF_COLORS: Record<string, number> = { Leaves_TwistedTree: 0x7cb342 };
 
+// glTF 파일마다 같은 트림 이미지를 따로 디코딩·업로드하지 않도록, 이름이 같은 텍스처는 처음 것 하나만 쓴다
+const sharedTex = new Map<string, THREE.Texture>();
+
+export function shareTextures(scene: THREE.Object3D): void {
+  scene.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+    for (const m of mats as THREE.MeshStandardMaterial[]) {
+      const t = m.map;
+      if (!t || !t.name) continue;
+      const first = sharedTex.get(t.name);
+      if (!first) sharedTex.set(t.name, t);
+      else if (first !== t) {
+        m.map = first;
+        t.dispose();
+        (t.image as ImageBitmap | undefined)?.close?.();
+      }
+    }
+  });
+}
+
 const templates = new Map<ModelName, Template>();
 const pending = new Map<ModelName, Promise<void>>();
 let loader: GLTFLoader | null = null;
 
 function prepare(scene: THREE.Object3D): Template {
+  shareTextures(scene);
   scene.traverse((o) => {
     const mesh = o as THREE.Mesh;
     if (!mesh.isMesh) return;
@@ -44,9 +67,9 @@ function loadOne(name: ModelName): Promise<void> {
   if (templates.has(name)) return Promise.resolve();
   let p = pending.get(name);
   if (!p) {
-    loader ??= new GLTFLoader();
-    p = loader
-      .loadAsync(modelUrl(name))
+    // GLTFLoader는 성 화면에서만 필요하므로 합성 화면 첫 로딩에서 빼 둔다
+    p = import("three/examples/jsm/loaders/GLTFLoader.js")
+      .then(({ GLTFLoader: L }) => (loader ??= new L()).loadAsync(modelUrl(name)))
       .then((gltf) => {
         templates.set(name, prepare(gltf.scene));
       })
@@ -86,5 +109,6 @@ export const ModelLibrary = {
   _reset(): void {
     templates.clear();
     pending.clear();
+    sharedTex.clear();
   },
 };

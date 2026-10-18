@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#271545" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="크라운&가십" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
+  <title>크라운 &amp; 가십: 3D 인테리어 &amp; 연금술 머지</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- 로컬 Three.js (WebGL 3D 엔진) & GSAP (카메라/모션 연출 엔진) -->
+  <script src="vendor/three.min.js"></script>
+  <script src="vendor/gsap.min.js"></script>
+</head>
+<body>
+  <div id="game-shell">
+    <!-- 전용 레벨업 축하 배너 (보드 플로팅 텍스트와 절대 겹치지 않는 상단 독립 배너) -->
+    <div id="levelup-banner" class="levelup-banner hidden">
+      <div class="lv-banner-icon">👑</div>
+      <div class="lv-banner-text">
+        <strong id="lv-banner-title">연금술사 레벨 업! Lv.2 달성!</strong>
+        <span id="lv-banner-sub">최대 에너지 증가 &amp; 보너스 보상 지급 완료!</span>
+      </div>
+    </div>
+
+    <!-- 1. 상단 리소스 헤더 -->
+    <header class="gh-topbar">
+      <!-- 클릭 가능한 레벨 & XP 프로그레스 배지 -->
+      <button class="gh-level-widget" id="btn-open-level" title="연금술사 레벨 및 성장 보상 보기">
+        <div class="lv-circle">
+          <span class="lv-crown">👑</span>
+          <span id="player-lv">1</span>
+        </div>
+        <div class="xp-bar-col">
+          <span class="xp-label" id="xp-text">0 / 60 XP</span>
+          <div class="xp-track">
+            <div class="xp-fill" id="xp-fill" style="width: 0%"></div>
+          </div>
+        </div>
+      </button>
+
+      <div class="gh-resources">
+        <div class="gh-res-pill energy">
+          <span class="res-ico">⚡</span>
+          <div class="res-val-wrap">
+            <span id="res-energy">100</span>
+            <small id="energy-timer">MAX</small>
+          </div>
+          <button class="res-plus-btn" id="btn-refill-energy" title="에너지 무료 충전">+</button>
+        </div>
+
+        <div class="gh-res-pill coins">
+          <span class="res-ico">🪙</span>
+          <span id="res-coins">350</span>
+        </div>
+
+        <div class="gh-res-pill stars" id="btn-next-reno" title="클릭하면 다음 복구할 가구로 카메라가 이동합니다">
+          <span class="res-ico">🌟</span>
+          <span id="res-stars">4</span>
+        </div>
+      </div>
+
+      <div class="gh-top-btns">
+        <button class="gh-icon-btn" id="btn-open-db" title="로컬 DB 저장 상태 및 백업">💾</button>
+        <button class="gh-icon-btn" id="btn-open-codex" title="아이템 체인 & 조합 레시피 도감">📖</button>
+        <button class="gh-icon-btn" id="btn-toggle-sound" title="사운드 켜기/끄기">🔊</button>
+      </div>
+    </header>
+
+    <!-- 2. 3D 아이소메트릭 인테리어 빌딩 스테이지 (Three.js + GSAP 연출) -->
+    <section class="interior-stage-section" id="interior-stage-section">
+      <div class="theme-tabs-bar">
+        <button class="theme-tab active" data-theme="alchemy">🔮 마녀의 공방</button>
+        <button class="theme-tab" data-theme="harbor">🏖️ 하버 오션카페</button>
+        <button class="theme-tab" data-theme="garden">🌿 보타니컬 온실</button>
+        <button class="theme-tab" data-theme="banquet">👑 황실 대연회장</button>
+        <button class="expand-3d-btn" id="btn-expand-3d" title="3D 인테리어 룸 확대/축소">🔍 룸 확대</button>
+      </div>
+
+      <div class="interior-viewport" id="interior-viewport">
+        <div id="three-canvas-mount"></div>
+        <div id="three-pins-overlay"></div>
+
+        <div class="room-progress-pill">
+          <span id="room-title-label">🔮 제1구역: 마녀의 연금술 공방</span>
+          <span class="room-prog-badge" id="room-prog-badge">0 / 5 복구됨</span>
+        </div>
+
+        <div class="save-status-indicator" id="save-status-indicator">💾 DB 동기화됨</div>
+
+        <div class="style-selector-overlay hidden" id="style-selector-overlay"></div>
+      </div>
+    </section>
+
+    <!-- 3. 손님 주문 대기열 & 스토리 대사 -->
+    <section class="orders-and-story">
+      <div class="gh-orders-strip" id="orders-strip"></div>
+      <div class="gh-dialogue-bar" id="dialogue-bar">
+        <span class="speaker-tag" id="speaker-tag">🧙‍♀️ 셀레네:</span>
+        <span class="dialogue-text" id="dialogue-text">"모든 진행도는 휴대폰 로컬 DB(IndexedDB)에 실시간 저장되어 업데이트 후에도 안전하게 유지됩니다!"</span>
+      </div>
+    </section>
+
+    <!-- 4. 메인 7x8 조합(Merge & Combination) 보드 -->
+    <main class="gh-board-container" id="board-section">
+      <div class="gh-board-grid" id="board-grid"></div>
+    </main>
+
+    <!-- 5. 하단 선택 타일 인스펙터 & 보관함/부스터 -->
+    <footer class="gh-bottom-panel">
+      <div class="gh-side-tools">
+        <button class="gh-bag-btn" id="btn-open-bag" title="보관함 (아이템 최대 6개 보관)">
+          <span class="bag-ico">🎒</span>
+          <span class="bag-label">보관함</span>
+          <span class="bag-count" id="bag-count">0/6</span>
+        </button>
+        <button class="gh-mini-booster" id="btn-unlock-web" title="선택한 거미줄 타일 1개를 즉시 해제합니다 (20코인)">
+          <span>🕸️해제</span>
+          <small>🪙20</small>
+        </button>
+        <button class="gh-mini-booster" id="btn-sort-board" title="흩어진 재료들을 체인별로 깔끔하게 정렬합니다">
+          <span>🧹정렬</span>
+          <small>무료</small>
+        </button>
+      </div>
+
+      <div class="gh-inspector" id="item-inspector">
+        <div class="insp-icon" id="insp-icon"></div>
+        <div class="insp-details">
+          <div class="insp-title-row">
+            <strong id="insp-name">생성기를 탭하거나 재료를 드래그하세요</strong>
+            <span class="insp-lv-badge" id="insp-lv">안내</span>
+          </div>
+          <p id="insp-desc">같은 아이템을 드래그해 상위 레벨로 합치거나, 특별한 이종 재료끼리 조합해 스페셜 메뉴를 만드세요!</p>
+        </div>
+        <div class="insp-actions" id="insp-actions"></div>
+      </div>
+    </footer>
+
+    <!-- 드래그 고스트 및 파티클 레이어 -->
+    <div id="drag-layer"></div>
+    <div id="fx-layer"></div>
+
+    <!-- 모달 1: 아이템 체인 & 스페셜 조합 레시피 도감 -->
+    <div class="gh-modal-backdrop hidden" id="modal-codex">
+      <div class="gh-modal">
+        <div class="gh-modal-header">
+          <h2>📖 생성기 체인 &amp; 스페셜 조합 레시피 도감</h2>
+          <button class="gh-close-btn" data-close="modal-codex">✕</button>
+        </div>
+        <div class="gh-modal-body" id="codex-body"></div>
+      </div>
+    </div>
+
+    <!-- 모달 2: 차원 보관함 (Inventory) -->
+    <div class="gh-modal-backdrop hidden" id="modal-bag">
+      <div class="gh-modal">
+        <div class="gh-modal-header">
+          <h2>🎒 인벤토리 보관함 (최대 6칸)</h2>
+          <button class="gh-close-btn" data-close="modal-bag">✕</button>
+        </div>
+        <div class="gh-modal-body">
+          <p class="bag-help">보드가 좁을 때 재료를 보관해 두세요. 아래 슬롯을 클릭하면 다시 보드로 꺼냅니다.</p>
+          <div class="bag-grid" id="bag-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 모달 3: 플레이어 레벨 & 성장 보상 -->
+    <div class="gh-modal-backdrop hidden" id="modal-level">
+      <div class="gh-modal">
+        <div class="gh-modal-header">
+          <h2>👑 연금술사 레벨 &amp; 성장 혜택</h2>
+          <button class="gh-close-btn" data-close="modal-level">✕</button>
+        </div>
+        <div class="gh-modal-body" id="level-modal-body"></div>
+      </div>
+    </div>
+
+    <!-- 모달 4: 로컬 DB 저장 관리 & 기기 간 백업 코드 -->
+    <div class="gh-modal-backdrop hidden" id="modal-db">
+      <div class="gh-modal">
+        <div class="gh-modal-header">
+          <h2>💾 로컬 DB 영구 저장소 &amp; PWA 안내</h2>
+          <button class="gh-close-btn" data-close="modal-db">✕</button>
+        </div>
+        <div class="gh-modal-body">
+          <div class="codex-card" style="background:#ecfdf5;border-color:#10b981">
+            <h4>✅ IndexedDB + LocalStorage 이중 보호 활성화됨</h4>
+            <p style="font-size:11.5px;color:#065f46;line-height:1.4">
+              모든 진행 상황(레벨, 코인, 스타, 보드 위 모든 타일 위치, 3D 인테리어 시공 내역)은 행동 즉시 기기 내 로컬 데이터베이스에 자동 저장됩니다.<br/>
+              <strong>앱이 새 버전으로 업데이트되어도 기존 세이브 데이터를 새 스키마에 자동 병합하므로 진행도가 절대 초기화되지 않습니다.</strong>
+            </p>
+          </div>
+          <div class="codex-card">
+            <h4>📱 스마트폰 PWA 앱 설치 방법</h4>
+            <p style="font-size:11.5px;color:#334155;line-height:1.4">
+              • <strong>iPhone (Safari)</strong>: 하단 <strong>공유(↑)</strong> 버튼 ➔ <strong>'홈 화면에 추가'</strong> 선택<br/>
+              • <strong>Android (Chrome)</strong>: 우측 상단 메뉴(⋮) ➔ <strong>'앱 설치' 또는 '홈 화면에 추가'</strong> 선택
+            </p>
+          </div>
+          <div class="codex-card">
+            <h4>🔄 백업 코드 내보내기 / 복원하기</h4>
+            <p style="font-size:11px;color:#64748b;margin-bottom:6px">다른 휴대폰이나 PC로 진행도를 옮기고 싶을 때 사용하세요.</p>
+            <textarea id="backup-code-box" rows="3" style="width:100%;font-size:10px;padding:6px;border-radius:8px;border:1px solid #cbd5e1" placeholder="백업 코드가 여기에 표시됩니다..."></textarea>
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <button class="insp-btn spawn-btn" id="btn-export-save" style="flex:1;padding:8px">📤 백업 코드 생성/복사</button>
+              <button class="insp-btn sell-btn" id="btn-import-save" style="flex:1;padding:8px">📥 코드로 진행도 복원</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="sprites.js"></script>
+  <script src="interior3d.js"></script>
+  <script src="game.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -220,3 +220,48 @@ button.gh-res-pill {
     radial-gradient(circle at 70% 70%, rgba(253, 224, 71, 0.45) 0 1px, transparent 2px) 0 0 / 63px 63px,
     linear-gradient(180deg, #2a1650 0%, #3b1d6e 55%, #24123f 100%);
 }
+
+/* ===== v3.3: 성 화면 정리 ===== */
+.castle-host {
+  touch-action: none;
+}
+/* 복구한 곳: 작은 🎨 동그라미 */
+.room-pin.pin-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  justify-content: center;
+  font-size: 15px;
+  background: rgba(30, 16, 56, 0.72);
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+}
+/* 다음에 복구할 곳: 반짝이는 망치 */
+.room-pin.pin-next {
+  font-size: 15px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #64748b, #334155);
+  animation: pinBob 1.4s ease-in-out infinite;
+}
+.room-pin.pin-next.pin-ready {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.35), 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+.room-pin.pin-next b {
+  font-size: 12px;
+}
+@keyframes pinBob {
+  0%, 100% { transform: translate(-50%, -50%); }
+  50% { transform: translate(-50%, calc(-50% - 6px)); }
+}
+/* 하단: 이야기 진행 버튼 하나 */
+.castle-quest-panel .story-action-row {
+  margin: 0;
+}
+.castle-quest-panel .story-next-btn {
+  font-size: 14px;
+  padding: 12px 10px;
+}
+.castle-quest-panel .story-log-btn {
+  min-width: 48px;
+  font-size: 18px;
+}

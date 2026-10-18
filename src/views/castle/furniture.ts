@@ -2,6 +2,8 @@
 
 import * as THREE from "three";
 import type { StylePalette } from "../../core/rules/rooms";
+import { ModelLibrary } from "./models/library";
+import { SPOT_RECIPES, CLUTTER, ZONE_PROPS, recipeModels, type RecipeItem, type TintKey } from "./models/recipes";
 
 // 복구 전: 부서진 나무 판자, 잔해 돌멩이
 export function buildRubble(group: THREE.Group): void {
@@ -389,7 +391,208 @@ export const SPOT_BUILDERS: Record<string, (g: THREE.Group, pal: StylePalette) =
   ...Object.fromEntries(Object.entries(UNIQUE).map(([id, fn]) => [id, (g: THREE.Group, pal: StylePalette) => fn(g, mats(pal))])),
 };
 
+// ==================== v3.3: CC0 모델 배치 ====================
+
+// 모델 팩에 없는 작은 구조물
+function brew(g: THREE.Group, pal: StylePalette): void {
+  // 가마솥 속 빛나는 물약 수면
+  const M = mats(pal);
+  const liquid = put(g, new THREE.CylinderGeometry(0.62, 0.62, 0.06, 24), M.accent);
+  liquid.castShadow = false;
+  for (let i = 0; i < 3; i++) {
+    const b = put(g, new THREE.SphereGeometry(0.09 - i * 0.02, 10, 8), M.accent, -0.2 + i * 0.22, 0.12 + i * 0.05, 0.1 - i * 0.1);
+    b.userData.floatBubble = true;
+    b.userData.baseY = b.position.y;
+    b.userData.phase = i;
+  }
+}
+
+function cobweb(g: THREE.Group): void {
+  // 먼지 낀 거미줄 덩어리 + 바닥 먼지
+  const web = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, transparent: true, opacity: 0.35, roughness: 1 });
+  const dust = new THREE.MeshStandardMaterial({ color: 0x6b6375, transparent: true, opacity: 0.55, roughness: 1 });
+  const d = new THREE.Mesh(new THREE.CircleGeometry(1.25, 20), dust);
+  d.rotation.x = -Math.PI / 2;
+  d.position.y = 0.02;
+  g.add(d);
+  for (let i = 0; i < 3; i++) {
+    const w = new THREE.Mesh(new THREE.TorusGeometry(0.35 + i * 0.18, 0.012, 4, 18), web);
+    w.position.set(0.2, 0.9 + i * 0.05, -0.2);
+    w.rotation.set(0.6, 0.4, 0);
+    g.add(w);
+  }
+}
+
+// 줄무늬 파라솔 (기둥 + 8조각 캐노피를 두 색으로 번갈아)
+function umbrella(g: THREE.Group, pal: StylePalette): void {
+  const M = mats(pal);
+  put(g, new THREE.CylinderGeometry(0.05, 0.06, 2.9, 8), M.wood, 0, 1.45, 0);
+  for (let i = 0; i < 8; i++) {
+    const seg = put(g, new THREE.ConeGeometry(1.35, 0.55, 2, 1, true, (i * Math.PI) / 4, Math.PI / 4), i % 2 ? M.white : M.secondary, 0, 3.0, 0);
+    seg.material = (i % 2 ? M.white : M.secondary).clone();
+    (seg.material as THREE.Material).side = THREE.DoubleSide;
+  }
+  put(g, new THREE.SphereGeometry(0.09, 8, 6), M.gold, 0, 3.3, 0);
+}
+
+// 카페 원탁 (나무 상판 + 받침)
+function cafeTable(g: THREE.Group, pal: StylePalette): void {
+  const M = mats(pal);
+  put(g, new THREE.CylinderGeometry(0.75, 0.75, 0.08, 20), M.wood, 0, 0.88, 0);
+  put(g, new THREE.CylinderGeometry(0.07, 0.09, 0.85, 10), M.gold, 0, 0.43, 0);
+  put(g, new THREE.CylinderGeometry(0.38, 0.42, 0.06, 16), M.gold, 0, 0.03, 0);
+}
+
+// 벽돌 화덕 (둥근 돔 + 불빛 아치 + 굴뚝)
+function brickOven(g: THREE.Group, pal: StylePalette): void {
+  const M = mats(pal);
+  const brick = new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.9 });
+  const stone = new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.9 });
+  put(g, new THREE.BoxGeometry(2.0, 0.9, 1.6), stone, 0, 0.45, 0);
+  put(g, new THREE.SphereGeometry(0.95, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), brick, 0, 0.9, 0);
+  const mouth = put(g, new THREE.CircleGeometry(0.42, 16, 0, Math.PI), M.accent, 0, 0.92, 0.9);
+  mouth.castShadow = false;
+  put(g, new THREE.TorusGeometry(0.46, 0.07, 6, 16, Math.PI), stone, 0, 0.92, 0.88);
+  put(g, new THREE.CylinderGeometry(0.18, 0.22, 0.9, 10), brick, 0.4, 2.0, -0.3);
+}
+
+// 돌 벽난로 (아치 입구 안 불꽃 + 금빛 선반)
+function fireplace(g: THREE.Group, pal: StylePalette): void {
+  const M = mats(pal);
+  const stone = new THREE.MeshStandardMaterial({ color: 0x8b8494, roughness: 0.95 });
+  const soot = new THREE.MeshStandardMaterial({ color: 0x1f1b24, roughness: 1 });
+  put(g, new THREE.BoxGeometry(2.2, 2.0, 0.8), stone, 0, 1.0, 0);
+  put(g, new THREE.BoxGeometry(1.2, 1.0, 0.82), soot, 0, 0.5, 0.02);
+  put(g, new THREE.BoxGeometry(2.5, 0.16, 1.0), M.gold, 0, 2.08, 0.05);
+  for (let i = 0; i < 3; i++) {
+    const f = put(g, new THREE.ConeGeometry(0.16 - i * 0.03, 0.55 - i * 0.1, 8), M.accent, -0.25 + i * 0.25, 0.3, 0.3);
+    f.castShadow = false;
+  }
+  put(g, new THREE.BoxGeometry(1.0, 0.1, 0.25), M.wood, 0, 0.08, 0.3);
+  put(g, new THREE.BoxGeometry(0.5, 1.2, 0.5), stone, 0, 2.7, -0.1);
+}
+
+// 둥근 러그 (테두리 + 안쪽 무늬)
+function rug(g: THREE.Group, pal: StylePalette): void {
+  const M = mats(pal);
+  const outer = put(g, new THREE.CircleGeometry(1.5, 32), M.secondary, 0, 0.015, 0, -Math.PI / 2);
+  const inner = put(g, new THREE.CircleGeometry(1.15, 32), M.primary, 0, 0.02, 0, -Math.PI / 2);
+  const ring = put(g, new THREE.RingGeometry(0.55, 0.65, 32), M.accent, 0, 0.025, 0, -Math.PI / 2);
+  for (const m of [outer, inner, ring]) m.castShadow = false;
+}
+
+export const PROC_BUILDERS: Record<string, (g: THREE.Group, pal: StylePalette) => void> = {
+  ...SPOT_BUILDERS,
+  rug,
+  fireplace,
+  umbrella,
+  cafeTable,
+  brickOven,
+  brew,
+  cobweb: (g) => cobweb(g),
+};
+
+// 텍스처 모델에 스타일 색을 은은하게 입힌다 (원본 재질은 공유하므로 색별로 복제해 둔다)
+const tinted = new Map<string, THREE.Material>();
+function tint(obj: THREE.Object3D, hex: number): void {
+  obj.traverse((o) => {
+    const mesh = o as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    const src = mesh.material as THREE.MeshStandardMaterial;
+    const key = `${src.uuid}:${hex}`;
+    let m = tinted.get(key);
+    if (!m) {
+      const c = src.clone();
+      c.color = new THREE.Color(0xffffff).lerp(new THREE.Color(hex), 0.55);
+      tinted.set(key, c);
+      m = c;
+    }
+    mesh.material = m;
+  });
+}
+
+// 배치표의 크기를 방 비율에 맞춰 한꺼번에 키운다
+const MODEL_SCALE = 1.2;
+
+function placeItems(group: THREE.Group, items: RecipeItem[], pal: StylePalette): void {
+  const placed: THREE.Object3D[] = [];
+  for (const it of items) {
+    const [x, y, z] = it.p ?? [0, 0, 0];
+    if (it.proc) {
+      const sub = new THREE.Group();
+      PROC_BUILDERS[it.proc]?.(sub, pal);
+      sub.position.set(x, y, z);
+      if (it.r) sub.rotation.y = it.r;
+      group.add(sub);
+      placed.push(sub);
+      continue;
+    }
+    if (!it.m) continue;
+    const obj = ModelLibrary.clone(it.m, (it.s ?? 1) * MODEL_SCALE);
+    if (!obj) continue;
+    if (it.tint) tint(obj, pal[it.tint as TintKey]);
+    let baseY = y;
+    if (it.on !== undefined && placed[it.on]) {
+      group.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(placed[it.on]);
+      const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+      box.applyMatrix4(inv);
+      baseY = box.max.y + y;
+    }
+    obj.position.set(x, baseY, z);
+    if (it.tip) {
+      obj.rotation.z = Math.PI / 2;
+      obj.position.y += (it.s ?? 1) * 0.3;
+    }
+    if (it.r) obj.rotation.y = it.r;
+    group.add(obj);
+    placed.push(obj);
+  }
+}
+
+export function spotModelNames(spotId: string): ReturnType<typeof recipeModels> {
+  const r = SPOT_RECIPES[spotId];
+  return r ? recipeModels(r) : [];
+}
+
+// 구역 분위기 소품: 복구 수(doneCount) 이하 단계만 놓는다
+export function buildZoneProps(zone: string, doneCount: number, pal: StylePalette): THREE.Group {
+  const g = new THREE.Group();
+  const list = (ZONE_PROPS[zone] ?? []).filter((p) => p.step <= doneCount);
+  placeItems(g, list, pal);
+  return g;
+}
+
+export function zonePropModels(zone: string): ReturnType<typeof recipeModels> {
+  return recipeModels({ items: ZONE_PROPS[zone] ?? [] });
+}
+
+export const CLUTTER_MODELS = [...new Set(CLUTTER.flatMap((c) => recipeModels({ items: c })))];
+
+// 복구 전 잔해: 모델이 준비됐으면 먼지 쌓인 상자·항아리, 아니면 예전 판자 더미. floorY는 벽에 붙은 장소용 바닥 높이 보정
+export function buildSpotClutter(spotIdx: number, group: THREE.Group, floorY = 0): void {
+  // 벽에 붙은 장소(창문)는 잔해를 바닥 쪽 벽 앞으로 끌어낸다
+  const fwd = floorY < -0.5 ? 1.0 : 0;
+  const set = CLUTTER[spotIdx % CLUTTER.length];
+  if (!ModelLibrary.hasAll(recipeModels({ items: set }))) {
+    const g = new THREE.Group();
+    buildRubble(g);
+    g.position.set(0, floorY, fwd);
+    group.add(g);
+    return;
+  }
+  const g = new THREE.Group();
+  g.position.set(0, floorY, fwd);
+  placeItems(g, set, { id: 0, name: "", primary: 0x6b7280, secondary: 0x6b7280, accent: 0x9ca3af, wood: 0x57534e });
+  group.add(g);
+}
+
 export function buildSpotFurniture(spotId: string, group: THREE.Group, pal: StylePalette, fallbackType = "counter"): void {
+  const recipe = SPOT_RECIPES[spotId];
+  if (recipe && ModelLibrary.hasAll(recipeModels(recipe))) {
+    placeItems(group, [...recipe.items, ...recipe.styles[pal.id] ?? recipe.styles[0]], pal);
+    return;
+  }
   const b = SPOT_BUILDERS[spotId];
   if (b) b(group, pal);
   else buildFurniture(group, fallbackType, pal);

@@ -17,7 +17,10 @@
     "pixi.js": "8.22.0",
     "three": "0.186.1",
     "workbox-core": "7.4.1",
-    "workbox-precaching": "7.4.1"
+    "workbox-expiration": "7.4.1",
+    "workbox-precaching": "7.4.1",
+    "workbox-routing": "7.4.1",
+    "workbox-strategies": "7.4.1"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
@@ -33,5 +36,7 @@
     "vite-plugin-pwa": "2.0.0",
     "vitest": "5.0.5"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }

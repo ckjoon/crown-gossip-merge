@@ -8,7 +8,7 @@ import type { ZoneKey } from "../../core/types";
 
 // 위치는 그 구역 가구를 가리지 않는 앞쪽 빈 바닥
 export const ZONE_RESIDENT: Record<ZoneKey, { id: string; robe: string; pos: [number, number, number] }> = {
-  alchemy: { id: "selene", robe: "#5b21b6", pos: [3.6, 0, 3.4] },
+  alchemy: { id: "selene", robe: "#5b21b6", pos: [3.4, 0, 0.8] },
   harbor: { id: "quinn", robe: "#155e75", pos: [-3.4, 0, 2.8] },
   garden: { id: "nero", robe: "#1f2937", pos: [-3.4, 0, 2.8] },
   banquet: { id: "lucian", robe: "#7f1d1d", pos: [-3.4, 0, 2.8] },

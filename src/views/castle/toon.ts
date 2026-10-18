@@ -55,7 +55,9 @@ const OUTLINE_MAT = new THREE.MeshBasicMaterial({ color: 0x1b1028, side: THREE.B
 // 크기 비례로 키우면 고리 모양은 외곽선이 원래 몸통에서 떨어져 보이므로 제외
 function skipOutline(mesh: THREE.Mesh): boolean {
   const mat = mesh.material as THREE.Material | THREE.Material[];
-  if (Array.isArray(mat) ? mat.some((m) => m.transparent) : mat.transparent) return true;
+  // 유리(투명)·나뭇잎(알파 컷)은 뒤 껍데기가 구멍으로 비쳐 보인다
+  const seeThrough = (m: THREE.Material) => m.transparent || m.alphaTest > 0;
+  if (Array.isArray(mat) ? mat.some(seeThrough) : seeThrough(mat)) return true;
   return (mesh.geometry as THREE.BufferGeometry).type === "TorusGeometry";
 }
 
@@ -69,6 +71,7 @@ export function addOutline(root: THREE.Object3D, thickness = 0.03): void {
   for (const mesh of targets) {
     const outline = new THREE.Mesh(mesh.geometry, OUTLINE_MAT);
     outline.userData.outline = true;
+    outline.userData.shared = mesh.userData.shared;
     outline.scale.setScalar(1 + thickness * 2);
     outline.castShadow = false;
     outline.receiveShadow = false;
@@ -81,7 +84,8 @@ export function disposeGroup(root: THREE.Object3D): void {
   const seen = new Set<THREE.BufferGeometry>();
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
-    if (mesh.isMesh && mesh.geometry && !seen.has(mesh.geometry)) {
+    // 공유 모델(ModelLibrary)의 기하는 다른 장소도 쓰므로 해제하지 않는다
+    if (mesh.isMesh && mesh.geometry && !mesh.userData.shared && !seen.has(mesh.geometry)) {
       seen.add(mesh.geometry);
       mesh.geometry.dispose();
     }

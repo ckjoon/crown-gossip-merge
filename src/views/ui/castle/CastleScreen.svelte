@@ -81,11 +81,24 @@
     else goZone(key, { x: e.clientX, y: e.clientY });
   }
 
-  function questCard(spotId: string) {
-    if ($game.rooms[spotId]?.done) {
-      app().sfx.tap();
-      ui.cutscene = { spotId, step: 0, onFinish: null };
-    } else openStyle(spotId);
+  // 손가락으로 끌어 방 둘러보기 (탭은 그대로 핀 버튼이 받는다)
+  let panFrom: { id: number; x: number; y: number; moved: boolean } | null = null;
+  function panDown(e: PointerEvent) {
+    if (ui.castleMap || ui.inputLocked || ui.stylePick) return;
+    panFrom = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+  }
+  function panMove(e: PointerEvent) {
+    if (!panFrom || e.pointerId !== panFrom.id) return;
+    const dx = e.clientX - panFrom.x;
+    const dy = e.clientY - panFrom.y;
+    if (!panFrom.moved && Math.hypot(dx, dy) < 6) return;
+    panFrom.moved = true;
+    view?.panBy(dx, dy);
+    panFrom.x = e.clientX;
+    panFrom.y = e.clientY;
+  }
+  function panUp(e: PointerEvent) {
+    if (panFrom && e.pointerId === panFrom.id) panFrom = null;
   }
 
   const pick = $derived(ui.stylePick);
@@ -105,7 +118,7 @@
   </div>
 
   <div class="interior-viewport">
-    <div class="castle-host" bind:this={host}></div>
+    <div class="castle-host" bind:this={host} onpointerdown={panDown} onpointermove={panMove} onpointerup={panUp} onpointercancel={panUp} role="presentation"></div>
     <div class="castle-pins">
       {#if !pick && !ui.inputLocked}
         {#if ui.castleMap}
@@ -118,20 +131,22 @@
             {/if}
           {/each}
         {:else}
+          <!-- v3.3: 이름표 대신 다음에 복구할 곳 하나만 반짝이고, 복구한 곳은 작은 🎨 아이콘(스타일 바꾸기) -->
           {#each room.spots as sp (sp.id)}
             {@const st = $game.rooms[sp.id]}
             {@const isNext = sp.id === zp.nextSpotId}
             {@const cost = getSpotCoinCost($game.currentThemeKey, sp.cost)}
-            {#if pins[sp.id]}
+            {#if pins[sp.id] && (st?.done || isNext)}
               <button
                 class="room-pin"
-                class:pin-customize={st?.done}
-                class:pin-ready={!st?.done && isNext && $game.coins >= cost}
-                class:pin-locked={!st?.done && (!isNext || $game.coins < cost)}
+                class:pin-icon={st?.done}
+                class:pin-next={isNext}
+                class:pin-ready={isNext && $game.coins >= cost}
                 style="left:{clampX(pins[sp.id].x)}px;top:{clampY(pins[sp.id].y)}px"
                 onclick={() => openStyle(sp.id)}
+                title={sp.name}
               >
-                {#if st?.done}🎨 <span>{sp.name}</span>{:else if isNext}🔨 <span>{sp.name}</span> <b>🪙{cost}</b>{:else}🔒 <span>제{zp.chapterById[sp.id]}화</span>{/if}
+                {#if st?.done}🎨{:else}🔨 <b>🪙{cost}</b>{/if}
               </button>
             {/if}
           {/each}
@@ -140,7 +155,7 @@
     </div>
 
     <div class="room-progress-pill">
-      <span>{ui.castleMap ? "🏰 마녀 셀레네의 대마법성 (전체 성곽 지도)" : room.title}</span>
+      <span>{ui.castleMap ? "🏰 마녀의 성" : room.shortName}</span>
       <span class="room-prog-badge">{ui.castleMap ? `${totalDone} / ${ALL_SPOTS_IN_ORDER.length}` : `${doneInRoom} / ${room.spots.length}`} 복구됨</span>
     </div>
 
@@ -179,24 +194,9 @@
   </div>
 
   <div class="castle-quest-panel" class:input-locked={ui.inputLocked}>
-    <div class="castle-quest-header">
-      <strong>📜 {room.shortName} 이야기 (복구 시 생성기 진화 파츠 지급)</strong>
-      <span>마녀의 성 전체 {totalDone}/{ALL_SPOTS_IN_ORDER.length}</span>
-    </div>
     <div class="story-action-row">
-      <button class="story-next-btn" disabled={!next} onclick={storyNext}>📖 다음 이야기 진행 <b>{next ? `제${next.chapter}화 🪙${nextCost}` : "🎉 완결"}</b></button>
-      <button class="story-log-btn" onclick={() => { app().sfx.tap(); ui.modal = "storyLog"; }}>📜 스토리</button>
-    </div>
-    <div class="castle-quest-strip">
-      {#each room.spots as sp (sp.id)}
-        {@const st = $game.rooms[sp.id]}
-        {@const isNext = sp.id === zp.nextSpotId}
-        {@const cost = getSpotCoinCost($game.currentThemeKey, sp.cost)}
-        <div class="castle-quest-card" class:quest-done={st?.done} class:quest-ready={!st?.done && isNext && $game.coins >= cost} class:quest-locked={!st?.done && !(isNext && $game.coins >= cost)} role="button" tabindex="0" onclick={() => questCard(sp.id)} onkeydown={() => {}}>
-          <div class="cq-name">제{zp.chapterById[sp.id]}화 · {sp.name}</div>
-          <div class="cq-btn-tag">{st?.done ? "💬 다시보기" : isNext ? `🔨 🪙${cost}` : "🔒 잠김"}</div>
-        </div>
-      {/each}
+      <button class="story-next-btn" disabled={!next} onclick={storyNext}>📖 {next ? `제${next.chapter}화 · ${next.spot.name}` : "🎉 완결"} {#if next}<b>🪙{nextCost}</b>{/if}</button>
+      <button class="story-log-btn" onclick={() => { app().sfx.tap(); ui.modal = "storyLog"; }} title="지난 이야기 다시 보기">📜</button>
     </div>
   </div>
 </section>

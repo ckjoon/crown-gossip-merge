@@ -8,8 +8,13 @@ import { ROOMS, STYLE_PALETTES } from "../../core/rules/rooms";
 import { SPOT_LAYOUT, ZONE_LOOK } from "./layout";
 import { buildCastleOverview, buildRoomShell } from "./scenes";
 import { buildFurniture, buildRubble } from "./furniture";
+import { Ambience } from "./ambience";
 
 const DEFAULT_CAM = new THREE.Vector3(10, 10.5, 10);
+
+function wait(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
 interface Burst {
   mesh: THREE.Mesh;
@@ -43,6 +48,9 @@ export class CastleView {
   private raf = 0;
   private ro: ResizeObserver | null = null;
   ambientLight: THREE.AmbientLight | null = null;
+  ambience: Ambience | null = null;
+  private showcase: gsap.core.Timeline | null = null;
+  private spot: THREE.SpotLight | null = null;
   private frameHooks = new Set<(dt: number) => void>();
   private active = true;
 
@@ -127,6 +135,7 @@ export class CastleView {
     this.clearGroup();
     this.scene.background = buildCastleOverview(this.roomGroup);
     this.ambientLight = null;
+    this.ambience = null;
     legacyLightCompensate(this.roomGroup);
     this.resetCamera(false);
     this.resize();
@@ -143,11 +152,17 @@ export class CastleView {
     this.ambientLight = shell.ambient;
     for (const spot of ROOMS[zone].spots) this.renderSpot(spot.id);
     legacyLightCompensate(this.roomGroup);
+    this.ambience = new Ambience(this.ambientLight);
+    this.roomGroup.add(this.ambience.group);
+    this.ambience.apply(this.doneCount(), false);
     this.resetCamera(false);
     this.resize();
   }
 
   // rooms 상태만 바뀌었을 때(복구·스타일 변경) 방을 다시 만들지 않고 해당 가구만 갱신
+  // holdSpot: 보상 연출이 직접 등장시킬 가구는 여기서 다시 만들지 않는다
+  holdSpot: string | null = null;
+
   syncRooms(rooms: Record<string, SpotState>): void {
     const prev = this.rooms;
     this.rooms = rooms;
@@ -155,8 +170,82 @@ export class CastleView {
     for (const spot of ROOMS[this.zone].spots) {
       const a = prev[spot.id];
       const b = rooms[spot.id];
+      if (spot.id === this.holdSpot) continue;
       if (!a || a.done !== b.done || a.styleIdx !== b.styleIdx) this.renderSpot(spot.id);
     }
+  }
+
+  doneCount(): number {
+    return ROOMS[this.zone].spots.filter((sp) => this.rooms[sp.id]?.done).length;
+  }
+
+  // 🔨 복구 순간: 방을 어둡게 → 스포트라이트 → 카메라 다가감 → 가구가 떨어지며 쿵 + 반짝임 → 조명 복귀와 함께 분위기 한 단계 상승
+  async playRestore(spotId: string, rooms: Record<string, SpotState>): Promise<void> {
+    if (this.mode !== "room") return;
+    this.rooms = rooms;
+    const layout = SPOT_LAYOUT[spotId];
+    const amb = this.ambientLight;
+    const prevIntensity = amb?.intensity ?? 1;
+    if (amb) gsap.to(amb, { intensity: 0.15 * Math.PI, duration: 0.5 });
+    const spot = new THREE.SpotLight(0xfff3c4, 0, 14, 0.42, 0.45, 1);
+    spot.position.set(layout.pos[0] + 1.5, 8, layout.pos[2] + 1.5);
+    spot.target.position.set(...layout.pos);
+    this.roomGroup.add(spot, spot.target);
+    this.spot = spot;
+    gsap.to(spot, { intensity: 9 * Math.PI, duration: 0.6 });
+    await this.focusSpot(spotId, 1.5, 0.6);
+    const g = this.renderSpot(spotId);
+    this.holdSpot = null;
+    if (g) {
+      gsap.fromTo(g.position, { y: layout.pos[1] + 2.8 }, { y: layout.pos[1], duration: 0.65, ease: "bounce.out" });
+      gsap.fromTo(g.scale, { x: 0.4, y: 0.4, z: 0.4 }, { x: 1, y: 1, z: 1, duration: 0.55, ease: "elastic.out(1, 0.5)" });
+    }
+    await wait(450);
+    this.constructionBurst(spotId, 22);
+    await wait(250);
+    this.constructionBurst(spotId, 14);
+    await wait(500);
+    gsap.to(spot, { intensity: 0, duration: 0.6, onComplete: () => { this.roomGroup.remove(spot, spot.target); this.spot = null; } });
+    if (amb) gsap.to(amb, { intensity: prevIntensity, duration: 0.4 });
+    this.ambience?.apply(this.doneCount(), true);
+    this.resetCamera(true);
+    await wait(700);
+  }
+
+  // 🎉 구역 완성: 복구 전(0단계) 모습을 잠깐 보여 준 뒤 완성된 모습(5단계)으로 밝아지고, 카메라가 좌우로 둘러본다
+  playZoneShowcase(): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.mode !== "room") return resolve();
+      this.resetCamera(false);
+      this.ambience?.apply(0, false);
+      const radius = Math.hypot(DEFAULT_CAM.x, DEFAULT_CAM.z);
+      const base = Math.atan2(DEFAULT_CAM.z, DEFAULT_CAM.x);
+      const orbit = { a: 0, zoom: 1 };
+      const apply = () => {
+        const ang = base + orbit.a;
+        this.camera.position.set(Math.cos(ang) * radius, DEFAULT_CAM.y, Math.sin(ang) * radius);
+        this.camera.zoom = orbit.zoom;
+        this.camera.updateProjectionMatrix();
+        this.camera.lookAt(this.lookTarget);
+      };
+      const finish = () => {
+        this.showcase = null;
+        this.ambience?.apply(5, false);
+        this.resetCamera(false);
+        resolve();
+      };
+      const tl = gsap.timeline({ onUpdate: apply, onComplete: finish });
+      tl.to({}, { duration: 1.0 })
+        .call(() => this.ambience?.apply(5, true))
+        .to(orbit, { a: 0.75, zoom: 1.18, duration: 1.6, ease: "sine.inOut" })
+        .to(orbit, { a: -0.75, duration: 1.8, ease: "sine.inOut" })
+        .to(orbit, { a: 0, zoom: 1, duration: 0.8, ease: "sine.inOut" });
+      this.showcase = tl;
+    });
+  }
+
+  skipShowcase(): void {
+    this.showcase?.progress(1);
   }
 
   renderSpot(spotId: string): THREE.Group | null {
@@ -280,6 +369,7 @@ export class CastleView {
         this.bursts.splice(i, 1);
       }
     }
+    this.ambience?.tick(dt);
     for (const fn of this.frameHooks) fn(dt);
   }
 }

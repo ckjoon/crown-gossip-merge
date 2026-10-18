@@ -7,6 +7,11 @@ import { app } from "./context";
 export type Screen = "merge" | "castle";
 export type ModalId = "codex" | "bag" | "level" | "settings" | "changelog" | "gemShop" | "storyLog" | "holiday" | "migration";
 
+export type RewardView =
+  | { kind: "ribbon"; chapter: number; name: string; chips: string[] }
+  | { kind: "reaction"; characterId: string; line: string }
+  | { kind: "zone"; title: string; gems: number };
+
 export interface CutsceneView {
   spotId: string;
   step: number;
@@ -26,6 +31,7 @@ export const ui = $state({
   castleMap: false,
   stylePick: null as { spotId: string; styleIdx: number } | null,
   revealZone: null as string | null,
+  reward: null as RewardView | null,
 });
 
 export interface Toast {

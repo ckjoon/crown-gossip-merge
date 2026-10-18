@@ -445,8 +445,8 @@ export interface AmbienceStep {
 }
 
 export const ambienceByProgress: AmbienceStep[] = [
-  { ambientColor: 0x4b5563, ambientIntensity: 0.35, warmLight: 0.25, dust: 60, sparkles: 0, candles: 0 },
-  { ambientColor: 0x6b5b8a, ambientIntensity: 0.45, warmLight: 0.4, dust: 45, sparkles: 6, candles: 1 },
+  { ambientColor: 0x4b5563, ambientIntensity: 0.22, warmLight: 0.1, dust: 60, sparkles: 0, candles: 0 },
+  { ambientColor: 0x6b5b8a, ambientIntensity: 0.36, warmLight: 0.35, dust: 45, sparkles: 6, candles: 1 },
   { ambientColor: 0x7c6aa8, ambientIntensity: 0.55, warmLight: 0.55, dust: 30, sparkles: 12, candles: 2 },
   { ambientColor: 0x9370db, ambientIntensity: 0.65, warmLight: 0.7, dust: 18, sparkles: 20, candles: 3 },
   { ambientColor: 0xb08ae8, ambientIntensity: 0.75, warmLight: 0.85, dust: 8, sparkles: 30, candles: 4 },

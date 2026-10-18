@@ -125,3 +125,9 @@ button.gh-res-pill {
   gap: 6px;
   margin: 4px 0 6px;
 }
+
+/* 보상 연출 중에는 성 화면 입력을 막는다 */
+.input-locked {
+  pointer-events: none;
+  filter: saturate(0.7);
+}

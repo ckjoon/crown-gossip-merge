@@ -9,6 +9,7 @@
   import { getSpotCoinCost, ZONE_ORDER } from "../../../core/rules/progression";
   import type { ZoneKey } from "../../../core/types";
   import { goZone, openStyle, pickStyle, cancelStyle, confirmStyle, storyNext } from "./castleActions";
+  import RewardOverlay from "./RewardOverlay.svelte";
 
   const game = app().store;
   let host = $state<HTMLDivElement>();
@@ -94,7 +95,7 @@
 </script>
 
 <section class="screen-view" class:hidden={ui.screen !== "castle"} id="view-castle">
-  <div class="theme-tabs-bar">
+  <div class="theme-tabs-bar" class:input-locked={ui.inputLocked}>
     <button class="theme-tab" class:active={ui.castleMap} onclick={(e) => tab("castle_map", e)}>🏰 성 전체지도</button>
     {#each ZONE_ORDER as z (z)}
       {#if zp.accessibleKeys.includes(z)}
@@ -165,6 +166,8 @@
       </div>
     {/if}
 
+    <RewardOverlay />
+
     <button class="castle-to-merge-fab" onclick={() => { app().sfx.tap(); ui.screen = "merge"; }} title="합성 페이지로 들어가기">
       {#if anyOrderReady}<span class="fab-order-badge">주문완성!</span>{/if}
       <div class="fab-icon-circle">{room.sectionIcon}</div>
@@ -175,7 +178,7 @@
     </button>
   </div>
 
-  <div class="castle-quest-panel">
+  <div class="castle-quest-panel" class:input-locked={ui.inputLocked}>
     <div class="castle-quest-header">
       <strong>📜 {room.shortName} 이야기 (복구 시 생성기 진화 파츠 지급)</strong>
       <span>마녀의 성 전체 {totalDone}/{ALL_SPOTS_IN_ORDER.length}</span>

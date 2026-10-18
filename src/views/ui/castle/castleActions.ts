@@ -50,11 +50,6 @@ export function confirmStyle(at?: { x: number; y: number }): void {
   if (ev.some((e) => e.type === "rejected")) return;
   ui.stylePick = null;
   getCastleView()?.clearPreview();
-  const restored = ev.find((e) => e.type === "spotRestored");
-  if (restored && restored.type === "spotRestored") {
-    getCastleView()?.constructionBurst(restored.spotId);
-    setTimeout(() => (ui.cutscene = { spotId: restored.spotId, step: 0, onFinish: null }), 720);
-  }
 }
 
 export function storyNext(): void {

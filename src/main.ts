@@ -18,7 +18,9 @@ import { preloadTextures } from "./views/art/textures";
 import { FxLayer } from "./views/fx/FxLayer";
 import { attachJuice } from "./views/fx/juice";
 import { getMainBoard } from "./views/board/registry";
+import { getCastleView } from "./views/castle/registry";
 import { captureInstallPrompt } from "./views/ui/install";
+import { attachRewardDirector } from "./views/reward/RewardDirector";
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -54,7 +56,7 @@ async function boot(): Promise<void> {
   }, 1000);
 
   if (import.meta.env.DEV || location.search.includes("e2e")) {
-    Object.assign(window as object, { __game: store, __board: () => getMainBoard() });
+    Object.assign(window as object, { __game: store, __board: () => getMainBoard(), __castle: () => getCastleView() });
   }
 
   await preloadTextures();
@@ -62,6 +64,7 @@ async function boot(): Promise<void> {
   const fx = new FxLayer();
   await fx.init();
   attachJuice(store, fx, sfx);
+  attachRewardDirector(store, fx, sfx);
 }
 
 void boot();

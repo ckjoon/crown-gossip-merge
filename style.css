@@ -1025,26 +1025,6 @@ body {
   background: #fce7f3 !important;
 }
 
-/* 이종 재료 스페셜 조합(Cross-Combination) 가능 하이라이트 */
-.gh-cell.cell-combo-hint {
-  box-shadow: inset 0 0 0 2.5px #0ea5e9;
-  background: #e0f2fe !important;
-}
-
-.gh-cell.cell-combo-hint::before {
-  content: "⚗️조합!";
-  position: absolute;
-  top: -3px;
-  right: -2px;
-  background: #0284c7;
-  color: #fff;
-  font-size: 7.5px;
-  font-weight: 900;
-  padding: 1px 3px;
-  border-radius: 4px;
-  z-index: 9;
-}
-
 .gh-cell.cell-drop-target {
   transform: scale(1.05);
   box-shadow: inset 0 0 0 2.5px #f59e0b !important;

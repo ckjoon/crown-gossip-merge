@@ -389,25 +389,6 @@ const HOLIDAY_EVENTS = [
   },
 ];
 
-// 이종 재료 조합(Cross-Chain Combination) 레시피 테이블
-const CROSS_RECIPES = [
-  {
-    a: { chain: "potion", level: 2 },
-    b: { chain: "herb", level: 2 },
-    result: { chain: "combo", level: 1 },
-  },
-  {
-    a: { chain: "bakery", level: 2 },
-    b: { chain: "tea", level: 3 },
-    result: { chain: "combo", level: 2 },
-  },
-  {
-    a: { chain: "grimoire", level: 2 },
-    b: { chain: "gem", level: 2 },
-    result: { chain: "combo", level: 3 },
-  },
-];
-
 const CUSTOMERS = [
   { name: "퀸 (Quinn)", face: "🕵️‍♀️", line: "하버 오션카페와 마녀의 공방을 멋지게 리모델링해 봐요!" },
   { name: "루시안 공작", face: "🧛‍♂️", line: "특제 활력비약과 향긋한 홍차의 조합이 훌륭하군." },
@@ -544,9 +525,6 @@ function getGeneratorTierMeta(chain, level = 1) {
 // 퀘스트(주문) 요구 아이템의 출처/조합법 요약 텍스트 반환
 function getRequirementRecipeSummary(req) {
   const meta = getItemMeta(req.chain, req.level);
-  if (req.chain === "combo") {
-    return meta.shortRecipe || meta.recipeText || "⚗️이종조합";
-  }
   const ch = CHAINS[req.chain];
   const shortGen = ch && ch.shortGen ? ch.shortGen : "생성기";
   return `${shortGen}➔${meta.name}(Lv.${req.level})`;
@@ -641,6 +619,11 @@ async function init() {
       });
     }
   }
+
+  // v2.5.0: 이종 조합 제거 — 조합품을 요구하던 기존 주문은 같은 슬롯에서 일반 주문으로 다시 뽑음
+  state.orders = state.orders.map((ord, idx) =>
+    ord && Array.isArray(ord.reqs) && ord.reqs.some((r) => r.chain === "combo") ? createOrder(idx) : ord
+  );
 
   renderAll();
   renderCodexModal();
@@ -808,26 +791,6 @@ function getItemMeta(chain, level) {
   };
 }
 
-function findCrossRecipe(itemA, itemB) {
-  if (!itemA || !itemB || itemA.isGenerator || itemB.isGenerator) return null;
-  for (const rec of CROSS_RECIPES) {
-    const matchForward =
-      itemA.chain === rec.a.chain &&
-      itemA.level === rec.a.level &&
-      itemB.chain === rec.b.chain &&
-      itemB.level === rec.b.level;
-    const matchReverse =
-      itemA.chain === rec.b.chain &&
-      itemA.level === rec.b.level &&
-      itemB.chain === rec.a.chain &&
-      itemB.level === rec.a.level;
-    if (matchForward || matchReverse) {
-      return rec.result;
-    }
-  }
-  return null;
-}
-
 function findNearestEmptyCell(originIdx) {
   const empty = [];
   for (let i = 0; i < TOTAL_CELLS; i++) {
@@ -850,7 +813,7 @@ function findNearestEmptyCell(originIdx) {
 // 손님 주문 시스템
 function initCustomerOrders() {
   state.orders = [
-    createOrder(0, [{ chain: "combo", level: 2 }]),
+    createOrder(0, [{ chain: "potion", level: 3 }]),
     createOrder(1, [
       { chain: "potion", level: 2 },
       { chain: "herb", level: 1 },
@@ -868,30 +831,25 @@ function createOrder(slotIdx, customReqs = null) {
   let reqs = customReqs;
 
   if (!reqs) {
-    if (Math.random() < 0.25) {
-      const cmbLv = Math.floor(Math.random() * 3) + 1;
-      reqs = [{ chain: "combo", level: cmbLv }];
-    } else {
-      const c1 = core[Math.floor(Math.random() * core.length)];
-      const maxLv = Math.min(5, 2 + Math.floor(state.playerLv / 2));
-      const lv1 = Math.max(2, Math.floor(Math.random() * maxLv) + 1);
-      reqs = [{ chain: c1, level: lv1 }];
+    const c1 = core[Math.floor(Math.random() * core.length)];
+    const maxLv = Math.min(5, 2 + Math.floor(state.playerLv / 2));
+    const lv1 = Math.max(2, Math.floor(Math.random() * maxLv) + 1);
+    reqs = [{ chain: c1, level: lv1 }];
 
-      if (Math.random() < 0.55) {
-        const c2 = core[Math.floor(Math.random() * core.length)];
-        const lv2 = Math.max(1, lv1 - 1);
-        reqs.push({ chain: c2, level: lv2 });
-      }
+    if (Math.random() < 0.55) {
+      const c2 = core[Math.floor(Math.random() * core.length)];
+      const lv2 = Math.max(1, lv1 - 1);
+      reqs.push({ chain: c2, level: lv2 });
     }
   }
 
-  const baseVal = reqs.reduce((s, r) => s + (r.chain === "combo" ? 45 : Math.pow(2, r.level) * 9), 0);
+  const baseVal = reqs.reduce((s, r) => s + Math.pow(2, r.level) * 9, 0);
   return {
     id: newUid(),
     customer: cust,
     reqs,
     coins: baseVal + 20,
-    stars: reqs.some((r) => r.chain === "combo" || r.level >= 4) ? 2 : 1,
+    stars: reqs.some((r) => r.level >= 4) ? 2 : 1,
   };
 }
 
@@ -994,9 +952,6 @@ function explainOrderRecipe(ord) {
   sfx.tap();
   const descriptions = ord.reqs.map((req) => {
     const meta = getItemMeta(req.chain, req.level);
-    if (req.chain === "combo") {
-      return `[${meta.name}] = ${meta.recipeText}`;
-    }
     const ch = CHAINS[req.chain];
     return `[${meta.name} Lv.${req.level}] = ${ch.generator ? ch.generator.name : ch.name}에서 생성 후 합성`;
   });
@@ -1005,14 +960,7 @@ function explainOrderRecipe(ord) {
 
   // 해당 체인의 생성기를 찾아 선택 표시
   const firstReq = ord.reqs[0];
-  const targetGenChain =
-    firstReq.chain === "combo"
-      ? firstReq.level === 1
-        ? "potion"
-        : firstReq.level === 2
-        ? "bakery"
-        : "grimoire"
-      : firstReq.chain;
+  const targetGenChain = firstReq.chain;
   const genIdx = state.board.findIndex((it) => it && it.isGenerator && it.chain === targetGenChain);
   if (genIdx !== -1) {
     state.selectedIdx = genIdx;
@@ -1743,35 +1691,12 @@ function executeBoardDrop(srcIdx, dstIdx, clientX, clientY) {
     return;
   }
 
-  // 2. 이종 재료 조합 레시피(Cross-Chain Combination) 체크
-  const crossResult = findCrossRecipe(src, dst);
-  if (crossResult) {
-    const wasCobweb = dst.state === "cobweb";
-    state.board[srcIdx] = null;
-    state.board[dstIdx] = {
-      uid: newUid(),
-      state: "active",
-      isGenerator: false,
-      chain: crossResult.chain,
-      level: crossResult.level,
-      justSpawned: true,
-    };
-    if (wasCobweb) crackAdjacentCrates(dstIdx);
-
-    const resMeta = getItemMeta(crossResult.chain, crossResult.level);
-    sfx.merge(4, true);
-    gainXP(12);
-    state.selectedIdx = dstIdx;
-    floatText(`⚗️ 스페셜 조합 완성! [${resMeta.name}]`, clientX, clientY, "#38bdf8");
-    renderAll();
-    return;
-  }
-
-  // 3. 동일 아이템 레벨업 합치기 (Merge)
+  // 2. 동일 아이템 레벨업 합치기 (Merge) — 레거시 조합품(combo)은 합성 불가
   const meta = getItemMeta(src.chain, src.level);
   if (
     !src.isGenerator &&
     !dst.isGenerator &&
+    src.chain !== "combo" &&
     src.chain === dst.chain &&
     src.level === dst.level &&
     src.level < meta.maxLv
@@ -1827,7 +1752,7 @@ function executeBoardDrop(srcIdx, dstIdx, clientX, clientY) {
     renderAll();
   } else {
     sfx.warn();
-    floatText("🕸️ 같은 재료(또는 조합 레시피 재료)를 드래그해야 합쳐집니다!", clientX, clientY, "#94a3b8");
+    floatText("🕸️ 같은 재료를 드래그해야 합쳐집니다!", clientX, clientY, "#94a3b8");
   }
 }
 
@@ -2004,10 +1929,13 @@ function highlightCompatibleTargets(dragItem) {
     const meta = getItemMeta(dragItem.chain, dragItem.level);
 
     // 2. 일반 아이템 동일 레벨 합성 하이라이트
-    if (target.chain === dragItem.chain && target.level === dragItem.level && dragItem.level < meta.maxLv) {
+    if (
+      dragItem.chain !== "combo" &&
+      target.chain === dragItem.chain &&
+      target.level === dragItem.level &&
+      dragItem.level < meta.maxLv
+    ) {
       cellEl.classList.add("cell-merge-hint");
-    } else if (findCrossRecipe(dragItem, target) !== null) {
-      cellEl.classList.add("cell-combo-hint");
     }
   });
 }
@@ -2180,7 +2108,7 @@ function renderOrdersUI(orderStatus) {
           <div class="order-req-box ${fulfilled ? "fulfilled" : ""}" title="${meta.name}: ${getRequirementRecipeSummary(req)}">
             ${fulfilled ? '<span class="req-check">✔</span>' : ""}
             <div class="order-req-svg">${svgArt}</div>
-            <span class="req-lv">${req.chain === "combo" ? "⚗️조합" : "Lv." + req.level}</span>
+            <span class="req-lv">Lv.${req.level}</span>
           </div>
         `;
       })
@@ -2355,19 +2283,8 @@ function renderInspectorUI() {
     return;
   }
 
-  const crossHint = CROSS_RECIPES.find(
-    (r) =>
-      (r.a.chain === item.chain && r.a.level === item.level) ||
-      (r.b.chain === item.chain && r.b.level === item.level)
-  );
-  if (crossHint) {
-    const partner =
-      crossHint.a.chain === item.chain && crossHint.a.level === item.level ? crossHint.b : crossHint.a;
-    const partnerMeta = getItemMeta(partner.chain, partner.level);
-    const resMeta = getItemMeta(crossHint.result.chain, crossHint.result.level);
-    descEl.textContent = `⚗️조합: [${partnerMeta.name} Lv.${partner.level}]와 합치면 [${resMeta.name}] 탄생!`;
-  } else if (meta.recipeText) {
-    descEl.textContent = `조합식: ${meta.recipeText}`;
+  if (item.chain === "combo") {
+    descEl.textContent = "이전 버전의 스페셜 조합품입니다. 더 이상 합성하거나 주문에 쓸 수 없고, 판매만 가능해요.";
   } else {
     descEl.textContent = `${meta.chainName} · 같은 재료끼리 드래그하여 상위 단계로 합치세요.`;
   }
@@ -2508,22 +2425,6 @@ function renderCodexModal() {
     </div>
   `;
   body.appendChild(genEvoCard);
-
-  // 2. 스페셜 이종 조합 카드
-  const comboCard = document.createElement("div");
-  comboCard.className = "codex-card";
-  comboCard.style.background = "#fefce8";
-  comboCard.style.borderColor = "#f59e0b";
-  comboCard.innerHTML = `
-    <h4>⚗️ 스페셜 이종 재료 조합(Cross-Combination) 레시피</h4>
-    <p style="font-size:11px;color:#475569;margin-bottom:6px">서로 다른 체인의 특정 재료를 드래그해 겹치면 새로운 스페셜 메뉴가 조합됩니다!</p>
-    <div style="display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:#1e293b">
-      <div>1️⃣ 🔥초급 마나물약(Lv.2) + 🪴몽환 달버섯(Lv.2) ➔ 🌟 특제 활력비약</div>
-      <div>2️⃣ 🧁버터 크루아상(Lv.2) + 🫖에스프레소(Lv.3) ➔ 🍽️ 모닝 브런치세트</div>
-      <div>3️⃣ 🦉봉인 주문서(Lv.2) + 💎사파이어(Lv.2) ➔ 🔮 마력 각인룬스톤</div>
-    </div>
-  `;
-  body.appendChild(comboCard);
 
   for (const [key, ch] of Object.entries(CHAINS)) {
     if (key === "combo") continue;

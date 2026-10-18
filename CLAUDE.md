@@ -4,43 +4,66 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-"크라운 & 가십: 마녀의 성" (Crown & Gossip) — a mobile-first, portrait-only merge game PWA with a Three.js 3D castle-decoration screen. All UI text, comments, and commit/changelog content are in Korean. Target device for layout tuning is a Galaxy S25 in portrait.
+"크라운 & 가십: 마녀의 성" (Crown & Gossip) — a mobile-first, portrait-only merge game shipped as a web PWA on Vercel. A PixiJS merge board feeds a Three.js 3D castle-decoration screen. All UI text, comments, and commit/changelog content are in Korean. Target device for layout tuning is a Galaxy S25 in portrait (412×915).
 
 ## Commands
 
-There is no build step, package.json, bundler, or linter. It is plain static files using browser globals (no ES modules).
-
-- Tests: pure game rules live in `progression.js` and are tested with Node's built-in runner: `node --test` (all) or `node --test tests/progression.test.js` (one file). `tests/helpers/load-global.js` loads `window.X` scripts into a Node `vm` context (`loadGlobalPlain` clones results so `deepStrictEqual` works across realms). DOM/UI behavior is verified manually in the browser.
-
-- Run locally: serve the repo root with any static server, e.g. `python3 -m http.server 8000`, then open http://localhost:8000. The service worker and absolute paths (`/sw.js`, `/manifest.json`) need it served from the root.
-- Deploy: the repo is linked to the Vercel project `kek-coding` (`.vercel/`). Deploy with `vercel` (preview) or `vercel --prod`. `vercel.json` only sets headers (no-cache for `sw.js`, manifest content type, security headers).
-- `vendor/three.min.js` and `vendor/gsap.min.js` are vendored copies loaded as globals (`THREE`, `gsap`). Don't swap them for CDN or npm imports.
+- `npm run dev`: Vite dev server on port 5173. The service worker is not registered in dev.
+- `npm test`: Vitest unit tests (`tests/unit`). To run one file: `npx vitest run tests/unit/board.test.ts`.
+- `npm run check`: svelte-check plus TypeScript.
+- `npm run build`, then `npm run preview`: production build into `dist/`, previewed on port 4173.
+- `npm run test:e2e`: Playwright E2E (`tests/e2e`) at a 412×915 viewport. It builds and serves preview automatically. It needs `npx playwright install chromium` once.
+- Deploy: Vercel project `kek-coding`. Pushing `main` triggers a production deploy (`vercel.json` uses the Vite framework and outputs `dist`).
+- Debug hooks: in dev, or with `?e2e` in the URL, `window.__game` is the core store, and `__board()` / `__castle()` return the live Pixi board and Three.js castle views.
 
 ## Architecture
 
-`index.html` loads scripts in this order, and each file depends on the globals defined before it:
+There are three layers. `src/core` never imports `window`, `document`, pixi.js, svelte, three, or gsap.
 
-1. `progression.js` → `window.GameProgression`: pure rules with no DOM (zone progress/unlock, order level caps, generator tier caps, boost cost, coin/gem prices, legacy star conversion). Other files call it; put new balance rules here so they can be unit-tested.
-2. `db.js` → `window.GameDB`: persistence. It saves to IndexedDB (`CrownGossipMergeDB` / `player_progress`, key `main_save_v1`) and mirrors every save to localStorage (`crown_gossip_save_backup_v1`). On load it takes whichever copy is newer. `mergeWithDefaultState(state, record, CHAINS, TOTAL_CELLS)` validates the saved data field by field, grants energy for offline time, and drops board/bag items and orders that reference a chain no longer in `CHAINS`. It also handles backup export/import strings.
-3. `sprites.js` → `window.GameSprites`: draws every item as an inline SVG string (`getItemSVG(chain, level, isGenerator)`, `getCrateSVG`, `getEventSVG`). Every chain × level is expected to have a unique design.
-4. `interior3d.js` → `window.Interior3DEngine`: the Three.js + GSAP castle screen. `ROOM_THEMES` defines the 4 castle zones and their restorable "spots" (cost, styles, story cutscene dialogue). Its public API is the object returned at the bottom of the file (`init`, `switchTheme`, `exportRoomsState`/`importRoomsState`, etc.).
-5. `game.js`: everything else. The single mutable `state` object, game data tables (`CHAINS` with generator `tiers`, `CUSTOMERS_BY_ZONE`, `HOLIDAY_EVENTS`), the 7×8 main board, the 5×5 holiday event board, pointer-based drag/merge engines (`drag`, `evDrag`), orders/quests, XP/levels, modals, and `bindUIEvents()`. Entry point is `init()` on `DOMContentLoaded`.
+- **`src/core`**: pure game logic.
+  - `types.ts`: `GameState` and the other shared types.
+  - `rules/`: data and balance.
+    - `progression.ts`: zone unlock, order caps, generator tier caps, boost, prices, holiday rewards.
+    - `chains.ts`, `customers.ts`, `holidays.ts`, `rooms.ts` (spots, dialogues, `ambienceByProgress`), `characters.ts`, `versionHistory.ts`.
+  - `actions/*.ts`: every state change is an `Action<P> = (draft, ctx, payload) => GameEvent[]`. Groups are `board`, `orders`, `progress`, `castle`, and `holiday`.
+  - `store.ts`: `dispatch(action, payload, {transient?})` runs the action on a `structuredClone`, swaps in the new state, then notifies `subscribe` (Svelte store contract), `onCommit`, and `onEvent`.
+  - `ctx.ts`: injects time and RNG, so tests are deterministic.
+  - `economy.ts`: `grant`/`spend` is the single gateway for coins, gems, and energy. Replace it with a server adapter later for payments.
+- **`src/services`**: side effects.
+  - `save/repository.ts`: IndexedDB `CrownGossipMergeDB`/`player_progress`/`main_save_v1` plus localStorage `crown_gossip_save_backup_v1`. It loads whichever copy is newer. Records are `schemaVersion: 4`.
+  - `save/restore.ts`: `restoreState(record, now, ctx)` validates every field and restores offline energy.
+  - `save/migrations.ts`: v2 records (schema ≤3) get a one-time cleanup and return a `MigrationReport`.
+  - `save/autosave.ts`: batches saves over 300ms, saves immediately for gems, restores, zone completion, and purchases, and skips transient commits.
+  - Also: `save/backup.ts` (v2-compatible backup codes), `audio.ts`, `haptics.ts`.
+- **`src/views`**: rendering only. Views read state and play events. They never decide rules.
+  - `ui/`: Svelte 5. `App.svelte`, `components/` (HUD), `modals/`, `castle/` (castle screen, pins, style picker, reward overlay).
+    - `ui.svelte.ts` holds UI-only state that is not saved. It also has `act()`, which dispatches an action and turns `rejected` events into toasts.
+    - CSS is the v2 stylesheet (`styles/legacy.css`, class names kept) plus `styles/v3.css`.
+  - `board/`: Pixi board. `BoardView.ts` handles cells, tiles, input, slide tweens, and particles. `visuals.ts` maps state to `CellVisual`. `BoardCanvas.svelte` wires the main 7×8 or holiday 5×5 board.
+  - `fx/`: `FxLayer` is a full-screen click-through Pixi canvas for flights between the board and the HTML UI. `juice.ts` maps events to effects.
+  - `castle/`: `CastleView.ts` (Three.js), `scenes.ts`/`furniture.ts` (ported v2 meshes), `ambience.ts` (room mood 0–5), `layout.ts` (3D positions).
+  - `reward/RewardDirector.ts`: sequences a restore: 3D drop, ribbon, reaction, cutscene, then (on zone complete) the showcase, a gem flight, and the next-zone reveal. Input stays locked throughout.
+  - `art/`: `sprites.ts` (SVG item art) and `textures.ts` (SVG → Pixi texture cache keyed by `item:chain:lv`, `gen:chain:lv`, `crate`, `event:lv`, `eventGen`).
+- `src/main.ts` wires everything together. `src/sw.ts` is the Workbox injectManifest service worker, built to `/sw.js`.
 
-Data flow: game actions mutate `state`, then call `renderAll()` (or a specific `render*UI()` function) and `triggerAutoSave()`. `triggerAutoSave()` builds the save payload by hand from `state` plus `Interior3DEngine.exportRoomsState()`.
+### Invariants
 
-### Invariants to keep when changing things
+- **Rules live in core.** Add or change gameplay as an action plus a unit test, written test-first. Views call `act(action, payload)`. Effects react to `GameEvent`s and must not mutate state.
+- **Save compatibility:** never rename save keys or the DB/store names.
+  - A new persisted field goes in three places: the `GameState` type and `createInitialState`, the field-by-field restore in `restore.ts`, and a v4 round-trip test.
+  - The v2 cleanup in `migrations.ts` runs only for `schemaVersion < 4`.
+- **Currency:** never change coins, gems, or energy except through `economy.grant`/`spend`.
+  - Gems are premium. They come only from holiday missions (capped at 10 per event), zone completion (💎50), level-ups (💎3), and the migration.
+  - The holiday event gives no energy.
+- **Story order:** zones unlock in `ZONE_ORDER`. Spots are restored in `rooms.ts` order (chapter N). `castle.renovate` re-checks the next chapter and the coin cost at confirm time.
+- **Rendering sync:** `BoardView.render()` always reconciles against the latest state. Effects use temporary copies, or nodes picked up after the next frame (`afterRender`). Pixi apps must be destroyed with `texture/textureSource/context: false`, because textures are shared across canvases.
+- **three r186 lighting** is physically based. `legacyLightCompensate` multiplies v2-era intensities by π.
 
-- **Adding a persisted field** requires three edits: the default in `state` (game.js), the payload in `triggerAutoSave()`, and a validated restore in `GameDB.mergeWithDefaultState` (db.js). Saves must stay backward compatible. Players' existing progress must never break, so don't rename existing keys. For example, room theme keys `alchemy`/`harbor`/`garden`/`banquet` are kept even though the zones were renamed.
-- **Energy rules** (cap 100, +1 every 300s) are defined twice: in `db.js` (`NATURAL_ENERGY_CAP`, `ENERGY_REGEN_INTERVAL_SEC`) and in `game.js` (`NATURAL_ENERGY_CAP`, `ENERGY_REGEN_SEC`). Keep them in sync.
-- **Currencies (v2.5.0):** 🪙 coins pay for story/renovation (`spot.cost × zone unit` via `GameProgression.getSpotCoinCost`); 💎 `gems` are premium (holiday missions, zone completion, level-up only — never from normal merges/orders) and buy energy or order items. There is no 🌟 star currency anymore; legacy saves convert stars to coins once in `db.js`. Keep new energy sources scarce.
-- **Story order is fixed:** zones unlock in `GameProgression.ZONE_ORDER`, and spots must be restored in `ROOM_THEMES` array order (chapter N). Any new entry point that renovates a spot must go through `Interior3DEngine.focusOnSpotForDesign`, which enforces the lock.
-- **Adding a chain or level** means updating `CHAINS` in game.js and the matching SVG case in sprites.js.
+## Releasing
 
-### Releasing a version
+1. Add an entry at the top of `VERSION_HISTORY` in `src/core/rules/versionHistory.ts`, bump `APP_VERSION`, and move the `LATEST` badge. The changelog pops up once when `lastSeenVersion` differs.
+2. Bump `version` in `package.json`.
+3. Run `npm test && npm run check && npm run test:e2e`.
+4. Merge to `main` and push. Vercel builds it, and the service worker precache updates automatically. No manual cache-name bump is needed.
 
-Each release so far has bumped all of these together:
-- `APP_VERSION` and a new entry at the top of `VERSION_HISTORY` in game.js. The changelog popup appears when the version differs from the saved `lastSeenVersion`. Move the `LATEST` badge to the new entry.
-- The header comment at the top of game.js.
-- `CACHE_NAME` in `sw.js` (e.g. `crown-gossip-pwa-v5` → `v6`). The SW is network-first, so this mainly clears old offline caches. If you add a new static file, add it to `ASSETS` there too.
-
-Commit messages follow `feat(vX.Y.Z): ...` style.
+Commit messages follow `feat(vX.Y.Z): ...` in Korean.

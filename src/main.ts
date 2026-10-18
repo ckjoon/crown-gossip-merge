@@ -21,6 +21,7 @@ import { getMainBoard } from "./views/board/registry";
 import { getCastleView } from "./views/castle/registry";
 import { captureInstallPrompt } from "./views/ui/install";
 import { attachRewardDirector } from "./views/reward/RewardDirector";
+import { registerServiceWorker } from "./views/ui/pwa";
 
 function safeLocalStorage(): Storage | null {
   try {
@@ -65,6 +66,7 @@ async function boot(): Promise<void> {
   await fx.init();
   attachJuice(store, fx, sfx);
   attachRewardDirector(store, fx, sfx);
+  registerServiceWorker();
 }
 
 void boot();

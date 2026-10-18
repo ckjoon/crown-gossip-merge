@@ -17,7 +17,7 @@ window.GameSprites = (function () {
   }
 
   function getItemSVG(chain, level, isGenerator = false) {
-    if (isGenerator) return getGeneratorSVG(chain);
+    if (isGenerator) return getGeneratorSVG(chain, level || 1);
     switch (chain) {
       case "potion":
         return getPotionSVG(level);
@@ -44,30 +44,68 @@ window.GameSprites = (function () {
     }
   }
 
-  // ==================== 5종 생성기 아이콘 ====================
-  function getGeneratorSVG(chain) {
-    const uid = `gen_${chain}`;
+  // ==================== 5종 생성기 아이콘 (Lv.1 ➔ Lv.2 ➔ Lv.3 합성 진화별 고유 외형!) ====================
+  function getGeneratorSVG(chain, level = 1) {
+    const uid = `gen_${chain}_${level}`;
     if (chain === "potion") {
+      if (level === 1) {
+        // Lv.1 수습 마법 가마솥 (무쇠 가마솥 + 보라 거품)
+        return svgWrap(
+          `
+          <path d="M16 54 Q24 42 32 54 Q40 42 48 54 Z" fill="#ff6b35"/>
+          <path d="M22 55 Q32 44 42 55 Z" fill="#fde047"/>
+          <ellipse cx="32" cy="36" rx="20" ry="15" fill="url(#${uid})" stroke="#1e1b4b" stroke-width="2.5"/>
+          <ellipse cx="32" cy="24" rx="17" ry="6" fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
+          <ellipse cx="32" cy="24" rx="14" ry="4.5" fill="#c084fc"/>
+          <circle cx="27" cy="22" r="3" fill="#f0abfc"/>
+          <circle cx="36" cy="20" r="2.2" fill="#e879f9"/>
+          <circle cx="32" cy="14" r="2.5" fill="#f0abfc"/>
+        `,
+          uid,
+          "#4c1d95",
+          "#1e1b4b"
+        );
+      }
+      if (level === 2) {
+        // Lv.2 황금 연금술 가마솥 (합성 시 다른 성질로 변화! 에메랄드 영혼불꽃 + 황금 룬 가마솥)
+        return svgWrap(
+          `
+          <path d="M12 56 Q22 40 32 56 Q42 40 52 56 Z" fill="#10b981"/>
+          <path d="M20 56 Q32 42 44 56 Z" fill="#a7f3d0"/>
+          <circle cx="12" cy="34" r="5" fill="none" stroke="#fde047" stroke-width="2.5"/>
+          <circle cx="52" cy="34" r="5" fill="none" stroke="#fde047" stroke-width="2.5"/>
+          <ellipse cx="32" cy="36" rx="20" ry="15" fill="url(#${uid})" stroke="#fef08a" stroke-width="2.5"/>
+          <ellipse cx="32" cy="23" rx="17" ry="6" fill="#78350f" stroke="#fde047" stroke-width="2"/>
+          <ellipse cx="32" cy="23" rx="14" ry="4.5" fill="#34d399"/>
+          <polygon points="32,8 34,14 40,14 35,18 37,24 32,20 27,24 29,18 24,14 30,14" fill="#fde047"/>
+        `,
+          uid,
+          "#f59e0b",
+          "#92400e"
+        );
+      }
+      // Lv.3 태고의 성배 신화 가마솥 (날개 달린 왕실 성배 가마솥 + 무지개 성운 코어)
       return svgWrap(
         `
-        <path d="M16 54 Q24 42 32 54 Q40 42 48 54 Z" fill="#ff6b35"/>
-        <path d="M22 55 Q32 44 42 55 Z" fill="#fde047"/>
-        <ellipse cx="32" cy="36" rx="20" ry="15" fill="url(#${uid})" stroke="#1e1b4b" stroke-width="2.5"/>
-        <ellipse cx="32" cy="24" rx="17" ry="6" fill="#312e81" stroke="#1e1b4b" stroke-width="2"/>
-        <ellipse cx="32" cy="24" rx="14" ry="4.5" fill="#c084fc"/>
-        <circle cx="27" cy="22" r="3" fill="#f0abfc"/>
-        <circle cx="36" cy="20" r="2.2" fill="#e879f9"/>
-        <circle cx="32" cy="14" r="2.5" fill="#f0abfc"/>
+        <path d="M6 28 Q16 14 22 28 Q14 36 6 28 Z" fill="#fef08a" stroke="#d97706" stroke-width="1.5"/>
+        <path d="M58 28 Q48 14 42 28 Q50 36 58 28 Z" fill="#fef08a" stroke="#d97706" stroke-width="1.5"/>
+        <path d="M14 56 Q32 38 50 56 Z" fill="#38bdf8"/>
+        <ellipse cx="32" cy="36" rx="19" ry="15" fill="url(#${uid})" stroke="#fde047" stroke-width="2.8"/>
+        <ellipse cx="32" cy="22" rx="16" ry="5.5" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+        <polygon points="22,16 26,8 32,14 38,8 42,16" fill="#fde047" stroke="#b45309" stroke-width="1.5"/>
       `,
         uid,
-        "#4c1d95",
-        "#1e1b4b"
+        "#ec4899",
+        "#6d28d9"
       );
     }
     if (chain === "grimoire") {
+      const c1 = level === 1 ? "#b45309" : level === 2 ? "#7c3aed" : "#0284c7";
+      const c2 = level === 1 ? "#78350f" : level === 2 ? "#3b0764" : "#1e3a8a";
+      const border = level === 1 ? "#451a03" : "#fde047";
       return svgWrap(
         `
-        <rect x="12" y="10" width="40" height="46" rx="5" fill="url(#${uid})" stroke="#451a03" stroke-width="2.5"/>
+        <rect x="12" y="10" width="40" height="46" rx="5" fill="url(#${uid})" stroke="${border}" stroke-width="2.5"/>
         <rect x="16" y="15" width="32" height="16" rx="2" fill="#291507"/>
         <rect x="16" y="35" width="32" height="16" rx="2" fill="#291507"/>
         <rect x="18" y="17" width="6" height="14" rx="1" fill="#ef4444"/>
@@ -76,41 +114,49 @@ window.GameSprites = (function () {
         <rect x="40" y="19" width="6" height="12" rx="1" fill="#eab308"/>
         <circle cx="25" cy="43" r="6" fill="#38bdf8" stroke="#bae6fd" stroke-width="1.5"/>
         <rect x="34" y="38" width="11" height="13" rx="1.5" fill="#10b981"/>
+        ${level >= 2 ? '<polygon points="32,4 35,11 29,11" fill="#fde047"/>' : ""}
       `,
         uid,
-        "#b45309",
-        "#78350f"
+        c1,
+        c2
       );
     }
     if (chain === "herb") {
+      const potC1 = level === 1 ? "#f97316" : level === 2 ? "#10b981" : "#f59e0b";
+      const potC2 = level === 1 ? "#9a3412" : level === 2 ? "#065f46" : "#78350f";
+      const flw = level === 1 ? "#f472b6" : level === 2 ? "#fde047" : "#38bdf8";
       return svgWrap(
         `
         <path d="M16 38 V24 A16 16 0 0 1 48 24 V38 Z" fill="rgba(186,230,253,0.45)" stroke="#38bdf8" stroke-width="2"/>
         <path d="M32 38 V20" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/>
         <path d="M32 28 Q22 22 20 28 Q24 34 32 28 Z" fill="#4ade80"/>
         <path d="M32 25 Q42 19 44 25 Q40 31 32 25 Z" fill="#22c55e"/>
-        <circle cx="32" cy="18" r="5" fill="#f472b6" stroke="#fbcfe8" stroke-width="1.5"/>
-        <polygon points="14,38 50,38 44,54 20,54" fill="url(#${uid})" stroke="#7c2d12" stroke-width="2.5"/>
+        <circle cx="32" cy="18" r="${level >= 2 ? 6.5 : 5}" fill="${flw}" stroke="#ffffff" stroke-width="1.5"/>
+        <polygon points="14,38 50,38 44,54 20,54" fill="url(#${uid})" stroke="#fde047" stroke-width="2"/>
       `,
         uid,
-        "#f97316",
-        "#9a3412"
+        potC1,
+        potC2
       );
     }
     if (chain === "bakery") {
+      const c1 = level === 1 ? "#dc2626" : level === 2 ? "#d97706" : "#9333ea";
+      const c2 = level === 1 ? "#7f1d1d" : level === 2 ? "#78350f" : "#3b0764";
       return svgWrap(
         `
-        <path d="M12 52 V28 A20 20 0 0 1 52 28 V52 Z" fill="url(#${uid})" stroke="#7f1d1d" stroke-width="2.5"/>
+        <path d="M12 52 V28 A20 20 0 0 1 52 28 V52 Z" fill="url(#${uid})" stroke="#fde047" stroke-width="2.5"/>
         <path d="M20 52 V34 A12 12 0 0 1 44 34 V52 Z" fill="#450a0a" stroke="#fbbf24" stroke-width="2"/>
-        <ellipse cx="32" cy="45" rx="9" ry="5" fill="#fb923c"/>
+        <ellipse cx="32" cy="45" rx="9" ry="5" fill="${level >= 2 ? "#38bdf8" : "#fb923c"}"/>
         <ellipse cx="32" cy="43" rx="7" ry="3.5" fill="#fde047"/>
       `,
         uid,
-        "#dc2626",
-        "#7f1d1d"
+        c1,
+        c2
       );
     }
     if (chain === "tea") {
+      const c1 = level === 1 ? "#0284c7" : level === 2 ? "#ec4899" : "#eab308";
+      const c2 = level === 1 ? "#1e3a8a" : level === 2 ? "#831843" : "#713f12";
       return svgWrap(
         `
         <path d="M46 28 Q58 24 54 36 Q50 42 44 40" fill="none" stroke="#fbbf24" stroke-width="4" stroke-linecap="round"/>
@@ -120,8 +166,8 @@ window.GameSprites = (function () {
         <circle cx="32" cy="17" r="3.5" fill="#fbbf24"/>
       `,
         uid,
-        "#0284c7",
-        "#1e3a8a"
+        c1,
+        c2
       );
     }
     return getGemSVG(5);

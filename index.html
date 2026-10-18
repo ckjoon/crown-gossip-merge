@@ -25,7 +25,7 @@
       <div class="lv-banner-icon">👑</div>
       <div class="lv-banner-text">
         <strong id="lv-banner-title">연금술사 레벨 업! Lv.2 달성!</strong>
-        <span id="lv-banner-sub">보너스 코인 &amp; 번개 지급 완료!</span>
+        <span id="lv-banner-sub">보너스 코인 &amp; 생성기 진화 파츠 지급 완료!</span>
       </div>
     </div>
 
@@ -67,17 +67,17 @@
         </div>
       </div>
 
+      <!-- 우측 상단 버튼: 명절 이벤트(🎃), 레시피 도감(📖), 통합 설정 메뉴(⚙️) -->
       <div class="gh-top-btns">
         <button class="gh-icon-btn event-top-btn" id="btn-open-event" title="전세계 명절 한정 팝업 이벤트">🎃</button>
-        <button class="gh-icon-btn" id="btn-open-db" title="로컬 DB 저장 상태 및 앱 설치">💾</button>
         <button class="gh-icon-btn" id="btn-open-codex" title="아이템 체인 & 조합 레시피 도감">📖</button>
-        <button class="gh-icon-btn" id="btn-toggle-sound" title="사운드 켜기/끄기">🔊</button>
+        <button class="gh-icon-btn" id="btn-open-settings" title="설정 메뉴 (사운드, 버전 패치노트, DB 백업, 앱 설치)">⚙️</button>
       </div>
     </header>
 
     <!-- =========================================================================
          [화면 A] 🏰 마녀의 성 (3D 성 전체지도 & 구역별 인테리어 꾸미기 화면)
-         - '성으로 가기'를 누르면 나타나는 화면
+         - '성으로 가기'를 누르면 나타나는 화면 (마녀의 공방 3D 시야 잘림 완벽 해결)
          - 오른쪽 하단(Bottom-Right)에 현재 섹션 아이콘(🔮/🏖️/🌿/👑) 버튼이 위치하며,
            누르면 해당 섹션의 아이콘 합성(Merge) 페이지로 즉시 진입!
     ========================================================================== -->
@@ -117,39 +117,41 @@
       <!-- 마녀의 성 현재 구역 퀘스트 목록 & 스토리 대사 패널 -->
       <div class="castle-quest-panel">
         <div class="castle-quest-header">
-          <strong id="castle-quest-zone-name">📜 현재 구역 복구 퀘스트 (클릭하여 시공 또는 스토리 감상)</strong>
+          <strong id="castle-quest-zone-name">📜 현재 구역 복구 퀘스트 (완료 시 생성기 진화 파츠 지급!)</strong>
           <span id="castle-total-prog">성 전체 0/20</span>
         </div>
         <div class="castle-quest-strip" id="castle-quest-strip"></div>
         <div class="gh-dialogue-bar" id="castle-dialogue-bar">
           <span class="speaker-tag" id="castle-speaker-tag">🧙‍♀️ 셀레네:</span>
-          <span class="dialogue-text" id="castle-dialogue-text">"오른쪽 아래 섹션 아이콘(🔮)을 누르면 재료를 합성하는 보드로 들어갈 수 있어요!"</span>
+          <span class="dialogue-text" id="castle-dialogue-text">"퀘스트를 완료하면 가마솥 같은 생성기를 합성·진화시킬 수 있는 파츠도 드려요!"</span>
         </div>
       </div>
     </section>
 
     <!-- =========================================================================
          [화면 B] 🔮 아이콘 합성 보드 페이지 (Merge & Customer Orders 화면)
-         - Galaxy S25 화면 비율에 100% 최적화되어 잘림 없이 한눈에 들어오는 레이아웃
-         - 좌측 하단 '🏰 성으로 가기' 버튼을 누르면 언제든 마녀의 성 꾸미기 화면으로 이동!
+         - 각 손님 주문(Quest) 카드에 어떤 생성기/재료 조합으로 만드는지 레시피 힌트 직접 표시!
     ========================================================================== -->
     <section class="screen-view" id="view-merge">
-      <!-- 명절 한정 팝업 이벤트 미니 배너 & 현재 구역 표시 바 -->
+      <!-- 명절 한정 팝업 이벤트 미니 배너 & 버전 배지 -->
       <div class="merge-subbar">
         <button class="holiday-mini-banner" id="btn-banner-event">
           <span class="ev-pulse-dot"></span>
           <span id="banner-event-title">🎃 할로윈 호박제 이벤트 진행중!</span>
           <b id="banner-event-timer">D-5</b>
-          <span class="ev-enter-tag">⚡번개&amp;재료 획득 ➔</span>
+          <span class="ev-enter-tag">⚡번개&amp;재료 합성 ➔</span>
+        </button>
+        <button class="version-pill-btn" id="btn-open-changelog" title="버전 히스토리 및 업데이트 내역 보기">
+          🆕 <span id="top-version-label">v2.4.0</span>
         </button>
       </div>
 
-      <!-- 손님 주문 대기열 & 한줄 스토리 바 -->
+      <!-- 손님 주문 대기열 (재료 출처 & 조합식이 직접 표시됨!) & 한줄 스토리 바 -->
       <div class="orders-and-story">
         <div class="gh-orders-strip" id="orders-strip"></div>
         <div class="gh-dialogue-bar" id="dialogue-bar">
           <span class="speaker-tag" id="speaker-tag">🧙‍♀️ 셀레네:</span>
-          <span class="dialogue-text" id="dialogue-text">"재료를 합성해 주문을 완성하고, [🏰 성으로 가기]를 눌러 마녀의 성을 꾸며보세요!"</span>
+          <span class="dialogue-text" id="dialogue-text">"주문 카드를 누르면 어떤 생성기나 재료 조합이 필요한지 자세히 알려드려요!"</span>
         </div>
       </div>
 
@@ -192,7 +194,7 @@
               <strong id="insp-name">생성기를 탭하거나 재료를 드래그하세요</strong>
               <span class="insp-lv-badge" id="insp-lv">안내</span>
             </div>
-            <p id="insp-desc">같은 아이템을 합치거나 이종 재료를 조합하세요!</p>
+            <p id="insp-desc">같은 생성기끼리도 합성(Lv.1➔Lv.2➔Lv.3)하여 새로운 성질로 진화시킬 수 있습니다!</p>
           </div>
           <div class="insp-actions" id="insp-actions"></div>
         </div>
@@ -233,28 +235,26 @@
     </div>
 
     <!-- =========================================================================
-         모달 1: 🎃 전세계 공통 명절 기준 기한 한정 팝업 이벤트 (이벤트 전용 5x5 합성 보드)
-         - 예: 할로윈 5일 전(10/26) ~ 할로윈 당일 끝나는 날(10/31 23:59)까지
-         - 합성하여 본 게임에서 쓸 수 있는 '번개(⚡)' 및 '본 게임 재료' 획득!
+         모달 1: 🎃 전세계 공통 명절 기준 기한 한정 팝업 이벤트 (드래그&드롭 + 탭 합성 완벽 지원!)
     ========================================================================== -->
     <div class="gh-modal-backdrop hidden" id="modal-holiday-event">
       <div class="gh-modal holiday-event-modal">
         <div class="gh-modal-header event-modal-header">
           <div>
             <h2 id="event-modal-title">🎃 할로윈 마법 호박제 (기한 한정 이벤트)</h2>
-            <small id="event-modal-period" style="color:#fde68a;font-size:10.5px">기간: 할로윈 5일 전(10/26) ~ 당일(10/31 24:00) · 남은 시간: 계산중</small>
+            <small id="event-modal-period" style="color:#fde68a;font-size:10.5px">기간: 할로윈 5일 전(10/26) ~ 당일(10/31 24:00)</small>
           </div>
           <button class="gh-close-btn" data-close="modal-holiday-event">✕</button>
         </div>
         <div class="gh-modal-body event-modal-body">
-          <!-- 명절 테마 선택/미리보기 탭 (할로윈 / 크리스마스 / 설날·신년 / 발렌타인 / 추석·수확제) -->
+          <!-- 명절 테마 선택/미리보기 탭 -->
           <div class="holiday-schedule-bar" id="holiday-schedule-bar"></div>
 
           <!-- 이벤트 미션 & 보상 안내 카드 -->
           <div class="event-mission-box">
             <div class="event-mission-info">
               <strong id="event-mission-title">🎯 명절 합성 미션: Lv.3 이상 이벤트 아이템 완성하기</strong>
-              <p>이벤트 보드에서 호박/사탕을 합성하면 <b>본 게임 번개(⚡)</b>와 <b>본 게임 고급 재료</b>를 즉시 획득합니다!</p>
+              <p>같은 이벤트 아이콘을 <b>드래그하여 겹치거나 연속 탭</b>하면 상위 단계로 합성됩니다!</p>
             </div>
             <div class="event-Target-reward" id="event-target-box">
               <div class="ev-req-slot" id="ev-req-svg"></div>
@@ -262,7 +262,7 @@
             </div>
           </div>
 
-          <!-- 이벤트 전용 5x5 미니 합성 보드 -->
+          <!-- 이벤트 전용 5x5 미니 합성 보드 (드래그 앤 드롭 & 탭 합성 모두 지원!) -->
           <div class="event-board-wrap">
             <div class="event-board-grid" id="event-board-grid"></div>
           </div>
@@ -284,7 +284,7 @@
     <div class="gh-modal-backdrop hidden" id="modal-codex">
       <div class="gh-modal">
         <div class="gh-modal-header">
-          <h2>📖 생성기 체인 &amp; 스페셜 조합 레시피 도감</h2>
+          <h2>📖 생성기 진화 &amp; 스페셜 조합 레시피 도감</h2>
           <button class="gh-close-btn" data-close="modal-codex">✕</button>
         </div>
         <div class="gh-modal-body" id="codex-body"></div>
@@ -299,7 +299,7 @@
           <button class="gh-close-btn" data-close="modal-bag">✕</button>
         </div>
         <div class="gh-modal-body">
-          <p class="bag-help">보드가 좁을 때 재료를 보관해 두세요. 아래 슬롯을 클릭하면 다시 보드로 꺼냅니다.</p>
+          <p class="bag-help">보드가 좁을 때 재료나 여분의 생성기 파츠를 보관해 두세요. 슬롯을 탭하면 보드로 꺼냅니다.</p>
           <div class="bag-grid" id="bag-grid"></div>
         </div>
       </div>
@@ -309,48 +309,86 @@
     <div class="gh-modal-backdrop hidden" id="modal-level">
       <div class="gh-modal">
         <div class="gh-modal-header">
-          <h2>👑 연금술사 레벨 &amp; 번개(⚡) 경제 안내</h2>
+          <h2>👑 연금술사 레벨 &amp; 생성기 진화 보상</h2>
           <button class="gh-close-btn" data-close="modal-level">✕</button>
         </div>
         <div class="gh-modal-body" id="level-modal-body"></div>
       </div>
     </div>
 
-    <!-- 모달 5: 로컬 DB 저장 관리 & 안드로이드 보안 인증 PWA 설치 -->
-    <div class="gh-modal-backdrop hidden" id="modal-db">
+    <!-- =========================================================================
+         모달 5: ⚙️ 통합 설정 메뉴 (사운드 설정, 버전 히스토리, PWA 앱 설치, 로컬 DB 백업)
+    ========================================================================== -->
+    <div class="gh-modal-backdrop hidden" id="modal-settings">
       <div class="gh-modal">
         <div class="gh-modal-header">
-          <h2>💾 로컬 DB 영구 저장소 &amp; 안드로이드 앱 설치</h2>
-          <button class="gh-close-btn" data-close="modal-db">✕</button>
+          <h2>⚙️ 환경설정 &amp; 시스템 관리</h2>
+          <button class="gh-close-btn" data-close="modal-settings">✕</button>
         </div>
         <div class="gh-modal-body">
+          <!-- 1. 기본 게임 설정 (사운드 등) -->
+          <div class="codex-card" style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <h4 style="margin-bottom:2px">🔊 게임 효과음 (SFX) 설정</h4>
+              <p style="font-size:11px;color:#64748b">합성, 주문 완료, 시공 연출 사운드를 켜거나 끕니다.</p>
+            </div>
+            <button class="insp-btn spawn-btn" id="btn-toggle-sound" style="padding:8px 14px;font-size:12px">
+              🔊 사운드 켜짐
+            </button>
+          </div>
+
+          <!-- 2. 버전 정보 & 업데이트 기록 보기 -->
+          <div class="codex-card" style="background:#fefce8;border-color:#f59e0b;display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <h4 style="margin-bottom:2px;color:#92400e">🆕 현재 게임 버전: <span id="settings-version-text">v2.4.0</span></h4>
+              <p style="font-size:11px;color:#78350f">버전별 새로 추가된 기능과 개발 히스토리를 확인하세요.</p>
+            </div>
+            <button class="insp-btn sell-btn" id="btn-settings-open-changelog" style="padding:8px 12px;font-size:11.5px">
+              📜 패치노트 보기
+            </button>
+          </div>
+
+          <!-- 3. 안드로이드 공식 웹앱 설치 -->
           <div class="codex-card" style="background:#eff6ff;border-color:#3b82f6">
             <h4>🛡️ 안드로이드(Galaxy S25) 보안 인증 PWA 설치</h4>
-            <p style="font-size:11.5px;color:#1e3a8a;line-height:1.45;margin-bottom:8px">
-              구글 크롬 표준 WebAPK 보안 규격(독립 아이콘 분리 및 HTTPS 보안 헤더)이 적용되어 보안 경고 없이 안전하게 설치됩니다.<br/>
-              • 아래 <b>[📲 공식 앱 즉시 설치]</b> 버튼을 누르거나, 크롬 우측 상단 메뉴(⋮) ➔ <b>'홈 화면에 추가 / 앱 설치'</b>를 누르세요.<br/>
-              • <small>(참고: 갤럭시 One UI '보안 위험 자동 차단' 기능이 켜져 있을 때 구형 바로가기가 경고를 띄우면 크롬 최신 메뉴의 <b>'홈 화면에 추가 ➔ 앱 설치'</b>를 선택하면 정식 Google WebAPK로 설치됩니다.)</small>
+            <p style="font-size:11px;color:#1e3a8a;line-height:1.4;margin-bottom:7px">
+              Google WebAPK 보안 규격이 적용되어 경고 없이 안전하게 설치됩니다.
             </p>
-            <button class="insp-btn spawn-btn" id="btn-install-pwa" style="width:100%;padding:9px;font-size:12px">
+            <button class="insp-btn spawn-btn" id="btn-install-pwa" style="width:100%;padding:8px;font-size:11.5px">
               📲 안드로이드 / 모바일 공식 웹앱 즉시 설치하기
             </button>
           </div>
+
+          <!-- 4. 로컬 DB 백업 & 복원 -->
           <div class="codex-card" style="background:#ecfdf5;border-color:#10b981">
-            <h4>✅ IndexedDB + LocalStorage 이중 보호 활성화됨</h4>
-            <p style="font-size:11.5px;color:#065f46;line-height:1.4">
-              모든 진행 상황(레벨, 코인, 번개, 보드 타일, 마녀의 성 3D 인테리어, 명절 이벤트 보드)은 즉시 기기 내 로컬 데이터베이스에 자동 저장되며 업데이트 후에도 절대 초기화되지 않습니다.
+            <h4>💾 로컬 DB 영구 저장소 &amp; 백업 코드</h4>
+            <p style="font-size:10.5px;color:#065f46;line-height:1.35;margin-bottom:6px">
+              IndexedDB + LocalStorage 이중 저장으로 앱이 새 버전으로 업데이트되어도 기존 진행도는 100% 보존됩니다.
             </p>
-          </div>
-          <div class="codex-card">
-            <h4>🔄 백업 코드 내보내기 / 복원하기</h4>
-            <p style="font-size:11px;color:#64748b;margin-bottom:6px">다른 휴대폰이나 PC로 진행도를 옮기고 싶을 때 사용하세요.</p>
-            <textarea id="backup-code-box" rows="3" style="width:100%;font-size:10px;padding:6px;border-radius:8px;border:1px solid #cbd5e1" placeholder="백업 코드가 여기에 표시됩니다..."></textarea>
+            <textarea id="backup-code-box" rows="2" style="width:100%;font-size:10px;padding:6px;border-radius:8px;border:1px solid #cbd5e1" placeholder="백업 코드가 여기에 표시됩니다..."></textarea>
             <div style="display:flex;gap:6px;margin-top:6px">
-              <button class="insp-btn spawn-btn" id="btn-export-save" style="flex:1;padding:8px">📤 백업 코드 생성/복사</button>
-              <button class="insp-btn sell-btn" id="btn-import-save" style="flex:1;padding:8px">📥 코드로 진행도 복원</button>
+              <button class="insp-btn spawn-btn" id="btn-export-save" style="flex:1;padding:7px">📤 백업 코드 복사</button>
+              <button class="insp-btn sell-btn" id="btn-import-save" style="flex:1;padding:7px">📥 코드로 복원</button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         모달 6: 🆕 버전 업데이트 알림 팝업 & 버전 Progression 기록 (Changelog Modal)
+         - 새 버전으로 업데이트될 때 자동으로 팝업되어 어떤 기능이 새로 추가되었는지 안내합니다!
+    ========================================================================== -->
+    <div class="gh-modal-backdrop hidden" id="modal-changelog">
+      <div class="gh-modal">
+        <div class="gh-modal-header" style="background:linear-gradient(90deg,#1e3a8a,#5b21b6)">
+          <div>
+            <h2 id="changelog-modal-title">🆕 업데이트 안내 및 버전 히스토리</h2>
+            <small style="color:#bae6fd;font-size:10.5px">새 버전이 배포될 때마다 추가된 기능이 자동으로 기록됩니다</small>
+          </div>
+          <button class="gh-close-btn" data-close="modal-changelog">확인 ✕</button>
+        </div>
+        <div class="gh-modal-body" id="changelog-body"></div>
       </div>
     </div>
   </div>

@@ -1,6 +1,59 @@
 // game.js — 크라운 & 가십: 마녀의 성 3D 인테리어 빌딩 & 멀티 체인 합성(Merge) 게임
-// Galaxy S25 최적화 2-Screen 구조 (🏰 마녀의 성 꾸미기 화면 ↔ 🔮 아이콘 합성 보드 페이지),
-// 퀘스트별 스토리 컷신, 전세계 명절 기준 기한 한정 팝업 이벤트, 5분당 1개(최대 100개) 번개(⚡) 경제 시스템
+// v2.4.0: 생성기 합성 진화(Lv.1➔Lv.2➔Lv.3 성질 변화), 퀘스트 재료 조합법 표시, 명절 이벤트 드래그 합성 버그 수정,
+//         마녀의 공방 3D/탭 잘림 해결, 통합 설정(⚙️) 메뉴 및 버전 업데이트 히스토리 팝업 시스템
+
+const APP_VERSION = "v2.4.0";
+
+// 버전별 개발 Progression 및 업데이트 히스토리 기록
+const VERSION_HISTORY = [
+  {
+    version: "v2.4.0",
+    date: "2026-10-18",
+    badge: "LATEST",
+    title: "생성기 합성 진화 & 퀘스트 조합법 가이드 & 이벤트 드래그 패치",
+    changes: [
+      "🔥 [생성기 합성 & 성질 진화] 마법 가마솥·책장·화분·오븐·티포트 같은 생성기도 레벨업이나 퀘스트 완료 보상으로 파츠를 얻어 합치면(Lv.1➔Lv.2➔Lv.3) 외형과 생성 성질(고급 재료 직배출·이종 조합 재료 동시 생성·완제품 연성)이 진화합니다!",
+      "🧪 [퀘스트 재료 조합법 안내] 손님 주문(Quest) 카드 하단에 어떤 생성기나 이종 재료 조합식이 필요한지 즉시 표시되며, 주문 카드를 탭하면 상세 조합법을 안내합니다.",
+      "🎃 [할로윈/명절 이벤트 합성 버그 수정] 5x5 이벤트 보드에서 드래그 앤 드롭(Drag & Drop) 및 연속 탭 합성이 모두 완벽하게 동작하도록 수정했습니다.",
+      "📐 [마녀의 공방 화면 잘림 해결] Galaxy S25 세로 비율에서 3D 마녀의 공방 좌우 시야와 상단 탭이 잘리지 않도록 카메라 시야각(Frustum)과 탭 레이아웃을 최적화했습니다.",
+      "⚙️ [통합 설정 메뉴 & 버전 팝업] 사운드·DB 백업·앱 설치·패치노트를 우측 상단 [⚙️ 설정] 메뉴로 통합하고, 버전 업데이트 시 새로운 내용을 알려주는 팝업을 추가했습니다.",
+      "⚖️ [번개/금화 드롭 확률 밸런스 조정] 합성 시 무작위로 떨어지던 번개·동전 확률을 대폭 낮춰(Lv.4 이상 12%) 보드 플레이에 집중할 수 있도록 개선했습니다.",
+    ],
+  },
+  {
+    version: "v2.3.0",
+    date: "2026-10-18",
+    badge: "MAJOR",
+    title: "마녀의 성 2-Screen 분리 & 명절 이벤트 & 번개 100개 경제",
+    changes: [
+      "🏰 [성으로 가기 ↔ 섹션 아이콘 합성 페이지] '성으로 가기' 화면과 '아이콘 합성' 페이지를 분리하고, 성 화면 오른쪽 하단에 현재 구역 아이콘(🔮/🏖️/🌿/👑) 합성 진입 버튼을 배치했습니다.",
+      "🎬 [퀘스트 완료 스토리 컷신] 가구 복구 퀘스트를 1개씩 깰 때마다 캐릭터 대화 스토리 컷신이 연출됩니다.",
+      "⚡ [번개 100개 자동 충전 경제] 최대 100개까지 5분(05:00)마다 1개씩 자동 충전되는 Gossip Harbor 표준 번개 경제를 도입했습니다.",
+      "🛡️ [안드로이드 보안 규격 패치] Google WebAPK 표준 아이콘 분리 및 HTTPS 보안 헤더를 적용했습니다.",
+    ],
+  },
+  {
+    version: "v2.0.0",
+    date: "2026-10-18",
+    badge: "CORE",
+    title: "연금술사 레벨 시스템 & IndexedDB 영구 저장소 & PWA",
+    changes: [
+      "👑 플레이어 레벨 및 경험치(XP) 성장 시스템과 전용 상단 레벨업 축하 배너를 추가했습니다.",
+      "💾 IndexedDB + LocalStorage 이중 영구 저장소(db.js)를 구축하여 앱 업데이트 시에도 진행도가 보존됩니다.",
+      "🎨 모든 체인의 Lv.1~Lv.6 아이콘을 서로 다른 고유 커스텀 SVG 일러스트로 전면 교체했습니다.",
+    ],
+  },
+  {
+    version: "v1.0.0",
+    date: "2026-10-18",
+    badge: "INIT",
+    title: "Three.js 3D 인테리어 디오라마 & 멀티 체인 합성 엔진 출시",
+    changes: [
+      "🏛️ Three.js + GSAP 기반 3D 아이소메트릭 인테리어 공간 복구 및 3가지 가구 스타일 선택 시스템을 구축했습니다.",
+      "⚗️ 5대 생성기 체인과 이종 재료 스페셜 조합(Cross-Combination) 시스템을 구현했습니다.",
+    ],
+  },
+];
 
 const COLS = 7;
 const ROWS = 8;
@@ -14,10 +67,31 @@ const CHAINS = {
   potion: {
     id: "potion",
     name: "비전 물약 체인",
+    shortGen: "🔥가마솥",
     css: "chain-potion",
-    generator: { name: "마법 가마솥", desc: "탭하면 물약 재료(⚡1)와 22% 확률로 희귀 보석 원석을 생성합니다." },
+    generator: {
+      name: "마법 가마솥",
+      desc: "탭하면 물약 재료(⚡1)와 보석 원석을 생성합니다. 같은 가마솥끼리 합성하면 성질이 진화합니다!",
+      tiers: [
+        {
+          level: 1,
+          name: "수습 마법 가마솥",
+          desc: "[Lv.1 기본 성질] 물약 재료(Lv.1~2)와 20% 확률로 보석 원석(Lv.1)을 생성합니다. 가마솥 2개를 합치면 황금 가마솥으로 진화합니다!",
+        },
+        {
+          level: 2,
+          name: "황금 연금술 가마솥",
+          desc: "[Lv.2 진화 성질] 고농축 물약(Lv.2~3) 배출률이 대폭 오르고, 세공된 사파이어(Lv.2) 및 활력비약 조합용 달버섯을 함께 연성합니다!",
+        },
+        {
+          level: 3,
+          name: "태고의 성배 가마솥",
+          desc: "[Lv.3 신화 성질] 상급 비약(Lv.2~4)과 문스톤 보석을 생성하며, 20% 확률로 완제품 [특제 활력비약]을 즉시 연성합니다!",
+        },
+      ],
+    },
     rareDropChain: "gem",
-    rareChance: 0.22,
+    rareChance: 0.2,
     items: [
       { level: 1, name: "마나 이슬", sell: 2 },
       { level: 2, name: "초급 마나물약", sell: 5 },
@@ -30,8 +104,29 @@ const CHAINS = {
   grimoire: {
     id: "grimoire",
     name: "고대 마도서 체인",
+    shortGen: "🦉책장",
     css: "chain-grimoire",
-    generator: { name: "고대 마법책장", desc: "탭하면 마력 깃펜과 봉인된 주문서 재료(⚡1)를 생성합니다." },
+    generator: {
+      name: "고대 마법책장",
+      desc: "탭하면 마도서 재료(⚡1)를 생성합니다. 책장끼리 합성하면 성질이 진화합니다!",
+      tiers: [
+        {
+          level: 1,
+          name: "고대 마법책장",
+          desc: "[Lv.1 기본 성질] 마력 깃펜(Lv.1)과 봉인 주문서(Lv.2)를 생성합니다.",
+        },
+        {
+          level: 2,
+          name: "비전 아카이브 서가",
+          desc: "[Lv.2 진화 성질] 주문서와 화염 마도서(Lv.2~3)를 생성하며, 룬스톤 조합용 사파이어(Lv.2)를 추가 배출합니다!",
+        },
+        {
+          level: 3,
+          name: "신화 아카식 서고",
+          desc: "[Lv.3 신화 성질] 고위 마도서(Lv.2~4) 및 완제품 [마력 각인룬스톤]을 직접 배출합니다!",
+        },
+      ],
+    },
     items: [
       { level: 1, name: "마력 깃펜", sell: 2 },
       { level: 2, name: "봉인 주문서", sell: 5 },
@@ -44,8 +139,29 @@ const CHAINS = {
   herb: {
     id: "herb",
     name: "달빛 마법식물 체인",
+    shortGen: "🪴화분",
     css: "chain-herb",
-    generator: { name: "달빛 온실화분", desc: "탭하면 신비한 식물 포자와 달버섯(⚡1)을 생성합니다." },
+    generator: {
+      name: "달빛 온실화분",
+      desc: "탭하면 마법식물 재료(⚡1)를 생성합니다. 화분끼리 합성하면 성질이 진화합니다!",
+      tiers: [
+        {
+          level: 1,
+          name: "달빛 온실화분",
+          desc: "[Lv.1 기본 성질] 야광 포자(Lv.1)와 몽환 달버섯(Lv.2)을 생성합니다.",
+        },
+        {
+          level: 2,
+          name: "에메랄드 테라리움",
+          desc: "[Lv.2 진화 성질] 달버섯과 만드라고라(Lv.2~3)를 생성하며, 활력비약 조합용 초급 마나물약을 공명 생성합니다!",
+        },
+        {
+          level: 3,
+          name: "세계수의 성소 화단",
+          desc: "[Lv.3 신화 성질] 희귀 환수 식물(Lv.2~4) 및 완제품 [특제 활력비약]을 직접 배출합니다!",
+        },
+      ],
+    },
     items: [
       { level: 1, name: "야광 포자", sell: 2 },
       { level: 2, name: "몽환 달버섯", sell: 5 },
@@ -58,8 +174,29 @@ const CHAINS = {
   bakery: {
     id: "bakery",
     name: "화로 베이커리 체인",
+    shortGen: "🧁오븐",
     css: "chain-bakery",
-    generator: { name: "마법 화로오븐", desc: "탭하면 갓 구운 베이커리 반죽과 크루아상(⚡1)을 생성합니다." },
+    generator: {
+      name: "마법 화로오븐",
+      desc: "탭하면 베이커리 재료(⚡1)를 생성합니다. 오븐끼리 합성하면 성질이 진화합니다!",
+      tiers: [
+        {
+          level: 1,
+          name: "마법 화로오븐",
+          desc: "[Lv.1 기본 성질] 밀가루 반죽(Lv.1)과 버터 크루아상(Lv.2)을 구워냅니다.",
+        },
+        {
+          level: 2,
+          name: "황금 파티시에 화덕",
+          desc: "[Lv.2 진화 성질] 크루아상과 베리 타르트(Lv.2~3)를 구워내며, 브런치 조합용 에스프레소(Lv.3)를 함께 배출합니다!",
+        },
+        {
+          level: 3,
+          name: "로얄 블랑제리 신화오븐",
+          desc: "[Lv.3 신화 성질] 고급 디저트(Lv.2~4) 및 완제품 [모닝 브런치세트]를 즉시 배출합니다!",
+        },
+      ],
+    },
     items: [
       { level: 1, name: "밀가루 반죽", sell: 2 },
       { level: 2, name: "버터 크루아상", sell: 5 },
@@ -72,8 +209,29 @@ const CHAINS = {
   tea: {
     id: "tea",
     name: "연금술 티 & 카페 체인",
+    shortGen: "🫖티포트",
     css: "chain-tea",
-    generator: { name: "황실 티포트", desc: "탭하면 향긋한 찻잎과 에스프레소 음료 재료(⚡1)를 생성합니다." },
+    generator: {
+      name: "황실 티포트",
+      desc: "탭하면 차/커피 재료(⚡1)를 생성합니다. 티포트끼리 합성하면 성질이 진화합니다!",
+      tiers: [
+        {
+          level: 1,
+          name: "황실 티포트",
+          desc: "[Lv.1 기본 성질] 향긋한 찻잎(Lv.1)과 캐모마일 티(Lv.2)를 우려냅니다.",
+        },
+        {
+          level: 2,
+          name: "오로라 바리스타 포트",
+          desc: "[Lv.2 진화 성질] 에스프레소(Lv.3)와 밀크티를 빠르게 추출하며 브런치용 크루아상을 함께 제공합니다!",
+        },
+        {
+          level: 3,
+          name: "여왕의 신화 티메이커",
+          desc: "[Lv.3 신화 성질] 최고급 음료(Lv.2~4)와 완제품 [모닝 브런치세트]를 즉시 생성합니다!",
+        },
+      ],
+    },
     items: [
       { level: 1, name: "향긋한 찻잎", sell: 2 },
       { level: 2, name: "캐모마일 티", sell: 5 },
@@ -85,6 +243,7 @@ const CHAINS = {
   gem: {
     id: "gem",
     name: "별빛 세공보석 체인 (가마솥 부산물)",
+    shortGen: "💎가마솥부산물",
     css: "chain-gem",
     items: [
       { level: 1, name: "원석 파편", sell: 4 },
@@ -97,11 +256,30 @@ const CHAINS = {
   combo: {
     id: "combo",
     name: "⚗️ 이종 재료 스페셜 조합품",
+    shortGen: "⚗️이종조합",
     css: "chain-combo",
     items: [
-      { level: 1, name: "특제 활력비약", sell: 35, recipeText: "초급 마나물약(Lv.2) + 몽환 달버섯(Lv.2)" },
-      { level: 2, name: "모닝 브런치세트", sell: 50, recipeText: "버터 크루아상(Lv.2) + 에스프레소(Lv.3)" },
-      { level: 3, name: "마력 각인룬스톤", sell: 55, recipeText: "봉인 주문서(Lv.2) + 사파이어(Lv.2)" },
+      {
+        level: 1,
+        name: "특제 활력비약",
+        sell: 35,
+        shortRecipe: "⚗️물약Lv2+달버섯Lv2",
+        recipeText: "🔥초급 마나물약(Lv.2) + 🪴몽환 달버섯(Lv.2) 드래그 조합",
+      },
+      {
+        level: 2,
+        name: "모닝 브런치세트",
+        sell: 50,
+        shortRecipe: "⚗️크루아상Lv2+커피Lv3",
+        recipeText: "🧁버터 크루아상(Lv.2) + 🫖에스프레소(Lv.3) 드래그 조합",
+      },
+      {
+        level: 3,
+        name: "마력 각인룬스톤",
+        sell: 55,
+        shortRecipe: "⚗️주문서Lv2+사파이어Lv2",
+        recipeText: "🦉봉인 주문서(Lv.2) + 💎사파이어(Lv.2) 드래그 조합",
+      },
     ],
   },
   coin: {
@@ -136,7 +314,7 @@ const HOLIDAY_EVENTS = [
     icon: "🎃",
     name: "할로윈 마법 호박제",
     month: 10,
-    day: 31, // 10월 26일(5일 전) ~ 10월 31일 당일 끝까지
+    day: 31,
     periodLabel: "할로윈 5일 전(10/26) ~ 당일(10/31 24:00)",
     genName: "호박 마법 가마솥",
     items: [
@@ -152,7 +330,7 @@ const HOLIDAY_EVENTS = [
     icon: "🎄",
     name: "크리스마스 성탄 마법제",
     month: 12,
-    day: 25, // 12월 20일(5일 전) ~ 12월 25일 당일 끝까지
+    day: 25,
     periodLabel: "크리스마스 5일 전(12/20) ~ 당일(12/25 24:00)",
     genName: "성탄 선물 벽난로",
     items: [
@@ -168,7 +346,7 @@ const HOLIDAY_EVENTS = [
     icon: "🧧",
     name: "신년 & 설날 복주머니 축제",
     month: 1,
-    day: 1, // 12월 27일(5일 전) ~ 1월 1일 당일 끝까지
+    day: 1,
     periodLabel: "신년 5일 전(12/27) ~ 당일(01/01 24:00)",
     genName: "황금 복주머니 화로",
     items: [
@@ -184,7 +362,7 @@ const HOLIDAY_EVENTS = [
     icon: "🍫",
     name: "발렌타인 로얄 쇼콜라제",
     month: 2,
-    day: 14, // 2월 9일(5일 전) ~ 2월 14일 당일 끝까지
+    day: 14,
     periodLabel: "발렌타인 5일 전(02/09) ~ 당일(02/14 24:00)",
     genName: "로즈 쇼콜라 분수",
     items: [
@@ -221,7 +399,7 @@ const CUSTOMERS = [
   { name: "루시안 공작", face: "🧛‍♂️", line: "특제 활력비약과 향긋한 홍차의 조합이 훌륭하군." },
   { name: "올리비아", face: "👧", line: "화덕 오븐에서 갓 구운 크루아상이랑 케이크 냄새가 너무 좋아요!" },
   { name: "해리슨", face: "🧔‍♂️", line: "별빛로드를 밝힐 마도서와 따뜻한 에스프레소 부탁하네!" },
-  { name: "카르멘", face: "👩‍🎨", line: "[🏰 성으로 가기]를 눌러 마녀의 성 전체를 둘러보고 가구를 배치해 보세요!" },
+  { name: "카르멘", face: "👩‍🎨", line: "가마솥 같은 생성기도 2개를 합치면 황금 생성기로 진화한답니다!" },
 ];
 
 // 사운드 엔진
@@ -287,12 +465,12 @@ function newUid() {
 }
 
 const state = {
-  activeScreen: "merge", // "merge" (합성 보드 화면) | "castle" (마녀의 성 꾸미기 화면)
+  activeScreen: "merge", // "merge" | "castle"
   playerLv: 1,
   xp: 0,
-  maxEnergy: NATURAL_ENERGY_CAP, // 자동 충전 최대치 100⚡ 고정
+  maxEnergy: NATURAL_ENERGY_CAP,
   energy: 100,
-  energyCountdown: ENERGY_REGEN_SEC, // 300초(5분) 카운트다운
+  energyCountdown: ENERGY_REGEN_SEC,
   coins: 350,
   stars: 4,
   selectedIdx: null,
@@ -301,8 +479,10 @@ const state = {
   orders: [],
   lastTapCell: null,
   lastTapTime: 0,
+  soundEnabled: true,
+  cauldronPartGranted: true,
+  lastSeenVersion: APP_VERSION,
   isLoaded: false,
-  // 명절 팝업 이벤트 상태 (5x5=25칸 미니 합성 보드)
   eventState: {
     activeHolidayId: "halloween",
     board: new Array(25).fill(null),
@@ -313,7 +493,6 @@ const state = {
   },
 };
 
-// 현재 진행 중인 스토리 컷신 상태
 const cutsceneState = {
   active: false,
   spot: null,
@@ -323,7 +502,6 @@ const cutsceneState = {
   giveBonusOnFinish: false,
 };
 
-// 안드로이드 Chrome 공식 WebAPK 설치 프롬프트 저장
 let deferredInstallPrompt = null;
 window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
@@ -334,7 +512,43 @@ function getRequiredXP(lv) {
   return 50 + (lv - 1) * 20;
 }
 
+function getGeneratorTierMeta(chain, level = 1) {
+  const ch = CHAINS[chain];
+  if (!ch || !ch.generator) return { name: "생성기", desc: "", maxGenLv: 3 };
+  const tiers = ch.generator.tiers || [];
+  const tier = tiers[Math.min(Math.max(1, level) - 1, tiers.length - 1)] || {
+    level: 1,
+    name: ch.generator.name,
+    desc: ch.generator.desc,
+  };
+  return {
+    ...tier,
+    maxGenLv: tiers.length || 3,
+  };
+}
+
+// 퀘스트(주문) 요구 아이템의 출처/조합법 요약 텍스트 반환
+function getRequirementRecipeSummary(req) {
+  const meta = getItemMeta(req.chain, req.level);
+  if (req.chain === "combo") {
+    return meta.shortRecipe || meta.recipeText || "⚗️이종조합";
+  }
+  const ch = CHAINS[req.chain];
+  const shortGen = ch && ch.shortGen ? ch.shortGen : "생성기";
+  return `${shortGen}➔${meta.name}(Lv.${req.level})`;
+}
+
 const drag = {
+  active: false,
+  isDragging: false,
+  sourceIdx: null,
+  startX: 0,
+  startY: 0,
+  ghostEl: null,
+  hoverIdx: null,
+};
+
+const evDrag = {
   active: false,
   isDragging: false,
   sourceIdx: null,
@@ -349,18 +563,21 @@ async function init() {
   initCustomerOrders();
   initHolidayEventBoard();
 
-  // 로컬 DB(IndexedDB + LocalStorage)에서 기존 진행도 복원 및 스키마 병합
   let savedInterior = null;
+  let previousSeenVersion = null;
   if (window.GameDB) {
     const record = await GameDB.loadProgress();
     if (record) {
       const res = GameDB.mergeWithDefaultState(state, record, CHAINS, TOTAL_CELLS);
       if (res && res.merged) {
         savedInterior = res;
+        previousSeenVersion = res.lastSeenVersion;
       }
     }
   }
-  state.maxEnergy = NATURAL_ENERGY_CAP; // 자연 회복 상한 100⚡ 고정
+  state.maxEnergy = NATURAL_ENERGY_CAP;
+  sfx.enabled = state.soundEnabled !== false;
+
   if (!state.eventState || !Array.isArray(state.eventState.board) || state.eventState.board.length !== 25) {
     initHolidayEventBoard();
   }
@@ -368,6 +585,7 @@ async function init() {
 
   bindUIEvents();
   setupPointerDragEngine();
+  setupEventBoardPointerDrag();
 
   // Three.js 3D 아이소메트릭 마녀의 성 & 인테리어 엔진 초기화
   if (window.Interior3DEngine) {
@@ -382,7 +600,12 @@ async function init() {
           state.coins += 100;
           state.energy += 20;
           gainXP(35);
-          floatText(`🎉 [${spot.name}] 시공 완료! +100🪙 +20⚡`, window.innerWidth / 2, 160, "#10b981");
+
+          // ★ 퀘스트 완료 시 생성기 진화 파츠(Lv.1 생성기) 보너스 지급! (합성하여 생성기 성질 진화 가능)
+          const genPartChain = getGeneratorChainForTheme(currentThemeObj ? currentThemeObj.id : "alchemy");
+          grantGeneratorEvolutionPart(genPartChain, `퀘스트 완료 보상`);
+
+          floatText(`🎉 [${spot.name}] 시공 완료! +100🪙 +20⚡ +생성기파츠!`, window.innerWidth / 2, 160, "#10b981");
         } else {
           floatText(`🎨 [${spot.name}] 스타일 변경 완료!`, window.innerWidth / 2, 160, "#c084fc");
         }
@@ -390,7 +613,6 @@ async function init() {
         setDialogue("🔨 " + spot.name, spot.story);
         renderAll();
 
-        // ★ Gossip Harbor 스타일: 퀘스트 완료 시 해당 퀘스트와 관련된 스토리 컷신 자동 실행!
         setTimeout(() => {
           openStoryCutscene(spot, currentThemeObj ? currentThemeObj.title : "🏰 마녀의 성", !wasAlreadyDone);
         }, 720);
@@ -408,9 +630,19 @@ async function init() {
 
   renderAll();
   renderCodexModal();
+  renderChangelogModal();
   updateHolidayCountdowns();
+  updateSoundButtonUI();
 
-  // 1초 주기로 번개(⚡) 5분(300초) 자동 충전 타이머 & 명절 이벤트 남은 시간 업데이트
+  // ★ 버전이 올라갔을 때(또는 첫 방문 시) 어떤 새로운 내용이 추가되었는지 알려주는 버전 팝업 자동 표시!
+  if (previousSeenVersion !== APP_VERSION) {
+    state.lastSeenVersion = APP_VERSION;
+    triggerAutoSave();
+    setTimeout(() => {
+      document.getElementById("modal-changelog").classList.remove("hidden");
+    }, 350);
+  }
+
   setInterval(() => {
     if (state.energy < NATURAL_ENERGY_CAP) {
       state.energyCountdown--;
@@ -427,7 +659,40 @@ async function init() {
   }, 1000);
 }
 
-// 화면 전환 함수: "castle" (🏰 마녀의 성 꾸미기 화면) ↔ "merge" (🔮 아이콘 합성 보드 화면)
+function getGeneratorChainForTheme(themeId) {
+  if (themeId === "alchemy") return "potion";
+  if (themeId === "harbor") return "bakery";
+  if (themeId === "garden") return "herb";
+  if (themeId === "banquet") return "grimoire";
+  return "potion";
+}
+
+function grantGeneratorEvolutionPart(chain, reasonText) {
+  const emptyIdx = findNearestEmptyCell(24);
+  const newGenPart = {
+    uid: newUid(),
+    state: "active",
+    isGenerator: true,
+    chain,
+    level: 1,
+    justSpawned: true,
+  };
+  const genMeta = getGeneratorTierMeta(chain, 1);
+  if (emptyIdx !== -1) {
+    state.board[emptyIdx] = newGenPart;
+    setDialogue(
+      "🔥 생성기 진화 파츠 획득",
+      `${reasonText}으로 [${genMeta.name} Lv.1]을 획득했습니다! 같은 생성기끼리 드래그해 합치면 상위 성질로 진화합니다!`
+    );
+  } else if (state.bag.length < 6) {
+    state.bag.push(newGenPart);
+    setDialogue(
+      "🎒 보관함 지급",
+      `보드가 가득 차서 [${genMeta.name} Lv.1] 진화 파츠가 보관함(🎒)으로 지급되었습니다!`
+    );
+  }
+}
+
 function switchScreen(targetScreen) {
   state.activeScreen = targetScreen;
   const castleView = document.getElementById("view-castle");
@@ -462,7 +727,7 @@ function selectCastleThemeTab(themeKey) {
   }
 }
 
-// 5대 생성기(가마솥, 책장, 화분, 화로오븐, 티포트) + 거미줄(🕸️) + 외곽 봉인상자(📦) 배치
+// 초기 보드: 5대 생성기 + 가마솥 합성 진화를 즉시 체험할 수 있는 보조 가마솥(Lv.1) 배치!
 function buildInitialBoard() {
   state.board.fill(null);
   const allCoreChains = ["potion", "grimoire", "herb", "bakery", "tea"];
@@ -495,20 +760,19 @@ function buildInitialBoard() {
     }
   }
 
-  // 중앙 오픈 공간에 5종류의 핵심 생성기 배치
-  placeTile(2, 2, { isGenerator: true, chain: "potion", level: 1, state: "active" });
+  // 중앙 오픈 공간에 5종류의 핵심 생성기 배치 (+ 가마솥 합성 진화 체험용 보조 가마솥 Lv.1 1개 추가 배치!)
+  placeTile(2, 2, { isGenerator: true, chain: "potion", level: 1, state: "active" }); // 🔥 마법 가마솥 Lv.1
+  placeTile(2, 3, { isGenerator: true, chain: "potion", level: 1, state: "active" }); // 🔥 두 번째 마법 가마솥 Lv.1 (합성하면 Lv.2 황금 연금술 가마솥으로 진화!)
   placeTile(2, 4, { isGenerator: true, chain: "grimoire", level: 1, state: "active" });
   placeTile(3, 3, { isGenerator: true, chain: "herb", level: 1, state: "active" });
   placeTile(5, 2, { isGenerator: true, chain: "bakery", level: 1, state: "active" });
   placeTile(5, 4, { isGenerator: true, chain: "tea", level: 1, state: "active" });
 
-  // 시작 재료 및 번개(⚡) 아이템 배치
-  placeTile(2, 3, { isGenerator: false, chain: "potion", level: 1, state: "active" });
-  placeTile(3, 2, { isGenerator: false, chain: "potion", level: 1, state: "active" });
+  // 시작 재료 배치
+  placeTile(3, 2, { isGenerator: false, chain: "potion", level: 2, state: "active" });
   placeTile(3, 4, { isGenerator: false, chain: "herb", level: 2, state: "active" });
   placeTile(4, 2, { isGenerator: false, chain: "bakery", level: 2, state: "active" });
   placeTile(4, 4, { isGenerator: false, chain: "tea", level: 3, state: "active" });
-  placeTile(4, 3, { isGenerator: false, chain: "energy", level: 1, state: "active" });
 
   state.selectedIdx = 2 * COLS + 2;
 }
@@ -682,22 +946,26 @@ function serveOrder(orderIdx, event) {
   gainXP(25);
   sfx.serve();
 
-  // 주문 완료 시 인게임 번개(⚡) 조각 보너스 드롭!
-  const bonusCell = findNearestEmptyCell(27);
-  if (bonusCell !== -1) {
-    state.board[bonusCell] = {
-      uid: newUid(),
-      state: "active",
-      isGenerator: false,
-      chain: "energy",
-      level: 1,
-      justSpawned: true,
-    };
+  // 주문 완료 시 번개 조각 드롭은 과도하지 않게 15% 확률로만 등장
+  let bonusMsg = "";
+  if (Math.random() < 0.15) {
+    const bonusCell = findNearestEmptyCell(27);
+    if (bonusCell !== -1) {
+      state.board[bonusCell] = {
+        uid: newUid(),
+        state: "active",
+        isGenerator: false,
+        chain: "energy",
+        level: 1,
+        justSpawned: true,
+      };
+      bonusMsg = " +번개조각⚡";
+    }
   }
 
   setDialogue(ord.customer.face + " " + ord.customer.name, ord.customer.line);
   floatText(
-    `🎉 주문 완료! +${ord.coins}🪙 +${ord.stars}🌟 +번개조각⚡`,
+    `🎉 주문 완료! +${ord.coins}🪙 +${ord.stars}🌟${bonusMsg}`,
     event ? event.clientX : window.innerWidth / 2,
     event ? event.clientY : 160,
     "#10b981"
@@ -705,6 +973,37 @@ function serveOrder(orderIdx, event) {
 
   state.orders[orderIdx] = createOrder(orderIdx);
   renderAll();
+}
+
+// 주문 카드를 클릭했을 때 필요한 재료의 조합법/생성기를 하단 대화창 및 보드 하이라이트로 친절히 안내!
+function explainOrderRecipe(ord) {
+  sfx.tap();
+  const descriptions = ord.reqs.map((req) => {
+    const meta = getItemMeta(req.chain, req.level);
+    if (req.chain === "combo") {
+      return `[${meta.name}] = ${meta.recipeText}`;
+    }
+    const ch = CHAINS[req.chain];
+    return `[${meta.name} Lv.${req.level}] = ${ch.generator ? ch.generator.name : ch.name}에서 생성 후 합성`;
+  });
+
+  setDialogue("💡 퀘스트 조합 가이드", descriptions.join(" / "));
+
+  // 해당 체인의 생성기를 찾아 선택 표시
+  const firstReq = ord.reqs[0];
+  const targetGenChain =
+    firstReq.chain === "combo"
+      ? firstReq.level === 1
+        ? "potion"
+        : firstReq.level === 2
+        ? "bakery"
+        : "grimoire"
+      : firstReq.chain;
+  const genIdx = state.board.findIndex((it) => it && it.isGenerator && it.chain === targetGenChain);
+  if (genIdx !== -1) {
+    state.selectedIdx = genIdx;
+    renderAll();
+  }
 }
 
 // ============================================================================
@@ -773,13 +1072,12 @@ function closeOrAdvanceCutscene(skipAll = false) {
 }
 
 // ============================================================================
-// 🎃 전세계 공통 명절 기준 기한 한정 팝업 이벤트 엔진 (5x5 이벤트 합성 보드)
+// 🎃 전세계 공통 명절 기준 기한 한정 팝업 이벤트 엔진 (드래그&드롭 + 탭 합성 완벽 지원!)
 // ============================================================================
 function getActiveHolidayConfig() {
   return HOLIDAY_EVENTS.find((h) => h.id === state.eventState.activeHolidayId) || HOLIDAY_EVENTS[0];
 }
 
-// 명절 당일 5일 전부터 당일 23:59:59까지의 남은 시간 계산
 function getHolidayRemainingText(holiday) {
   const now = new Date();
   const year = now.getFullYear();
@@ -794,7 +1092,6 @@ function getHolidayRemainingText(holiday) {
     const s = Math.floor((diffMs / 1000) % 60);
     return `진행중 · 남은시간 ${d}일 ${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
-  // 만약 해당 날짜 주간이 아닐 때도 상시 체험 가능하도록 5일 타이머 표시
   const cycleSec = 5 * 86400 - (Math.floor(Date.now() / 1000) % (5 * 86400));
   const d = Math.floor(cycleSec / 86400);
   const h = Math.floor((cycleSec % 86400) / 3600);
@@ -822,9 +1119,7 @@ function updateHolidayCountdowns() {
 
 function initHolidayEventBoard() {
   const b = new Array(25).fill(null);
-  // 중앙(12번 칸)에 명절 이벤트 생성기 배치
   b[12] = { uid: newUid(), isGenerator: true, level: 1 };
-  // 시작 이벤트 아이템 배치
   b[6] = { uid: newUid(), isGenerator: false, level: 1 };
   b[7] = { uid: newUid(), isGenerator: false, level: 1 };
   b[11] = { uid: newUid(), isGenerator: false, level: 2 };
@@ -840,7 +1135,6 @@ function renderHolidayEventModal() {
   document.getElementById("event-modal-title").textContent = `${h.icon} ${h.name} (기한 한정 이벤트)`;
   updateHolidayCountdowns();
 
-  // 상단 명절 탭 렌더링
   const schedBar = document.getElementById("holiday-schedule-bar");
   schedBar.innerHTML = HOLIDAY_EVENTS.map(
     (ev) => `
@@ -859,14 +1153,13 @@ function renderHolidayEventModal() {
     });
   });
 
-  // 미션 타겟 표시
   const targetLv = state.eventState.targetLv || 3;
   const targetMeta = h.items[Math.min(targetLv - 1, h.items.length - 1)];
   document.getElementById("event-mission-title").textContent =
     `🎯 명절 미션: [${targetMeta.name} (Lv.${targetLv})] 합성하기`;
   document.getElementById("ev-req-svg").innerHTML = GameSprites.getEventSVG(targetLv, false);
 
-  const hasTargetOnBoard = state.eventState.board.some((it) => it && !it.isGenerator && it.level >= targetLv);
+  const hasTargetOnBoard = state.eventState.board.some((it) => it && !it.isGenerator && intLv(it.level) >= targetLv);
   const claimBtn = document.getElementById("btn-claim-event-order");
   claimBtn.disabled = !hasTargetOnBoard;
   const rewardBolt = targetLv * 15;
@@ -874,18 +1167,31 @@ function renderHolidayEventModal() {
     ? `🎁 미션 완료!<br/><small>+${rewardBolt}⚡ &amp; 본게임 재료</small>`
     : `Lv.${targetLv} 필요<br/><small>+${rewardBolt}⚡ &amp; 본게임 재료</small>`;
 
-  // 무료 소환 횟수 표시
   document.getElementById("ev-free-spawns").textContent =
     state.eventState.freeSpawns > 0 ? `(무료 ${state.eventState.freeSpawns}회)` : `(⚡1 소모)`;
 
-  // 5x5 이벤트 보드 렌더링
   const grid = document.getElementById("event-board-grid");
   grid.innerHTML = "";
 
+  const selItem =
+    state.eventState.selectedIdx !== null ? state.eventState.board[state.eventState.selectedIdx] : null;
+
   for (let i = 0; i < 25; i++) {
-    const cell = document.createElement("div");
-    cell.className = `ev-cell ${state.eventState.selectedIdx === i ? "ev-selected" : ""}`;
     const it = state.eventState.board[i];
+    const isCompat =
+      selItem &&
+      !selItem.isGenerator &&
+      it &&
+      !it.isGenerator &&
+      i !== state.eventState.selectedIdx &&
+      intLv(it.level) === intLv(selItem.level) &&
+      intLv(it.level) < h.items.length;
+
+    const cell = document.createElement("div");
+    cell.className = `ev-cell ${state.eventState.selectedIdx === i ? "ev-selected" : ""} ${
+      isCompat ? "ev-merge-hint" : ""
+    }`;
+    cell.dataset.evIndex = i;
 
     if (it) {
       const tile = document.createElement("div");
@@ -897,65 +1203,201 @@ function renderHolidayEventModal() {
           <span class="gen-bolt-badge">${h.icon}</span>
         `;
       } else {
-        const meta = h.items[Math.min(it.level - 1, h.items.length - 1)];
+        const lv = intLv(it.level);
+        const meta = h.items[Math.min(lv - 1, h.items.length - 1)];
         tile.className = "gh-tile chain-grimoire";
         tile.innerHTML = `
-          <div class="tile-svg-wrap">${GameSprites.getEventSVG(it.level, false)}</div>
+          <div class="tile-svg-wrap">${GameSprites.getEventSVG(lv, false)}</div>
           <span class="tile-label">${meta.name}</span>
-          <span class="tile-lv-pill">Lv.${it.level}</span>
+          <span class="tile-lv-pill">Lv.${lv}</span>
         `;
       }
       cell.appendChild(tile);
     }
 
-    cell.addEventListener("click", (e) => handleEventCellClick(i, e));
     grid.appendChild(cell);
   }
 }
 
-function handleEventCellClick(idx, e) {
+function intLv(v) {
+  return Math.max(1, parseInt(v, 10) || 1);
+}
+
+// 🎃 이벤트 5x5 보드 전용 포인터 드래그 앤 드롭 & 탭 합성 엔진 (드래그해도, 탭해도 100% 합성됨!)
+function setupEventBoardPointerDrag() {
+  const gridEl = document.getElementById("event-board-grid");
+  if (!gridEl) return;
+
+  gridEl.addEventListener("pointerdown", (e) => {
+    const cellEl = e.target.closest(".ev-cell");
+    if (!cellEl) return;
+    const idx = parseInt(cellEl.dataset.evIndex, 10);
+    const item = state.eventState.board[idx];
+    if (!item) {
+      // 빈 칸을 탭했을 때 이전에 선택된 아이템이 있으면 이동
+      if (state.eventState.selectedIdx !== null) {
+        const prev = state.eventState.board[state.eventState.selectedIdx];
+        if (prev && !prev.isGenerator) {
+          state.eventState.board[idx] = prev;
+          state.eventState.board[state.eventState.selectedIdx] = null;
+          state.eventState.selectedIdx = idx;
+          sfx.tap();
+          renderHolidayEventModal();
+          triggerAutoSave();
+        }
+      }
+      return;
+    }
+
+    evDrag.active = true;
+    evDrag.isDragging = false;
+    evDrag.sourceIdx = idx;
+    evDrag.startX = e.clientX;
+    evDrag.startY = e.clientY;
+    evDrag.hoverIdx = null;
+  });
+
+  window.addEventListener("pointermove", (e) => {
+    if (!evDrag.active || evDrag.sourceIdx === null) return;
+    const item = state.eventState.board[evDrag.sourceIdx];
+    if (!item) return;
+
+    const dist = Math.hypot(e.clientX - evDrag.startX, e.clientY - evDrag.startY);
+    if (!evDrag.isDragging && dist >= 6) {
+      evDrag.isDragging = true;
+      state.eventState.selectedIdx = evDrag.sourceIdx;
+      createEventDragGhost(item, e.clientX, e.clientY);
+    }
+
+    if (evDrag.isDragging && evDrag.ghostEl) {
+      evDrag.ghostEl.style.left = `${e.clientX}px`;
+      evDrag.ghostEl.style.top = `${e.clientY}px`;
+
+      const underEl = document.elementFromPoint(e.clientX, e.clientY);
+      const cellEl = underEl ? underEl.closest(".ev-cell") : null;
+      evDrag.hoverIdx = cellEl ? parseInt(cellEl.dataset.evIndex, 10) : null;
+    }
+  });
+
+  const endEvDrag = (e) => {
+    if (!evDrag.active) return;
+    const srcIdx = evDrag.sourceIdx;
+    const wasDragging = evDrag.isDragging;
+    const dstIdx = evDrag.hoverIdx;
+
+    document.getElementById("drag-layer").innerHTML = "";
+    evDrag.ghostEl = null;
+    evDrag.active = false;
+    evDrag.isDragging = false;
+    evDrag.sourceIdx = null;
+    evDrag.hoverIdx = null;
+
+    if (wasDragging) {
+      if (dstIdx !== null && dstIdx !== srcIdx) {
+        executeEventMergeOrMove(srcIdx, dstIdx, e.clientX, e.clientY);
+      } else {
+        renderHolidayEventModal();
+      }
+    } else {
+      handleEventCellTap(srcIdx, e);
+    }
+  };
+
+  window.addEventListener("pointerup", endEvDrag);
+  window.addEventListener("pointercancel", endEvDrag);
+}
+
+function createEventDragGhost(item, x, y) {
+  const layer = document.getElementById("drag-layer");
+  layer.innerHTML = "";
+  const h = getActiveHolidayConfig();
+  const lv = intLv(item.level);
+  const meta = h.items[Math.min(lv - 1, h.items.length - 1)];
+
+  const ghost = document.createElement("div");
+  ghost.className = `gh-tile ${item.isGenerator ? "is-generator" : "chain-grimoire"} drag-ghost`;
+  ghost.innerHTML = `
+    <div class="tile-svg-wrap">${GameSprites.getEventSVG(lv, item.isGenerator)}</div>
+    <span class="tile-label">${item.isGenerator ? h.genName : meta.name}</span>
+  `;
+  ghost.style.left = `${x}px`;
+  ghost.style.top = `${y}px`;
+  layer.appendChild(ghost);
+  evDrag.ghostEl = ghost;
+}
+
+function executeEventMergeOrMove(srcIdx, dstIdx, clientX, clientY) {
+  const b = state.eventState.board;
+  const src = b[srcIdx];
+  const dst = b[dstIdx];
+  const h = getActiveHolidayConfig();
+  if (!src) return;
+
+  if (!dst) {
+    b[dstIdx] = src;
+    b[srcIdx] = null;
+    state.eventState.selectedIdx = dstIdx;
+    sfx.tap();
+    renderHolidayEventModal();
+    triggerAutoSave();
+    return;
+  }
+
+  const srcLv = intLv(src.level);
+  const dstLv = intLv(dst.level);
+
+  // 동일 레벨 이벤트 아이템끼리 합성!
+  if (!src.isGenerator && !dst.isGenerator && srcLv === dstLv && srcLv < h.items.length) {
+    const nextLv = srcLv + 1;
+    b[srcIdx] = null;
+    b[dstIdx] = { uid: newUid(), isGenerator: false, level: nextLv };
+    state.eventState.selectedIdx = dstIdx;
+
+    const instantBolt = nextLv * 3;
+    state.energy += instantBolt;
+    const nextMeta = h.items[Math.min(nextLv - 1, h.items.length - 1)];
+    sfx.merge(nextLv, true);
+    floatText(
+      `${h.icon} [${nextMeta.name} Lv.${nextLv}] 합성 성공! +${instantBolt}⚡`,
+      clientX,
+      clientY,
+      "#fde047"
+    );
+    renderHolidayEventModal();
+    renderAll();
+    return;
+  }
+
+  // 자리 교체
+  b[dstIdx] = src;
+  b[srcIdx] = dst;
+  state.eventState.selectedIdx = dstIdx;
+  sfx.tap();
+  renderHolidayEventModal();
+  triggerAutoSave();
+}
+
+function handleEventCellTap(idx, e) {
   const b = state.eventState.board;
   const clicked = b[idx];
   const prevIdx = state.eventState.selectedIdx;
   const h = getActiveHolidayConfig();
 
-  // 생성기 클릭 시 즉시 소환
   if (clicked && clicked.isGenerator) {
     state.eventState.selectedIdx = idx;
     spawnHolidayEventItem(e);
     return;
   }
 
-  // 이전에 선택된 아이템이 있고, 다른 칸의 같은 레벨 아이템을 클릭하면 즉시 합성(Merge)!
   if (prevIdx !== null && prevIdx !== idx && b[prevIdx] && !b[prevIdx].isGenerator) {
     const src = b[prevIdx];
-    if (!clicked) {
-      b[idx] = src;
-      b[prevIdx] = null;
-      state.eventState.selectedIdx = idx;
-      sfx.tap();
-      renderHolidayEventModal();
-      triggerAutoSave();
-      return;
-    }
-    if (!clicked.isGenerator && clicked.level === src.level && src.level < h.items.length) {
-      const nextLv = src.level + 1;
-      b[prevIdx] = null;
-      b[idx] = { uid: newUid(), isGenerator: false, level: nextLv };
-      state.eventState.selectedIdx = idx;
-
-      // 이벤트 합성 시 즉시 본 게임 번개(⚡) 보너스 지급!
-      const instantBolt = nextLv * 3;
-      state.energy += instantBolt;
-      sfx.merge(nextLv, true);
-      floatText(
-        `${h.icon} 이벤트 Lv.${nextLv} 합성! 본 게임 번개 +${instantBolt}⚡ 획득!`,
-        e.clientX,
-        e.clientY,
-        "#fde047"
-      );
-      renderHolidayEventModal();
-      renderAll();
+    if (
+      clicked &&
+      !clicked.isGenerator &&
+      intLv(clicked.level) === intLv(src.level) &&
+      intLv(src.level) < h.items.length
+    ) {
+      executeEventMergeOrMove(prevIdx, idx, e.clientX, e.clientY);
       return;
     }
   }
@@ -972,7 +1414,7 @@ function spawnHolidayEventItem(e) {
   });
   if (emptyIndices.length === 0) {
     sfx.warn();
-    floatText("이벤트 보드가 가득 찼습니다! 같은 아이콘을 탭해 합치세요!", e.clientX, e.clientY, "#ef4444");
+    floatText("이벤트 보드가 가득 찼습니다! 같은 아이콘을 드래그해 합치세요!", e.clientX, e.clientY, "#ef4444");
     return;
   }
 
@@ -1002,25 +1444,22 @@ function spawnHolidayEventItem(e) {
 function claimHolidayMissionOrder(e) {
   const h = getActiveHolidayConfig();
   const targetLv = state.eventState.targetLv || 3;
-  const foundIdx = state.eventState.board.findIndex((it) => it && !it.isGenerator && it.level >= targetLv);
+  const foundIdx = state.eventState.board.findIndex((it) => it && !it.isGenerator && intLv(it.level) >= targetLv);
   if (foundIdx === -1) {
     sfx.warn();
     return;
   }
 
   const item = state.eventState.board[foundIdx];
-  const meta = h.items[Math.min(item.level - 1, h.items.length - 1)];
+  const meta = h.items[Math.min(intLv(item.level) - 1, h.items.length - 1)];
   state.eventState.board[foundIdx] = null;
 
-  // 1. 본 게임 번개(⚡) 지급
   const boltGain = targetLv * 15;
   state.energy += boltGain;
-
-  // 2. 본 게임 고급 재료를 메인 보드(또는 보관함)로 전송!
   sendRewardItemToMainGame(meta.mainChain, meta.mainLv);
 
   state.eventState.completedCount = (state.eventState.completedCount || 0) + 1;
-  state.eventState.targetLv = (state.eventState.completedCount % 3) + 3; // Lv.3 ~ Lv.5 순환
+  state.eventState.targetLv = (state.eventState.completedCount % 3) + 3;
   state.eventState.freeSpawns += 4;
 
   sfx.serve();
@@ -1045,7 +1484,7 @@ function collectSelectedHolidayItemToMain(e) {
   }
 
   const h = getActiveHolidayConfig();
-  const meta = h.items[Math.min(it.level - 1, h.items.length - 1)];
+  const meta = h.items[Math.min(intLv(it.level) - 1, h.items.length - 1)];
   state.eventState.board[idx] = null;
   state.eventState.selectedIdx = null;
 
@@ -1083,20 +1522,20 @@ function sendRewardItemToMainGame(chain, level) {
 
 let lvBannerTimer = null;
 
-function showLevelUpBanner(newLv, rewardCoins, rewardEnergy) {
+function showLevelUpBanner(newLv, rewardCoins, rewardEnergy, genName) {
   const banner = document.getElementById("levelup-banner");
   const titleEl = document.getElementById("lv-banner-title");
   const subEl = document.getElementById("lv-banner-sub");
   if (!banner) return;
 
   titleEl.textContent = `👑 연금술사 레벨 업! Lv.${newLv} 달성!`;
-  subEl.textContent = `보상: +${rewardCoins}🪙 · +${rewardEnergy}⚡ · +1🌟 지급 완료!`;
+  subEl.textContent = `보상: +${rewardCoins}🪙 · +${rewardEnergy}⚡ · [${genName} Lv.1] 진화 파츠 지급!`;
   banner.classList.remove("hidden");
 
   if (lvBannerTimer) clearTimeout(lvBannerTimer);
   lvBannerTimer = setTimeout(() => {
     banner.classList.add("hidden");
-  }, 3400);
+  }, 3600);
 }
 
 function gainXP(amount) {
@@ -1106,29 +1545,22 @@ function gainXP(amount) {
   while (state.xp >= getRequiredXP(state.playerLv)) {
     state.xp -= getRequiredXP(state.playerLv);
     state.playerLv++;
-    state.maxEnergy = NATURAL_ENERGY_CAP; // 자연 회복 한도는 100⚡ 고정
+    state.maxEnergy = NATURAL_ENERGY_CAP;
 
     const rewardCoins = 40 * state.playerLv;
-    const rewardEnergy = 30;
+    const rewardEnergy = 25;
     state.coins += rewardCoins;
     state.stars += 1;
     state.energy += rewardEnergy;
 
-    // 보드에 레벨업 보너스 선물(금화 더미 또는 번개 구슬) 스폰
-    const giftCell = findNearestEmptyCell(27);
-    if (giftCell !== -1) {
-      state.board[giftCell] = {
-        uid: newUid(),
-        state: "active",
-        isGenerator: false,
-        chain: state.playerLv % 2 === 0 ? "coin" : "energy",
-        level: 2,
-        justSpawned: true,
-      };
-    }
+    // ★ 레벨업 시 생성기 진화 파츠(Lv.1 생성기)를 보드/가방에 지급하여 생성기 합성을 통한 성질 변화 지원!
+    const coreGenOrder = ["potion", "grimoire", "herb", "bakery", "tea"];
+    const rewardGenChain = coreGenOrder[(state.playerLv - 2) % coreGenOrder.length];
+    grantGeneratorEvolutionPart(rewardGenChain, `Lv.${state.playerLv} 레벨업 보상`);
+    const genMeta = getGeneratorTierMeta(rewardGenChain, 1);
 
     leveledUp = true;
-    showLevelUpBanner(state.playerLv, rewardCoins, rewardEnergy);
+    showLevelUpBanner(state.playerLv, rewardCoins, rewardEnergy, genMeta.name);
   }
 
   if (leveledUp) {
@@ -1136,14 +1568,14 @@ function gainXP(amount) {
   }
 }
 
-// 생성기 작동
+// ★ 생성기 작동: 생성기의 합성 진화 레벨(Lv.1 / Lv.2 / Lv.3)에 따라 배출 성질이 완전히 달라짐!
 function triggerGenerator(cellIdx, clientX, clientY) {
   const gen = state.board[cellIdx];
   if (!gen || !gen.isGenerator) return;
 
   if (state.energy < 1) {
     sfx.warn();
-    floatText("⚡ 번개가 부족합니다! 5분마다 충전되거나 이벤트/번개아이템으로 얻으세요!", clientX, clientY, "#ef4444");
+    floatText("⚡ 번개가 부족합니다! 5분마다 충전되거나 이벤트로 얻으세요!", clientX, clientY, "#ef4444");
     return;
   }
 
@@ -1157,13 +1589,59 @@ function triggerGenerator(cellIdx, clientX, clientY) {
   state.energy -= 1;
   sfx.spawn();
 
+  const genLv = Math.max(1, gen.level || 1);
   const chDef = CHAINS[gen.chain];
   let spawnChain = gen.chain;
-  let spawnLv = Math.random() < 0.18 ? 2 : 1;
+  let spawnLv = 1;
 
-  if (chDef.rareDropChain && Math.random() < chDef.rareChance) {
-    spawnChain = chDef.rareDropChain;
-    spawnLv = 1;
+  if (genLv === 1) {
+    // [Lv.1 기본 생성기 성질]: Lv.1(82%) 또는 Lv.2(18%) 생성 + 가마솥은 20% 보석 원석(Lv.1)
+    spawnLv = Math.random() < 0.18 ? 2 : 1;
+    if (chDef.rareDropChain && Math.random() < chDef.rareChance) {
+      spawnChain = chDef.rareDropChain;
+      spawnLv = 1;
+    }
+  } else if (genLv === 2) {
+    // [Lv.2 진화 생성기 성질]: 고급 재료(Lv.2~3) 대폭 상승 + 이종 조합 파트너 재료나 2단계 사파이어 보석 배출!
+    const roll = Math.random();
+    if (roll < 0.22) {
+      // 이종 조합용 파트너 재료 자동 공명 생성!
+      if (gen.chain === "potion") {
+        spawnChain = "herb";
+        spawnLv = 2;
+      } else if (gen.chain === "herb") {
+        spawnChain = "potion";
+        spawnLv = 2;
+      } else if (gen.chain === "bakery") {
+        spawnChain = "tea";
+        spawnLv = 3;
+      } else if (gen.chain === "tea") {
+        spawnChain = "bakery";
+        spawnLv = 2;
+      } else {
+        spawnChain = "gem";
+        spawnLv = 2;
+      }
+      floatText(`✨ Lv.2 각성 효과! 조합 파트너 재료 공명 생성!`, clientX, clientY, "#34d399");
+    } else if (chDef.rareDropChain && roll < 0.42) {
+      spawnChain = chDef.rareDropChain;
+      spawnLv = 2; // 원석이 아닌 Lv.2 사파이어 즉시 배출!
+    } else {
+      spawnLv = Math.random() < 0.35 ? 3 : 2;
+    }
+  } else {
+    // [Lv.3 신화 생성기 성질]: Lv.2~4 상급 재료 배출 + 20% 확률로 스페셜 이종 조합 완제품 즉시 연성!
+    const roll = Math.random();
+    if (roll < 0.2) {
+      spawnChain = "combo";
+      spawnLv = gen.chain === "potion" || gen.chain === "herb" ? 1 : gen.chain === "bakery" || gen.chain === "tea" ? 2 : 3;
+      floatText(`👑 Lv.3 신화 성질 발동! 스페셜 조합품 직접 연성!`, clientX, clientY, "#fde047");
+    } else if (chDef.rareDropChain && roll < 0.42) {
+      spawnChain = chDef.rareDropChain;
+      spawnLv = 3; // Lv.3 문스톤 결정 즉시 배출!
+    } else {
+      spawnLv = Math.random() < 0.3 ? 4 : Math.random() < 0.7 ? 3 : 2;
+    }
   }
 
   state.board[targetIdx] = {
@@ -1201,7 +1679,7 @@ function crackAdjacentCrates(centerIdx) {
   }
 }
 
-// 드래그 앤 드롭 합치기 & 이종 재료 조합 실행
+// 드래그 앤 드롭 합치기 (일반 재료 합성 + 이종 재료 조합 + ★생성기 합성 진화★)
 function executeBoardDrop(srcIdx, dstIdx, clientX, clientY) {
   if (srcIdx === null || dstIdx === null || srcIdx === dstIdx) return;
   const src = state.board[srcIdx];
@@ -1223,7 +1701,35 @@ function executeBoardDrop(srcIdx, dstIdx, clientX, clientY) {
     return;
   }
 
-  // 이종 재료 조합 레시피(Cross-Chain Combination) 체크
+  // ★ 1. 같은 생성기끼리 드래그 합성하여 상위 성질 생성기(Lv.1 ➔ Lv.2 ➔ Lv.3)로 진화!
+  if (
+    src.isGenerator &&
+    dst.isGenerator &&
+    src.chain === dst.chain &&
+    (src.level || 1) === (dst.level || 1) &&
+    (src.level || 1) < 3
+  ) {
+    const nextGenLv = (src.level || 1) + 1;
+    const nextGenMeta = getGeneratorTierMeta(src.chain, nextGenLv);
+    state.board[srcIdx] = null;
+    state.board[dstIdx] = {
+      uid: newUid(),
+      state: "active",
+      isGenerator: true,
+      chain: src.chain,
+      level: nextGenLv,
+      justSpawned: true,
+    };
+    sfx.serve();
+    gainXP(25);
+    state.selectedIdx = dstIdx;
+    setDialogue("🔥 생성기 합성 진화 성공!", `${nextGenMeta.name}(Lv.${nextGenLv})으로 진화하여 새로운 성질을 획득했습니다!`);
+    floatText(`🔥 생성기 진화! [${nextGenMeta.name} Lv.${nextGenLv}]`, clientX, clientY, "#fde047");
+    renderAll();
+    return;
+  }
+
+  // 2. 이종 재료 조합 레시피(Cross-Chain Combination) 체크
   const crossResult = findCrossRecipe(src, dst);
   if (crossResult) {
     const wasCobweb = dst.state === "cobweb";
@@ -1247,7 +1753,7 @@ function executeBoardDrop(srcIdx, dstIdx, clientX, clientY) {
     return;
   }
 
-  // 동일 아이템 레벨업 합치기 (Merge)
+  // 3. 동일 아이템 레벨업 합치기 (Merge)
   const meta = getItemMeta(src.chain, src.level);
   if (
     !src.isGenerator &&
@@ -1277,15 +1783,15 @@ function executeBoardDrop(srcIdx, dstIdx, clientX, clientY) {
       floatText(`✨ ${nextMeta.name} (Lv.${nextLv})`, clientX, clientY, "#fbbf24");
     }
 
-    // Lv.3 이상 합성 시 인게임 번개(⚡) 또는 금화 조각 드롭!
-    if (nextLv >= 3 && Math.random() < 0.55) {
+    // ★ 번개/돈 무작위 드롭 확률 대폭 축소: Lv.4 이상 고단계 합성 시에만 12% 확률로 드롭 (distracting 방지!)
+    if (nextLv >= 4 && Math.random() < 0.12) {
       const bonusCell = findNearestEmptyCell(dstIdx);
       if (bonusCell !== -1) {
         state.board[bonusCell] = {
           uid: newUid(),
           state: "active",
           isGenerator: false,
-          chain: Math.random() < 0.55 ? "energy" : "coin",
+          chain: Math.random() < 0.5 ? "energy" : "coin",
           level: 1,
           justSpawned: true,
         };
@@ -1332,7 +1838,7 @@ function collectBoardItem(cellIdx, clientX, clientY) {
   renderAll();
 }
 
-// 포인터 드래그 엔진
+// 메인 보드 포인터 드래그 엔진
 function setupPointerDragEngine() {
   const gridEl = document.getElementById("board-grid");
 
@@ -1448,7 +1954,7 @@ function createDragGhost(item, x, y) {
   const ghost = document.createElement("div");
   ghost.className = `gh-tile ${item.isGenerator ? "is-generator" : meta.css} drag-ghost`;
   const svgArt = GameSprites.getItemSVG(item.chain, item.level, item.isGenerator);
-  const label = item.isGenerator ? CHAINS[item.chain].generator.name : meta.name;
+  const label = item.isGenerator ? getGeneratorTierMeta(item.chain, item.level).name : meta.name;
 
   ghost.innerHTML = `
     <div class="tile-svg-wrap">${svgArt}</div>
@@ -1461,15 +1967,29 @@ function createDragGhost(item, x, y) {
 }
 
 function highlightCompatibleTargets(dragItem) {
-  if (dragItem.isGenerator) return;
-  const meta = getItemMeta(dragItem.chain, dragItem.level);
-
   document.querySelectorAll(".gh-cell").forEach((cellEl) => {
     const idx = parseInt(cellEl.dataset.index, 10);
     if (idx === drag.sourceIdx) return;
     const target = state.board[idx];
-    if (!target || target.state === "crate" || target.isGenerator) return;
+    if (!target || target.state === "crate") return;
 
+    // 1. 같은 생성기끼리 합성 진화 하이라이트
+    if (dragItem.isGenerator) {
+      if (
+        target.isGenerator &&
+        target.chain === dragItem.chain &&
+        (target.level || 1) === (dragItem.level || 1) &&
+        (dragItem.level || 1) < 3
+      ) {
+        cellEl.classList.add("cell-merge-hint");
+      }
+      return;
+    }
+
+    if (target.isGenerator) return;
+    const meta = getItemMeta(dragItem.chain, dragItem.level);
+
+    // 2. 일반 아이템 동일 레벨 합성 하이라이트
     if (target.chain === dragItem.chain && target.level === dragItem.level && dragItem.level < meta.maxLv) {
       cellEl.classList.add("cell-merge-hint");
     } else if (findCrossRecipe(dragItem, target) !== null) {
@@ -1486,7 +2006,6 @@ function cleanupDragVisuals() {
   });
 }
 
-// 자동 DB 저장 (IndexedDB + LocalStorage)
 let saveIndicatorTimer = null;
 function triggerAutoSave() {
   if (!state.isLoaded || !window.GameDB) return;
@@ -1503,6 +2022,9 @@ function triggerAutoSave() {
     bag: state.bag,
     orders: state.orders,
     eventState: state.eventState,
+    soundEnabled: sfx.enabled,
+    cauldronPartGranted: state.cauldronPartGranted,
+    lastSeenVersion: state.lastSeenVersion || APP_VERSION,
     interiorRooms: roomState ? roomState.rooms : null,
     currentThemeKey: roomState ? roomState.currentThemeKey : "alchemy",
   };
@@ -1519,7 +2041,6 @@ function triggerAutoSave() {
   }
 }
 
-// 전체 UI 렌더링
 function renderAll() {
   updateTopBarUI();
   const { wantedBoardUids, orderStatus } = computeWantedMap();
@@ -1551,14 +2072,17 @@ function updateTopBarUI() {
   if (xpFillEl) xpFillEl.style.width = `${xpPct}%`;
 
   document.getElementById("res-energy").textContent = state.energy;
-  // 번개 100개까지는 5분(05:00)마다 1개씩 자동 충전
   document.getElementById("energy-timer").textContent =
     state.energy >= NATURAL_ENERGY_CAP ? `MAX(100)` : formatMMSS(state.energyCountdown);
   document.getElementById("res-coins").textContent = state.coins;
   document.getElementById("res-stars").textContent = state.stars;
+
+  const verLabel = document.getElementById("top-version-label");
+  if (verLabel) verLabel.textContent = APP_VERSION;
+  const setVerText = document.getElementById("settings-version-text");
+  if (setVerText) setVerText.textContent = APP_VERSION;
 }
 
-// 🏰 마녀의 성 화면 UI (오른쪽 하단 현재 섹션 아이콘 버튼 + 퀘스트 카드 리스트) 업데이트
 function updateCastleViewUI(orderStatus = null) {
   if (!window.Interior3DEngine) return;
   const stats = Interior3DEngine.getProgressStats();
@@ -1567,32 +2091,30 @@ function updateCastleViewUI(orderStatus = null) {
 
   const currentRoom = stats.allThemes[stats.currentThemeKey] || stats.allThemes.alchemy;
 
-  // ★ 오른쪽 하단(Bottom-Right) 섹션 아이콘 버튼 업데이트 (예: 🔮 마녀의 공방 / 🏖️ 하버 오션카페 / 🌿 보타니컬 온실 / 👑 황실 대연회장) ★
   const fabIconEl = document.getElementById("fab-section-icon");
   const fabTitleEl = document.getElementById("fab-section-title");
   if (fabIconEl) fabIconEl.textContent = currentRoom.sectionIcon || "🔮";
-  if (fabTitleEl) fabTitleEl.textContent = currentRoom.shortName ? currentRoom.shortName.replace(/^[^\s]+\s/, "") : "마녀의 공방";
+  if (fabTitleEl) {
+    fabTitleEl.textContent = currentRoom.shortName ? currentRoom.shortName.replace(/^[^\s]+\s/, "") : "마녀의 공방";
+  }
 
-  // 주문 완성 여부 배지 표시
   if (orderStatus) {
     const anyOrderReady = orderStatus.some((st) => st.allReady);
     const fabBadge = document.getElementById("fab-order-badge");
     if (fabBadge) fabBadge.classList.toggle("hidden", !anyOrderReady);
   }
 
-  // 합성 화면의 [🏰 성으로 가기] 버튼 알림 배지 업데이트
   const canRenovateAny = stats.nextSpot && state.stars >= stats.nextSpot.cost;
   const castleDot = document.getElementById("castle-ready-dot");
   if (castleDot) castleDot.classList.toggle("hidden", !canRenovateAny);
 
-  // 성 하단 퀘스트 스트립 렌더링
   const totalProgEl = document.getElementById("castle-total-prog");
   if (totalProgEl) {
     totalProgEl.textContent = `마녀의 성 전체 ${stats.totalCastleDone}/${stats.totalCastleSpots}`;
   }
   const zoneNameEl = document.getElementById("castle-quest-zone-name");
   if (zoneNameEl) {
-    zoneNameEl.textContent = `📜 ${currentRoom.shortName} 퀘스트 (완료 시 스토리 컷신 오픈)`;
+    zoneNameEl.textContent = `📜 ${currentRoom.shortName} 퀘스트 (완료 시 생성기 진화 파츠 지급)`;
   }
 
   const stripEl = document.getElementById("castle-quest-strip");
@@ -1625,6 +2147,7 @@ function updateCastleViewUI(orderStatus = null) {
   });
 }
 
+// ★ 손님 주문(Quest) 렌더링: 각 요구 재료가 어떤 조합이나 생성기에서 나오는지 카드 하단에 즉시 표시!
 function renderOrdersUI(orderStatus) {
   const strip = document.getElementById("orders-strip");
   strip.innerHTML = "";
@@ -1640,14 +2163,17 @@ function renderOrdersUI(orderStatus) {
         const fulfilled = st.reqFulfilled[rIdx];
         const svgArt = GameSprites.getItemSVG(req.chain, req.level, false);
         return `
-          <div class="order-req-box ${fulfilled ? "fulfilled" : ""}" title="${meta.name} (Lv.${req.level})">
+          <div class="order-req-box ${fulfilled ? "fulfilled" : ""}" title="${meta.name}: ${getRequirementRecipeSummary(req)}">
             ${fulfilled ? '<span class="req-check">✔</span>' : ""}
             <div class="order-req-svg">${svgArt}</div>
-            <span class="req-lv">${req.chain === "combo" ? "조합" : "Lv." + req.level}</span>
+            <span class="req-lv">${req.chain === "combo" ? "⚗️조합" : "Lv." + req.level}</span>
           </div>
         `;
       })
       .join("");
+
+    // 카드 하단에 들어갈 조합법 / 생성기 출처 힌트 문자열
+    const recipeSummaryText = ord.reqs.map((r) => getRequirementRecipeSummary(r)).join(" · ");
 
     card.innerHTML = `
       <div class="order-cust-row">
@@ -1661,7 +2187,12 @@ function renderOrdersUI(orderStatus) {
         <div class="order-req-list">${reqBoxesHtml}</div>
         ${st.allReady ? `<button class="gh-serve-btn">완성!</button>` : ""}
       </div>
+      <div class="order-recipe-hint" title="클릭하면 상세 조합법을 안내합니다">💡 ${recipeSummaryText}</div>
     `;
+
+    card.addEventListener("click", () => {
+      explainOrderRecipe(ord);
+    });
 
     const serveBtn = card.querySelector(".gh-serve-btn");
     if (serveBtn) {
@@ -1702,12 +2233,13 @@ function renderBoardUI(wantedBoardUids) {
           <span class="tile-label">봉인 상자</span>
         `;
       } else if (item.isGenerator) {
-        const genInfo = CHAINS[item.chain].generator;
+        const genLv = Math.max(1, item.level || 1);
+        const genTier = getGeneratorTierMeta(item.chain, genLv);
         tile.className = `gh-tile is-generator ${item.justSpawned ? "pop-spawn" : ""}`;
         tile.innerHTML = `
-          <div class="tile-svg-wrap">${GameSprites.getItemSVG(item.chain, 1, true)}</div>
-          <span class="tile-label">${genInfo.name}</span>
-          <span class="gen-bolt-badge">⚡</span>
+          <div class="tile-svg-wrap">${GameSprites.getItemSVG(item.chain, genLv, true)}</div>
+          <span class="tile-label">${genTier.name}</span>
+          <span class="tile-lv-pill">Lv.${genLv}⚡</span>
         `;
       } else {
         const meta = getItemMeta(item.chain, item.level);
@@ -1741,10 +2273,10 @@ function renderInspectorUI() {
 
   const item = state.selectedIdx !== null ? state.board[state.selectedIdx] : null;
   if (!item) {
-    iconEl.innerHTML = GameSprites.getItemSVG("potion", 3, false);
+    iconEl.innerHTML = GameSprites.getItemSVG("potion", 2, true);
     nameEl.textContent = "타일을 탭하거나 드래그해 합성하세요";
     lvEl.textContent = "안내";
-    descEl.textContent = "좌측 하단 [🏰 성으로 가기]를 누르면 마녀의 성을 꾸밀 수 있습니다!";
+    descEl.textContent = "같은 생성기끼리도 합성(Lv.1➔Lv.2➔Lv.3)하여 새로운 성질로 진화시킬 수 있습니다!";
     return;
   }
 
@@ -1757,17 +2289,35 @@ function renderInspectorUI() {
   }
 
   if (item.isGenerator) {
-    const gen = CHAINS[item.chain].generator;
-    iconEl.innerHTML = GameSprites.getItemSVG(item.chain, 1, true);
-    nameEl.textContent = gen.name;
-    lvEl.textContent = "생성기";
-    descEl.textContent = gen.desc;
+    const genLv = Math.max(1, item.level || 1);
+    const genTier = getGeneratorTierMeta(item.chain, genLv);
+    iconEl.innerHTML = GameSprites.getItemSVG(item.chain, genLv, true);
+    nameEl.textContent = genTier.name;
+    lvEl.textContent = `생성기 Lv.${genLv}/3`;
+    descEl.textContent = genTier.desc;
 
     const btn = document.createElement("button");
     btn.className = "insp-btn spawn-btn";
     btn.textContent = "⚡ 생성";
     btn.addEventListener("click", (e) => triggerGenerator(state.selectedIdx, e.clientX, e.clientY));
     actionsEl.appendChild(btn);
+
+    const bagBtn = document.createElement("button");
+    bagBtn.className = "insp-btn store-btn";
+    bagBtn.textContent = "🎒보관";
+    bagBtn.addEventListener("click", (e) => {
+      if (state.bag.length >= 6) {
+        sfx.warn();
+        floatText("보관함이 가득 찼습니다!", e.clientX, e.clientY, "#ef4444");
+        return;
+      }
+      state.bag.push(item);
+      state.board[state.selectedIdx] = null;
+      state.selectedIdx = null;
+      sfx.tap();
+      renderAll();
+    });
+    actionsEl.appendChild(bagBtn);
     return;
   }
 
@@ -1839,17 +2389,45 @@ function renderInspectorUI() {
   actionsEl.appendChild(sellBtn);
 }
 
-// 플레이어 레벨 & 번개 경제 안내 모달
+// 🆕 버전 업데이트 알림 및 버전 Progression 기록 모달 렌더링
+function renderChangelogModal() {
+  const body = document.getElementById("changelog-body");
+  if (!body) return;
+  document.getElementById("changelog-modal-title").textContent = `🆕 업데이트 노트 (${APP_VERSION})`;
+
+  body.innerHTML = VERSION_HISTORY.map(
+    (v, idx) => `
+    <div class="codex-card" style="background:${idx === 0 ? "#fefce8" : "#ffffff"};border-color:${
+      idx === 0 ? "#f59e0b" : "#cbd5e1"
+    }">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <strong style="font-size:13px;color:#3b0764">🚀 ${v.version} — ${v.title}</strong>
+        <span style="font-size:9.5px;font-weight:900;padding:2px 7px;border-radius:99px;background:${
+          idx === 0 ? "#ea580c" : "#64748b"
+        };color:#fff">${v.badge} · ${v.date}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:#1e293b;line-height:1.42">
+        ${v.changes.map((line) => `<div>• ${line}</div>`).join("")}
+      </div>
+    </div>
+  `
+  ).join("");
+}
+
 function renderLevelModal() {
   const body = document.getElementById("level-modal-body");
   if (!body) return;
   const reqXP = getRequiredXP(state.playerLv);
   const pct = Math.min(100, Math.round((state.xp / reqXP) * 100));
+  const coreGenOrder = ["potion", "grimoire", "herb", "bakery", "tea"];
 
   let milestonesHtml = "";
   for (let lv = 2; lv <= Math.max(8, state.playerLv + 3); lv++) {
     const unlocked = state.playerLv >= lv;
     const coinBonus = 40 * lv;
+    const rewardGenChain = coreGenOrder[(lv - 2) % coreGenOrder.length];
+    const genMeta = getGeneratorTierMeta(rewardGenChain, 1);
+
     milestonesHtml += `
       <div class="codex-card" style="display:flex;align-items:center;justify-content:space-between;background:${
         unlocked ? "#f3e8ff" : "#ffffff"
@@ -1857,7 +2435,7 @@ function renderLevelModal() {
         <div>
           <strong style="font-size:12.5px;color:#3b0764">👑 레벨 ${lv} 달성 혜택</strong>
           <p style="font-size:11px;color:#475569;margin-top:2px">
-            보상: <b>+${coinBonus}🪙 코인 · +30⚡ 번개 · +1🌟 마력별 · 레벨업 선물상자</b>
+            보상: <b>+${coinBonus}🪙 · +25⚡ · +1🌟 · 🔥[${genMeta.name} Lv.1] 진화 파츠</b>
           </p>
         </div>
         <span style="font-size:11px;font-weight:900;padding:4px 8px;border-radius:8px;background:${
@@ -1879,19 +2457,45 @@ function renderLevelModal() {
         <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#38bdf8,#fde047)"></div>
       </div>
       <p style="font-size:11px;color:#e9d5ff;line-height:1.4">
-        ⚡ <b>번개(Lightning) 경제 시스템</b>: 최대 <b>100개</b>까지 <b>5분마다 1개씩</b> 자동 충전됩니다.<br/>
-        보드 위에서 번개 조각(Lv.1~4)을 합성하거나, 손님 주문 완료, 퀘스트 스토리 감상, 명절 팝업 이벤트에서 추가 번개를 획득할 수 있습니다!
+        🔥 <b>생성기 합성 &amp; 성질 진화</b>: 레벨업하거나 성 인테리어 퀘스트를 완료할 때마다 <b>생성기 진화 파츠(Lv.1)</b>를 획득합니다. 같은 생성기 2개를 합치면 <b>Lv.2 ➔ Lv.3</b>으로 외형과 생성 성질이 진화합니다!
       </p>
     </div>
     ${milestonesHtml}
   `;
 }
 
-// 도감 모달
+// 도감 모달 (생성기 합성 진화 도감 + 스페셜 이종 조합 레시피 + 일반 체인)
 function renderCodexModal() {
   const body = document.getElementById("codex-body");
   body.innerHTML = "";
 
+  // 1. 생성기 합성 진화(Lv.1 ➔ Lv.2 ➔ Lv.3) 안내 카드
+  const genEvoCard = document.createElement("div");
+  genEvoCard.className = "codex-card";
+  genEvoCard.style.background = "#f3e8ff";
+  genEvoCard.style.borderColor = "#9333ea";
+  const potTiers = CHAINS.potion.generator.tiers;
+  genEvoCard.innerHTML = `
+    <h4>🔥 생성기 합성 진화 (Lv.1 ➔ Lv.2 ➔ Lv.3 성질 변화)</h4>
+    <p style="font-size:11px;color:#475569;margin-bottom:6px">레벨업이나 퀘스트 완료로 얻은 같은 생성기 2개를 합치면 새로운 성질로 진화합니다!</p>
+    <div class="codex-flow">
+      ${potTiers
+        .map(
+          (t, idx) => `
+        <div class="codex-node" style="flex:1">
+          <div class="codex-svg-mini">${GameSprites.getItemSVG("potion", t.level, true)}</div>
+          <strong style="font-size:9.5px">${t.name}</strong>
+          <small style="font-size:8.5px;color:#6d28d9">Lv.${t.level}</small>
+        </div>
+        ${idx < potTiers.length - 1 ? '<span style="color:#9333ea;font-weight:900">➔</span>' : ""}
+      `
+        )
+        .join("")}
+    </div>
+  `;
+  body.appendChild(genEvoCard);
+
+  // 2. 스페셜 이종 조합 카드
   const comboCard = document.createElement("div");
   comboCard.className = "codex-card";
   comboCard.style.background = "#fefce8";
@@ -1900,9 +2504,9 @@ function renderCodexModal() {
     <h4>⚗️ 스페셜 이종 재료 조합(Cross-Combination) 레시피</h4>
     <p style="font-size:11px;color:#475569;margin-bottom:6px">서로 다른 체인의 특정 재료를 드래그해 겹치면 새로운 스페셜 메뉴가 조합됩니다!</p>
     <div style="display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:700;color:#1e293b">
-      <div>1️⃣ 초급 마나물약(Lv.2) + 몽환 달버섯(Lv.2) ➔ 🌟 특제 활력비약</div>
-      <div>2️⃣ 버터 크루아상(Lv.2) + 에스프레소(Lv.3) ➔ 🍽️ 모닝 브런치세트</div>
-      <div>3️⃣ 봉인 주문서(Lv.2) + 사파이어(Lv.2) ➔ 🔮 마력 각인룬스톤</div>
+      <div>1️⃣ 🔥초급 마나물약(Lv.2) + 🪴몽환 달버섯(Lv.2) ➔ 🌟 특제 활력비약</div>
+      <div>2️⃣ 🧁버터 크루아상(Lv.2) + 🫖에스프레소(Lv.3) ➔ 🍽️ 모닝 브런치세트</div>
+      <div>3️⃣ 🦉봉인 주문서(Lv.2) + 💎사파이어(Lv.2) ➔ 🔮 마력 각인룬스톤</div>
     </div>
   `;
   body.appendChild(comboCard);
@@ -1941,13 +2545,14 @@ function renderBagModal() {
     slot.className = "bag-slot";
     const it = state.bag[i];
     if (it) {
-      const meta = getItemMeta(it.chain, it.level);
+      const isGen = !!it.isGenerator;
+      const meta = isGen ? getGeneratorTierMeta(it.chain, it.level) : getItemMeta(it.chain, it.level);
       const tile = document.createElement("div");
-      tile.className = `gh-tile ${meta.css}`;
+      tile.className = `gh-tile ${isGen ? "is-generator" : meta.css}`;
       tile.style.width = "68px";
       tile.style.height = "62px";
       tile.innerHTML = `
-        <div class="tile-svg-wrap">${GameSprites.getItemSVG(it.chain, it.level, false)}</div>
+        <div class="tile-svg-wrap">${GameSprites.getItemSVG(it.chain, it.level || 1, isGen)}</div>
         <span class="tile-label">${meta.name}</span>
       `;
       slot.appendChild(tile);
@@ -1983,7 +2588,6 @@ function setDialogue(speaker, text) {
   if (tx2) tx2.textContent = text;
 }
 
-// 동시에 여러 플로팅 텍스트가 뜰 때 세로 위치를 계단식 분리하여 절대 겹치지 않게 처리
 let activeFloatCount = 0;
 function floatText(text, x, y, color = "#fbbf24") {
   const layer = document.getElementById("fx-layer");
@@ -2008,13 +2612,18 @@ function floatText(text, x, y, color = "#fbbf24") {
   }, 1050);
 }
 
+function updateSoundButtonUI() {
+  const sndBtn = document.getElementById("btn-toggle-sound");
+  if (sndBtn) {
+    sndBtn.textContent = sfx.enabled ? "🔊 사운드 켜짐" : "🔇 사운드 꺼짐";
+  }
+}
+
 function bindUIEvents() {
-  // ★ 1. [🏰 성으로 가기] 버튼 -> 마녀의 성 꾸미기 화면(View A)으로 전환!
   document.getElementById("btn-go-castle").addEventListener("click", () => {
     switchScreen("castle");
   });
 
-  // 상단 마력별(🌟) 배지 클릭 시에도 마녀의 성 화면으로 이동 후 다음 가구 포커스!
   document.getElementById("btn-next-reno").addEventListener("click", () => {
     if (state.activeScreen !== "castle") {
       switchScreen("castle");
@@ -2026,12 +2635,10 @@ function bindUIEvents() {
     }
   });
 
-  // ★ 2. 마녀의 성 화면 오른쪽 하단(Bottom-Right) 섹션 아이콘 버튼 -> 합성 페이지(View B)로 전환!
   document.getElementById("btn-enter-merge").addEventListener("click", () => {
     switchScreen("merge");
   });
 
-  // 3. 마녀의 성 구역 탭 전환 (성 전체지도 / 마녀의 공방 / 하버 오션카페 / 보타니컬 온실 / 황실 대연회장)
   document.querySelectorAll(".theme-tab").forEach((tab) => {
     tab.addEventListener("click", () => {
       sfx.tap();
@@ -2039,7 +2646,6 @@ function bindUIEvents() {
     });
   });
 
-  // 4. 스토리 컷신 모달 컨트롤
   document.getElementById("btn-cutscene-next").addEventListener("click", () => {
     closeOrAdvanceCutscene(false);
   });
@@ -2047,7 +2653,6 @@ function bindUIEvents() {
     closeOrAdvanceCutscene(true);
   });
 
-  // 5. 전세계 명절 팝업 이벤트 모달 오픈 & 컨트롤
   const openEventModal = () => {
     sfx.tap();
     renderHolidayEventModal();
@@ -2061,19 +2666,31 @@ function bindUIEvents() {
     collectSelectedHolidayItemToMain(e)
   );
 
-  // 6. 레벨 모달 오픈
   document.getElementById("btn-open-level").addEventListener("click", () => {
     renderLevelModal();
     document.getElementById("modal-level").classList.remove("hidden");
   });
 
-  // 7. 로컬 DB & 안드로이드 공식 앱 설치 모달
-  document.getElementById("btn-open-db").addEventListener("click", async () => {
+  // ⚙️ 통합 설정 모달 열기
+  document.getElementById("btn-open-settings").addEventListener("click", async () => {
     if (window.GameDB) {
       const code = await GameDB.exportBackupString();
       document.getElementById("backup-code-box").value = code;
     }
-    document.getElementById("modal-db").classList.remove("hidden");
+    updateSoundButtonUI();
+    document.getElementById("modal-settings").classList.remove("hidden");
+  });
+
+  // 🆕 버전 업데이트 노트 & 히스토리 모달 열기
+  const openChangelog = () => {
+    sfx.tap();
+    renderChangelogModal();
+    document.getElementById("modal-changelog").classList.remove("hidden");
+  };
+  document.getElementById("btn-open-changelog").addEventListener("click", openChangelog);
+  document.getElementById("btn-settings-open-changelog").addEventListener("click", () => {
+    document.getElementById("modal-settings").classList.add("hidden");
+    openChangelog();
   });
 
   document.getElementById("btn-install-pwa").addEventListener("click", async (e) => {
@@ -2117,7 +2734,6 @@ function bindUIEvents() {
     }
   });
 
-  // 8. 번개 충전 버튼 (30코인으로 +25⚡ 또는 비상 무료 보충)
   document.getElementById("btn-refill-energy").addEventListener("click", (e) => {
     if (state.coins >= 25) {
       state.coins -= 25;
@@ -2132,7 +2748,6 @@ function bindUIEvents() {
     renderAll();
   });
 
-  // 9. 거미줄 즉시 해제 부스터
   document.getElementById("btn-unlock-web").addEventListener("click", (e) => {
     if (state.coins < 20) {
       sfx.warn();
@@ -2160,7 +2775,6 @@ function bindUIEvents() {
     renderAll();
   });
 
-  // 10. 보드 정렬
   document.getElementById("btn-sort-board").addEventListener("click", (e) => {
     const indices = [];
     const items = [];
@@ -2182,14 +2796,15 @@ function bindUIEvents() {
     renderAll();
   });
 
-  // 11. 사운드 토글
+  // 설정 모달 내 사운드 토글
   const sndBtn = document.getElementById("btn-toggle-sound");
   sndBtn.addEventListener("click", () => {
     sfx.enabled = !sfx.enabled;
-    sndBtn.textContent = sfx.enabled ? "🔊" : "🔇";
+    state.soundEnabled = sfx.enabled;
+    updateSoundButtonUI();
+    triggerAutoSave();
   });
 
-  // 12. 도감/가방/모달 닫기
   document.getElementById("btn-open-codex").addEventListener("click", () => {
     document.getElementById("modal-codex").classList.remove("hidden");
   });

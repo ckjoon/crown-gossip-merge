@@ -162,7 +162,11 @@ window.GameDB = (function () {
       for (let i = 0; i < totalCells; i++) {
         const cell = saved.board[i];
         if (cell && cell.chain && validChains[cell.chain]) {
-          const maxLv = validChains[cell.chain].items ? validChains[cell.chain].items.length : 1;
+          const maxLv = cell.isGenerator
+            ? 3
+            : validChains[cell.chain].items
+            ? validChains[cell.chain].items.length
+            : 1;
           restoredBoard[i] = {
             uid: cell.uid || "restored_" + i + "_" + Date.now(),
             state: ["crate", "cobweb", "active"].includes(cell.state) ? cell.state : "active",
@@ -189,6 +193,25 @@ window.GameDB = (function () {
             };
           }
         }
+      }
+
+      // 가마솥 생성기 합성을 바로 체험해볼 수 있도록, 아직 가마솥이 Lv.1 1개뿐이고 v2.4.0 첫 진입이면 보조 가마솥 Lv.1 지급
+      const cauldronCount = restoredBoard.filter((it) => it && it.isGenerator && it.chain === "potion").length;
+      const hasLv2Cauldron = restoredBoard.some((it) => it && it.isGenerator && it.chain === "potion" && it.level >= 2);
+      if (cauldronCount === 1 && !hasLv2Cauldron && !saved.cauldronPartGranted) {
+        const emptyIdx = restoredBoard.findIndex((it) => it === null);
+        if (emptyIdx !== -1) {
+          restoredBoard[emptyIdx] = {
+            uid: "gen_bonus_potion_" + Date.now(),
+            state: "active",
+            isGenerator: true,
+            chain: "potion",
+            level: 1,
+          };
+          defaultState.cauldronPartGranted = true;
+        }
+      } else if (saved.cauldronPartGranted) {
+        defaultState.cauldronPartGranted = true;
       }
 
       defaultState.board = restoredBoard;
@@ -223,10 +246,15 @@ window.GameDB = (function () {
       };
     }
 
+    if (typeof saved.soundEnabled === "boolean") {
+      defaultState.soundEnabled = saved.soundEnabled;
+    }
+
     return {
       merged: true,
       interiorRooms: saved.interiorRooms || null,
       currentThemeKey: saved.currentThemeKey || "alchemy",
+      lastSeenVersion: saved.lastSeenVersion || null,
       updatedAt: savedRecord.updatedAt,
     };
   }

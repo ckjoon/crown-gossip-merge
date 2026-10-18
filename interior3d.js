@@ -585,21 +585,40 @@ window.Interior3DEngine = (function () {
     scene.add(roomGroup);
 
     buildRoomScene(currentThemeKey);
+    handleResize();
     animateLoop();
 
     window.addEventListener("resize", handleResize);
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => {
+        handleResize();
+        updatePinsDOM();
+      });
+      ro.observe(containerEl);
+    }
   }
 
   function handleResize() {
     if (!containerEl || !renderer || !camera) return;
-    const w = containerEl.clientWidth || 500;
-    const h = containerEl.clientHeight || 220;
+    const w = containerEl.clientWidth || 360;
+    const h = containerEl.clientHeight || 320;
+    if (w <= 0 || h <= 0) return;
     const aspect = w / h;
-    const d = isCastleMapMode ? 5.9 : isExpanded ? 5.8 : 5.4;
-    camera.left = -d * aspect;
-    camera.right = d * aspect;
-    camera.top = d;
-    camera.bottom = -d;
+
+    // 아이소메트릭 10x10 다이아몬드 룸의 가로 폭(약 ±7.2)이 Galaxy S25 세로 화면에서도 절대 잘리지 않도록 가로/세로 최소 시야 보장
+    const minHalfW = isCastleMapMode ? 8.0 : 7.5;
+    const minHalfH = isCastleMapMode ? 6.0 : 5.5;
+    let halfW = minHalfH * aspect;
+    let halfH = minHalfH;
+    if (halfW < minHalfW) {
+      halfW = minHalfW;
+      halfH = halfW / Math.max(0.35, aspect);
+    }
+
+    camera.left = -halfW;
+    camera.right = halfW;
+    camera.top = halfH;
+    camera.bottom = -halfH;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
   }
@@ -1105,8 +1124,10 @@ window.Interior3DEngine = (function () {
         const vec = new THREE.Vector3(pPos[0], pPos[1], pPos[2]);
         vec.project(camera);
 
-        const x = (vec.x * 0.5 + 0.5) * rect.width;
-        const y = (-(vec.y * 0.5) + 0.5) * rect.height;
+        const rawX = (vec.x * 0.5 + 0.5) * rect.width;
+        const rawY = (-(vec.y * 0.5) + 0.5) * rect.height;
+        const x = Math.max(68, Math.min(rect.width - 68, rawX));
+        const y = Math.max(42, Math.min(rect.height - 68, rawY));
 
         const pin = document.createElement("button");
         pin.className = `room-pin castle-zone-pin ${tKey === currentThemeKey ? "pin-ready" : ""}`;
@@ -1136,8 +1157,10 @@ window.Interior3DEngine = (function () {
       const vec = new THREE.Vector3(spot.pos[0], spot.pos[1] + 1.35, spot.pos[2]);
       vec.project(camera);
 
-      const x = (vec.x * 0.5 + 0.5) * rect.width;
-      const y = (-(vec.y * 0.5) + 0.5) * rect.height;
+      const rawX = (vec.x * 0.5 + 0.5) * rect.width;
+      const rawY = (-(vec.y * 0.5) + 0.5) * rect.height;
+      const x = Math.max(62, Math.min(rect.width - 62, rawX));
+      const y = Math.max(42, Math.min(rect.height - 68, rawY));
 
       const pin = document.createElement("button");
       if (!spot.done) {

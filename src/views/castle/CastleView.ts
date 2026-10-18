@@ -9,6 +9,8 @@ import { SPOT_LAYOUT, ZONE_LOOK } from "./layout";
 import { buildCastleOverview, buildRoomShell } from "./scenes";
 import { buildFurniture, buildRubble } from "./furniture";
 import { Ambience } from "./ambience";
+import { addOutline, disposeGroup, toonify } from "./toon";
+import { buildZoneDecor, setDecorGlow } from "./decor";
 
 const DEFAULT_CAM = new THREE.Vector3(10, 10.5, 10);
 
@@ -123,8 +125,14 @@ export class CastleView {
     this.renderer.setSize(w, h);
   }
 
+  private decor: THREE.Group | null = null;
+
   private clearGroup(): void {
-    for (const child of [...this.roomGroup.children]) this.roomGroup.remove(child);
+    for (const child of [...this.roomGroup.children]) {
+      this.roomGroup.remove(child);
+      disposeGroup(child);
+    }
+    this.decor = null;
     this.furniture.clear();
     this.bursts = [];
   }
@@ -137,6 +145,8 @@ export class CastleView {
     this.ambientLight = null;
     this.ambience = null;
     legacyLightCompensate(this.roomGroup);
+    toonify(this.roomGroup);
+    addOutline(this.roomGroup, 0.012);
     this.resetCamera(false);
     this.resize();
   }
@@ -150,9 +160,15 @@ export class CastleView {
     const shell = buildRoomShell(this.roomGroup, ZONE_LOOK[zone]);
     this.scene.background = shell.background;
     this.ambientLight = shell.ambient;
+    // 반구광: 그림자 쪽도 보랏빛으로 채워 툰 명암이 탁해지지 않게
+    this.roomGroup.add(new THREE.HemisphereLight(0xe9dcff, 0x3b2160, 0.95));
+    this.decor = buildZoneDecor(zone);
+    toonify(this.decor);
+    addOutline(this.decor, 0.02);
+    this.roomGroup.add(this.decor);
     for (const spot of ROOMS[zone].spots) this.renderSpot(spot.id);
     legacyLightCompensate(this.roomGroup);
-    this.ambience = new Ambience(this.ambientLight);
+    this.ambience = new Ambience(this.ambientLight, (step) => this.decor && setDecorGlow(this.decor, step));
     this.roomGroup.add(this.ambience.group);
     this.ambience.apply(this.doneCount(), false);
     this.resetCamera(false);
@@ -252,7 +268,10 @@ export class CastleView {
     const layout = SPOT_LAYOUT[spotId];
     if (!layout) return null;
     const old = this.furniture.get(spotId);
-    if (old) this.roomGroup.remove(old);
+    if (old) {
+      this.roomGroup.remove(old);
+      disposeGroup(old);
+    }
     const st = this.rooms[spotId] ?? { done: false, styleIdx: 0 };
     const previewing = this.preview?.spotId === spotId;
     const styleIdx = previewing ? this.preview!.styleIdx : st.styleIdx;
@@ -268,6 +287,8 @@ export class CastleView {
       buildRubble(group);
     }
     legacyLightCompensate(group);
+    toonify(group);
+    addOutline(group, 0.025);
     this.roomGroup.add(group);
     this.furniture.set(spotId, group);
     return group;

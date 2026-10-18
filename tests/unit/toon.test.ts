@@ -1,0 +1,37 @@
+import { test, expect } from "vitest";
+import * as THREE from "three";
+import { toonify, addOutline } from "../../src/views/castle/toon";
+
+function sample(): THREE.Group {
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ color: 0xff0000 })));
+  g.add(new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfde047, emissiveIntensity: 0.8 })));
+  g.add(new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0x00ff00 })));
+  return g;
+}
+
+test("toonify: Standard 재질 → Toon(색·발광 유지), Basic은 그대로", () => {
+  const g = sample();
+  toonify(g);
+  const [a, b, c] = g.children as THREE.Mesh[];
+  expect((a.material as THREE.Material).type).toBe("MeshToonMaterial");
+  expect((a.material as THREE.MeshToonMaterial).color.getHex()).toBe(0xff0000);
+  expect((b.material as THREE.MeshToonMaterial).emissive.getHex()).toBe(0xfde047);
+  expect((b.material as THREE.MeshToonMaterial).emissiveIntensity).toBe(0.8);
+  expect((b.material as THREE.MeshToonMaterial).gradientMap).toBeTruthy();
+  expect((c.material as THREE.Material).type).toBe("MeshBasicMaterial");
+});
+
+test("addOutline: 메쉬마다 뒷면 검은 외곽선 자식 1개, 두 번 호출해도 중복 없음", () => {
+  const g = sample();
+  addOutline(g, 0.03);
+  addOutline(g, 0.03);
+  const meshes = (g.children as THREE.Mesh[]).filter((m) => !m.userData.outline);
+  for (const m of meshes) {
+    const outlines = m.children.filter((c) => c.userData.outline);
+    expect(outlines.length).toBe(1);
+    const mat = (outlines[0] as THREE.Mesh).material as THREE.MeshBasicMaterial;
+    expect(mat.side).toBe(THREE.BackSide);
+    expect((outlines[0] as THREE.Mesh).geometry).toBe(m.geometry);
+  }
+});

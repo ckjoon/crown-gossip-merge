@@ -31,7 +31,10 @@ export class Ambience {
   private t = 0;
   step = 0;
 
-  constructor(private readonly ambient: THREE.AmbientLight | null) {
+  constructor(
+    private readonly ambient: THREE.AmbientLight | null,
+    private readonly onStep: (step: number) => void = () => {}
+  ) {
     this.group.name = "ambience";
     this.warm = new THREE.PointLight(0xffb36b, 0, 14, 1);
     this.warm.position.set(-3.5, 3.6, -3.5);
@@ -89,6 +92,7 @@ export class Ambience {
       } else c.visible = on;
     });
     this.cracks.visible = this.step === 0;
+    this.onStep(this.step);
   }
 
   // 촛불 깜빡임·파티클 떠다님

@@ -120,6 +120,10 @@
           <strong id="castle-quest-zone-name">📜 현재 구역 복구 퀘스트 (완료 시 생성기 진화 파츠 지급!)</strong>
           <span id="castle-total-prog">성 전체 0/20</span>
         </div>
+        <div class="story-action-row">
+          <button class="story-next-btn" id="btn-story-next">📖 다음 이야기 진행 <b id="story-next-cost">🪙300</b></button>
+          <button class="story-log-btn" id="btn-story-log">📜 스토리</button>
+        </div>
         <div class="castle-quest-strip" id="castle-quest-strip"></div>
         <div class="gh-dialogue-bar" id="castle-dialogue-bar">
           <span class="speaker-tag" id="castle-speaker-tag">🧙‍♀️ 셀레네:</span>
@@ -384,6 +388,17 @@
          모달 6: 🆕 버전 업데이트 알림 팝업 & 버전 Progression 기록 (Changelog Modal)
          - 새 버전으로 업데이트될 때 자동으로 팝업되어 어떤 기능이 새로 추가되었는지 안내합니다!
     ========================================================================== -->
+    <!-- 모달: 📜 스토리 다시보기 -->
+    <div class="gh-modal-backdrop hidden" id="modal-story-log">
+      <div class="gh-modal">
+        <div class="gh-modal-header">
+          <h2>📜 마녀의 성 스토리 다시보기</h2>
+          <button class="gh-close-btn" data-close="modal-story-log">✕</button>
+        </div>
+        <div class="gh-modal-body" id="story-log-body"></div>
+      </div>
+    </div>
+
     <!-- 모달: 💎 보석 상점 (번개 충전) -->
     <div class="gh-modal-backdrop hidden" id="modal-gem-shop">
       <div class="gh-modal">

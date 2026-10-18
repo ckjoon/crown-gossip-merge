@@ -544,6 +544,8 @@ window.Interior3DEngine = (function () {
   let onRenovateCallback = null;
   let onSelectRoomFromMapCallback = null;
   let getCoinsCallback = null;
+  let onLockedSpotCallback = null;
+  let pendingRevealKey = null; // 구역 완성 직후 성 지도에서 등장 애니메이션을 줄 구역
   let isExpanded = false;
   let animFrameId = null;
 
@@ -557,6 +559,7 @@ window.Interior3DEngine = (function () {
     onRenovateCallback = callbacks.onRenovate;
     onSelectRoomFromMapCallback = callbacks.onSelectRoomFromMap;
     getCoinsCallback = callbacks.getCoins;
+    onLockedSpotCallback = callbacks.onLockedSpot || null;
 
     if (!window.THREE || !containerEl) return;
 
@@ -638,6 +641,7 @@ window.Interior3DEngine = (function () {
     }
 
     if (!ROOM_THEMES[themeKey]) return;
+    if (!getZoneProgress().accessibleKeys.includes(themeKey)) return; // 잠긴 구역은 입장 불가
     isCastleMapMode = false;
     currentThemeKey = themeKey;
     resetCameraSmooth();
@@ -1117,7 +1121,9 @@ window.Interior3DEngine = (function () {
 
     // 1. 마녀의 성 전체 지도 모드일 때: 4개 성 구역(공방/앞마당/온실/첨탑) 입장 핀 표시
     if (isCastleMapMode) {
+      const zpMap = getZoneProgress();
       for (const [tKey, theme] of Object.entries(ROOM_THEMES)) {
+        if (!zpMap.accessibleKeys.includes(tKey)) continue; // 아직 공개되지 않은 구역은 핀을 숨김
         const doneCount = theme.spots.filter((s) => s.done).length;
         const totalCount = theme.spots.length;
         const pPos = theme.castlePinPos || [0, 2, 0];
@@ -1130,7 +1136,7 @@ window.Interior3DEngine = (function () {
         const y = Math.max(42, Math.min(rect.height - 68, rawY));
 
         const pin = document.createElement("button");
-        pin.className = `room-pin castle-zone-pin ${tKey === currentThemeKey ? "pin-ready" : ""}`;
+        pin.className = `room-pin castle-zone-pin ${tKey === currentThemeKey ? "pin-ready" : ""} ${tKey === pendingRevealKey ? "pin-reveal" : ""}`;
         pin.innerHTML = `${theme.shortName} <b>${doneCount}/${totalCount}</b> <span>입장➔</span>`;
         pin.style.left = `${x}px`;
         pin.style.top = `${y}px`;
@@ -1150,6 +1156,7 @@ window.Interior3DEngine = (function () {
     // 2. 개별 방 인테리어 모드일 때
     const theme = ROOM_THEMES[currentThemeKey];
     const coins = getCoinsCallback ? getCoinsCallback() : 0;
+    const zpRoom = getZoneProgress();
 
     if (activeInspectSpot) return;
 
@@ -1163,7 +1170,10 @@ window.Interior3DEngine = (function () {
       const y = Math.max(42, Math.min(rect.height - 68, rawY));
 
       const pin = document.createElement("button");
-      if (!spot.done) {
+      if (!spot.done && spot.id !== zpRoom.nextSpotId) {
+        pin.className = "room-pin pin-locked";
+        pin.innerHTML = `🔒 <span>제${zpRoom.chapterById[spot.id]}화</span>`;
+      } else if (!spot.done) {
         const cost = getSpotCost(currentThemeKey, spot);
         pin.className = `room-pin ${coins >= cost ? "pin-ready" : "pin-locked"}`;
         pin.innerHTML = `🔨 <span>${spot.name}</span> <b>🪙${cost}</b>`;
@@ -1185,6 +1195,11 @@ window.Interior3DEngine = (function () {
 
   // 가구 클릭 시 카메라 줌인 연출 + 3가지 인테리어 스타일 선택창 오픈!
   function focusOnSpotForDesign(spot) {
+    const zpFocus = getZoneProgress();
+    if (!spot.done && spot.id !== zpFocus.nextSpotId) {
+      if (onLockedSpotCallback) onLockedSpotCallback(spot, zpFocus.chapterById[spot.id]);
+      return;
+    }
     if (isCastleMapMode) {
       switchTheme(currentThemeKey);
     }
@@ -1243,7 +1258,7 @@ window.Interior3DEngine = (function () {
             spot.done
               ? "✨ 이 스타일로 변경 & 스토리 다시보기 (무료)"
               : canAfford
-              ? `🔨 복구하고 이야기 보기 (🪙${cost} 소모)`
+              ? `🔨 제${getZoneProgress().chapterById[spot.id]}화 진행 (🪙${cost} 소모)`
               : `🪙${cost} 필요 (주문을 완료해 코인을 모으세요)`
           }
         </button>
@@ -1441,27 +1456,39 @@ window.Interior3DEngine = (function () {
     };
   }
 
+  // [📖 다음 이야기 진행]: 스토리상 다음 화 장소로 이동해 스타일 선택 바를 엶
   function triggerNextSpot() {
-    if (isCastleMapMode) {
-      // 아직 미완성인 구역이 있으면 그 구역으로 먼저 이동
-      for (const [tKey, th] of Object.entries(ROOM_THEMES)) {
-        const incomplete = th.spots.find((s) => !s.done);
-        if (incomplete) {
-          if (onSelectRoomFromMapCallback) onSelectRoomFromMapCallback(tKey);
-          else switchTheme(tKey);
-          setTimeout(() => focusOnSpotForDesign(incomplete), 200);
-          return;
-        }
+    const zp = getZoneProgress();
+    let targetKey = null;
+    let targetSpot = null;
+    for (const [tKey, th] of Object.entries(ROOM_THEMES)) {
+      const s = th.spots.find((sp) => sp.id === zp.nextSpotId);
+      if (s) {
+        targetKey = tKey;
+        targetSpot = s;
+        break;
       }
-      switchTheme(currentThemeKey);
     }
-    const { nextSpot, allThemes } = getProgressStats();
-    if (nextSpot) {
-      focusOnSpotForDesign(nextSpot);
-    } else {
-      const spots = allThemes[currentThemeKey].spots;
+    if (!targetSpot) {
+      if (isCastleMapMode) switchTheme(currentThemeKey);
+      const spots = ROOM_THEMES[currentThemeKey].spots;
       if (spots.length > 0) focusOnSpotForDesign(spots[0]);
+      return;
     }
+    if (isCastleMapMode || targetKey !== currentThemeKey) {
+      if (onSelectRoomFromMapCallback) onSelectRoomFromMapCallback(targetKey);
+      else switchTheme(targetKey);
+      setTimeout(() => focusOnSpotForDesign(targetSpot), 200);
+      return;
+    }
+    focusOnSpotForDesign(targetSpot);
+  }
+
+  function markZoneRevealed(zoneKey) {
+    pendingRevealKey = zoneKey;
+    setTimeout(() => {
+      if (pendingRevealKey === zoneKey) pendingRevealKey = null;
+    }, 3000);
   }
 
   function exportRoomsState() {
@@ -1496,6 +1523,10 @@ window.Interior3DEngine = (function () {
     if (savedThemeKey && ROOM_THEMES[savedThemeKey]) {
       currentThemeKey = savedThemeKey;
     }
+    const zpLoad = getZoneProgress();
+    if (!zpLoad.accessibleKeys.includes(currentThemeKey)) {
+      currentThemeKey = zpLoad.currentZoneKey;
+    }
     if (roomGroup) {
       if (isCastleMapMode) buildCastleOverviewScene();
       else buildRoomScene(currentThemeKey);
@@ -1516,5 +1547,6 @@ window.Interior3DEngine = (function () {
     importRoomsState,
     getZoneProgress,
     getStorySpots,
+    markZoneRevealed,
   };
 })();

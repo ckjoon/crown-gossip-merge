@@ -616,6 +616,10 @@ async function init() {
   if (window.Interior3DEngine) {
     Interior3DEngine.init("three-canvas-mount", "three-pins-overlay", {
       getCoins: () => state.coins,
+      onLockedSpot: (spot, chapter) => {
+        sfx.warn();
+        setDialogue(`🔒 제${chapter}화`, `[${spot.name}]은(는) 앞 이야기를 먼저 진행해야 복구할 수 있어요. [📖 다음 이야기 진행]을 눌러 보세요!`);
+      },
       onSelectRoomFromMap: (themeKey) => {
         selectCastleThemeTab(themeKey);
       },
@@ -645,7 +649,7 @@ async function init() {
 
     if (savedInterior && savedInterior.interiorRooms) {
       Interior3DEngine.importRoomsState(savedInterior.interiorRooms, savedInterior.currentThemeKey);
-      const activeKey = savedInterior.currentThemeKey || "alchemy";
+      const activeKey = Interior3DEngine.getProgressStats().currentThemeKey;
       document.querySelectorAll(".theme-tab").forEach((t) => {
         t.classList.toggle("active", t.dataset.theme === activeKey);
       });
@@ -746,6 +750,15 @@ function switchScreen(targetScreen) {
 }
 
 function selectCastleThemeTab(themeKey) {
+  if (
+    window.Interior3DEngine &&
+    themeKey !== "castle_map" &&
+    !Interior3DEngine.getZoneProgress().accessibleKeys.includes(themeKey)
+  ) {
+    sfx.warn();
+    setDialogue("🔒 잠긴 구역", "이전 구역의 이야기를 모두 진행해야 열려요!");
+    return;
+  }
   document.querySelectorAll(".theme-tab").forEach((t) => {
     t.classList.toggle("active", t.dataset.theme === themeKey);
   });
@@ -997,7 +1010,7 @@ function explainOrderRecipe(ord) {
 // ============================================================================
 // 🎬 Gossip Harbor 스타일 퀘스트 완료 스토리 컷신 엔진
 // ============================================================================
-function openStoryCutscene(spot, themeTitle, giveBonus = false) {
+function openStoryCutscene(spot, themeTitle, giveBonus = false, onFinish = null) {
   const modal = document.getElementById("modal-story-cutscene");
   if (!modal || !spot) return;
 
@@ -1012,6 +1025,8 @@ function openStoryCutscene(spot, themeTitle, giveBonus = false) {
   cutsceneState.dialogues = lines;
   cutsceneState.stepIdx = 0;
   cutsceneState.giveBonusOnFinish = giveBonus;
+  cutsceneState.onFinish = onFinish;
+  cutsceneState.chapterNo = window.Interior3DEngine ? Interior3DEngine.getZoneProgress().chapterById[spot.id] : null;
 
   modal.classList.remove("hidden");
   renderCutsceneStep();
@@ -1022,7 +1037,9 @@ function renderCutsceneStep() {
   if (!d) return;
 
   document.getElementById("cutscene-zone-badge").textContent = cutsceneState.themeTitle;
-  document.getElementById("cutscene-spot-name").textContent = `✨ [${cutsceneState.spot.name}] 스토리 에피소드`;
+  document.getElementById("cutscene-spot-name").textContent = cutsceneState.chapterNo
+    ? `📖 제${cutsceneState.chapterNo}화 · ${cutsceneState.spot.name}`
+    : `📖 ${cutsceneState.spot.name}`;
   document.getElementById("cutscene-avatar").textContent = d.face || "🧙‍♀️";
   document.getElementById("cutscene-speaker").textContent = d.speaker || "대마녀 셀레네";
   document.getElementById("cutscene-line").textContent = `"${d.line}"`;
@@ -1051,7 +1068,10 @@ function closeOrAdvanceCutscene(skipAll = false) {
 
   document.getElementById("modal-story-cutscene").classList.add("hidden");
   cutsceneState.active = false;
+  const finishCb = cutsceneState.onFinish;
+  cutsceneState.onFinish = null;
   renderAll();
+  if (finishCb) finishCb();
 }
 
 // ============================================================================
@@ -2032,9 +2052,23 @@ function updateCastleViewUI(orderStatus = null) {
     if (fabBadge) fabBadge.classList.toggle("hidden", !anyOrderReady);
   }
 
-  const canRenovateAny = stats.nextSpot && state.coins >= GameProgression.getSpotCoinCost(stats.currentThemeKey, stats.nextSpot.cost);
+  const zp = Interior3DEngine.getZoneProgress();
+  const nextEntry = Interior3DEngine.getStorySpots().find((e) => e.spot.id === zp.nextSpotId) || null;
+  const nextCost = nextEntry ? GameProgression.getSpotCoinCost(nextEntry.themeKey, nextEntry.spot.cost) : 0;
   const castleDot = document.getElementById("castle-ready-dot");
-  if (castleDot) castleDot.classList.toggle("hidden", !canRenovateAny);
+  if (castleDot) castleDot.classList.toggle("hidden", !(nextEntry && state.coins >= nextCost));
+
+  const storyBtn = document.getElementById("btn-story-next");
+  const storyCostEl = document.getElementById("story-next-cost");
+  if (storyBtn && storyCostEl) {
+    storyBtn.disabled = !nextEntry;
+    storyCostEl.textContent = nextEntry ? `제${nextEntry.chapter}화 🪙${nextCost}` : "🎉 완결";
+  }
+
+  document.querySelectorAll(".theme-tab").forEach((t) => {
+    const key = t.dataset.theme;
+    t.classList.toggle("hidden", key !== "castle_map" && !zp.accessibleKeys.includes(key));
+  });
 
   const totalProgEl = document.getElementById("castle-total-prog");
   if (totalProgEl) {
@@ -2050,17 +2084,18 @@ function updateCastleViewUI(orderStatus = null) {
   stripEl.innerHTML = "";
 
   currentRoom.spots.forEach((spot) => {
+    const chapter = zp.chapterById[spot.id];
+    const isNext = spot.id === zp.nextSpotId;
     const spotCost = GameProgression.getSpotCoinCost(currentRoom.id, spot.cost);
-    const canAfford = state.coins >= spotCost;
     const card = document.createElement("div");
     card.className = `castle-quest-card ${
-      spot.done ? "quest-done" : canAfford ? "quest-ready" : "quest-locked"
+      spot.done ? "quest-done" : isNext && state.coins >= spotCost ? "quest-ready" : "quest-locked"
     }`;
 
     card.innerHTML = `
-      <div class="cq-name">${spot.name}</div>
+      <div class="cq-name">제${chapter}화 · ${spot.name}</div>
       <div class="cq-btn-tag">
-        ${spot.done ? "💬 스토리" : `🔨 🪙${spotCost}`}
+        ${spot.done ? "💬 다시보기" : isNext ? `🔨 🪙${spotCost}` : "🔒 잠김"}
       </div>
     `;
 
@@ -2520,6 +2555,28 @@ function buyOrderRequirement(orderIdx, reqIdx, e) {
   renderAll();
 }
 
+// 📜 이미 공개된 이야기(제N화) 다시보기
+function renderStoryLogModal() {
+  const body = document.getElementById("story-log-body");
+  if (!body || !window.Interior3DEngine) return;
+  const seen = Interior3DEngine.getStorySpots().filter((e) => e.spot.done);
+  if (seen.length === 0) {
+    body.innerHTML = `<p style="font-size:12px;color:#64748b">아직 공개된 이야기가 없어요. [📖 다음 이야기 진행]으로 제1화를 열어 보세요!</p>`;
+    return;
+  }
+  body.innerHTML = "";
+  seen.forEach((e) => {
+    const btn = document.createElement("button");
+    btn.className = "codex-card story-log-item";
+    btn.innerHTML = `<h4>제${e.chapter}화 · ${e.spot.name}</h4><p style="font-size:11px;color:#475569">${e.theme.shortName}</p>`;
+    btn.addEventListener("click", () => {
+      document.getElementById("modal-story-log").classList.add("hidden");
+      openStoryCutscene(e.spot, e.theme.title, false);
+    });
+    body.appendChild(btn);
+  });
+}
+
 function renderBagModal() {
   const grid = document.getElementById("bag-grid");
   grid.innerHTML = "";
@@ -2604,6 +2661,17 @@ function updateSoundButtonUI() {
 }
 
 function bindUIEvents() {
+  document.getElementById("btn-story-next").addEventListener("click", () => {
+    sfx.tap();
+    if (window.Interior3DEngine) Interior3DEngine.triggerNextSpot();
+  });
+
+  document.getElementById("btn-story-log").addEventListener("click", () => {
+    sfx.tap();
+    renderStoryLogModal();
+    document.getElementById("modal-story-log").classList.remove("hidden");
+  });
+
   document.getElementById("btn-refill-energy").addEventListener("click", openGemShop);
   document.getElementById("btn-open-gem-shop").addEventListener("click", openGemShop);
 

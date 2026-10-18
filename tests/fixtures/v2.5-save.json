@@ -1,0 +1,243 @@
+{
+ "id": "main_save_v1",
+ "schemaVersion": 3,
+ "updatedAt": 1800000000000,
+ "data": {
+  "playerLv": 6,
+  "xp": 5,
+  "maxEnergy": 100,
+  "energy": 80,
+  "energyCountdown": 200,
+  "coins": 1234,
+  "gems": 13,
+  "board": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   {
+    "uid": "gen_potion",
+    "state": "active",
+    "isGenerator": true,
+    "chain": "potion",
+    "level": 1
+   },
+   {
+    "uid": "gen_potion2",
+    "state": "active",
+    "isGenerator": true,
+    "chain": "potion",
+    "level": 2
+   },
+   {
+    "uid": "gen_grimoire",
+    "state": "active",
+    "isGenerator": true,
+    "chain": "grimoire",
+    "level": 1
+   },
+   null,
+   null,
+   null,
+   null,
+   null,
+   {
+    "uid": "gen_herb",
+    "state": "active",
+    "isGenerator": true,
+    "chain": "herb",
+    "level": 1
+   },
+   null,
+   null,
+   null,
+   null,
+   null,
+   {
+    "uid": "g5",
+    "state": "active",
+    "isGenerator": false,
+    "chain": "gem",
+    "level": 5
+   },
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   {
+    "uid": "gen_bakery",
+    "state": "active",
+    "isGenerator": true,
+    "chain": "bakery",
+    "level": 1
+   },
+   null,
+   {
+    "uid": "gen_tea",
+    "state": "active",
+    "isGenerator": true,
+    "chain": "tea",
+    "level": 1
+   },
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "bag": [],
+  "orders": [
+   {
+    "id": "o0",
+    "customer": {
+     "name": "선장 마르코",
+     "face": "⚓",
+     "line": "l"
+    },
+    "reqs": [
+     {
+      "chain": "bakery",
+      "level": 2
+     }
+    ],
+    "coins": 10
+   },
+   {
+    "id": "o1",
+    "customer": {
+     "name": "선장 마르코",
+     "face": "⚓",
+     "line": "l"
+    },
+    "reqs": [
+     {
+      "chain": "bakery",
+      "level": 3
+     }
+    ],
+    "coins": 10
+   },
+   {
+    "id": "o2",
+    "customer": {
+     "name": "선장 마르코",
+     "face": "⚓",
+     "line": "l"
+    },
+    "reqs": [
+     {
+      "chain": "bakery",
+      "level": 4
+     }
+    ],
+    "coins": 10
+   }
+  ],
+  "eventState": {
+   "activeHolidayId": "halloween",
+   "board": [
+    null,
+    null,
+    null,
+    {
+     "uid": "e3",
+     "isGenerator": false,
+     "level": 2
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    {
+     "uid": "eg",
+     "isGenerator": true,
+     "level": 1
+    },
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   "selectedIdx": null,
+   "targetLv": 4,
+   "freeSpawns": 5,
+   "completedCount": 7
+  },
+  "soundEnabled": false,
+  "boostMultiplier": 2,
+  "cauldronPartGranted": true,
+  "lastSeenVersion": "v2.5.0",
+  "interiorRooms": {
+   "alchemy": {
+    "alc_cauldron": {
+     "done": true,
+     "styleIdx": 0
+    },
+    "alc_bookcase": {
+     "done": true,
+     "styleIdx": 0
+    },
+    "alc_herbtable": {
+     "done": true,
+     "styleIdx": 0
+    },
+    "alc_window": {
+     "done": true,
+     "styleIdx": 0
+    },
+    "alc_counter": {
+     "done": true,
+     "styleIdx": 0
+    }
+   },
+   "harbor": {
+    "hb_espresso": {
+     "done": true,
+     "styleIdx": 1
+    },
+    "hb_parasol": {
+     "done": true,
+     "styleIdx": 0
+    }
+   }
+  },
+  "currentThemeKey": "harbor"
+ }
+}

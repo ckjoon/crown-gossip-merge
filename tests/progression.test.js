@@ -131,3 +131,9 @@ test("보석 상수", () => {
     { gems: 25, energy: 150 },
   ]);
 });
+
+test("명절 미션 보상: 번개 없음, 보석은 이벤트당 10회까지만", () => {
+  assert.deepEqual(P.getHolidayMissionReward(0), { energy: 0, gems: 5, freeSpawns: 0 });
+  assert.deepEqual(P.getHolidayMissionReward(9), { energy: 0, gems: 5, freeSpawns: 0 });
+  assert.deepEqual(P.getHolidayMissionReward(10), { energy: 0, gems: 0, freeSpawns: 0 });
+});

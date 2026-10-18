@@ -648,6 +648,11 @@ async function init() {
           grantGeneratorEvolutionPart(genPartChain, `퀘스트 완료 보상`);
 
           floatText(`🎉 [${spot.name}] 복구 완료! -${coinCost}🪙 · +생성기파츠!`, window.innerWidth / 2, 160, "#10b981");
+
+          // 구역의 마지막 장소였다면 💎 보상은 장소 완료와 같은 저장에 포함 (컷신 중 앱 종료 대비). 연출만 컷신 뒤에 재생
+          if (currentThemeObj && Interior3DEngine.getZoneProgress().completedKeys.includes(currentThemeObj.id)) {
+            state.gems += GameProgression.GEM_REWARDS.zoneComplete;
+          }
         } else {
           floatText(`🎨 [${spot.name}] 스타일 변경 완료!`, window.innerWidth / 2, 160, "#c084fc");
         }
@@ -766,6 +771,10 @@ function switchScreen(targetScreen) {
       }, 30);
     }
   } else {
+    // 성 화면을 떠날 때 열려 있던 스타일 선택 바는 닫음 (오래된 비용 판단으로 확정되는 것 방지)
+    const styleBar = document.getElementById("style-selector-overlay");
+    const cancelStyleBtn = document.getElementById("btn-cancel-style");
+    if (styleBar && !styleBar.classList.contains("hidden") && cancelStyleBtn) cancelStyleBtn.click();
     castleView.classList.add("hidden");
     mergeView.classList.remove("hidden");
   }
@@ -1103,9 +1112,7 @@ function playZoneCompleteSequence(zoneKey) {
   if (!window.Interior3DEngine) return;
   const themes = Interior3DEngine.getProgressStats().allThemes;
   const theme = themes[zoneKey];
-  const gemReward = GameProgression.GEM_REWARDS.zoneComplete;
-  state.gems += gemReward;
-  triggerAutoSave();
+  const gemReward = GameProgression.GEM_REWARDS.zoneComplete; // 지급은 onRenovate에서 이미 완료 (표시만)
 
   const banner = document.getElementById("zone-complete-banner");
   document.getElementById("zone-complete-title").textContent = `🎉 ${theme ? theme.shortName : "구역"} 완성!`;
@@ -1224,10 +1231,11 @@ function renderHolidayEventModal() {
   const hasTargetOnBoard = state.eventState.board.some((it) => it && !it.isGenerator && intLv(it.level) >= targetLv);
   const claimBtn = document.getElementById("btn-claim-event-order");
   claimBtn.disabled = !hasTargetOnBoard;
-  const rewardBolt = targetLv * 15;
+  const missionGems = GameProgression.getHolidayMissionReward(state.eventState.completedCount || 0).gems;
+  const rewardText = `${missionGems > 0 ? `+💎${missionGems} &amp; ` : ""}본게임 재료`;
   claimBtn.innerHTML = hasTargetOnBoard
-    ? `🎁 미션 완료!<br/><small>+${rewardBolt}⚡ &amp; 본게임 재료</small>`
-    : `Lv.${targetLv} 필요<br/><small>+${rewardBolt}⚡ &amp; 본게임 재료</small>`;
+    ? `🎁 미션 완료!<br/><small>${rewardText}</small>`
+    : `Lv.${targetLv} 필요<br/><small>${rewardText}</small>`;
 
   document.getElementById("ev-free-spawns").textContent =
     state.eventState.freeSpawns > 0 ? `(무료 ${state.eventState.freeSpawns}회)` : `(⚡1 소모)`;
@@ -1514,19 +1522,20 @@ function claimHolidayMissionOrder(e) {
   const meta = h.items[Math.min(intLv(item.level) - 1, h.items.length - 1)];
   state.eventState.board[foundIdx] = null;
 
-  const boltGain = targetLv * 5;
-  state.energy += boltGain;
-  state.gems += GameProgression.GEM_REWARDS.holidayMission;
+  // v2.5.0: 이벤트는 번개를 주지 않음(무한 번개 방지). 💎는 이벤트당 앞 10회 미션까지만
+  const reward = GameProgression.getHolidayMissionReward(state.eventState.completedCount || 0);
+  state.energy += reward.energy;
+  state.gems += reward.gems;
+  state.eventState.freeSpawns += reward.freeSpawns;
   sendRewardItemToMainGame(meta.mainChain, meta.mainLv);
 
   state.eventState.completedCount = (state.eventState.completedCount || 0) + 1;
   state.eventState.targetLv = (state.eventState.completedCount % 3) + 3;
-  state.eventState.freeSpawns += 4;
 
   sfx.serve();
   const mainMeta = getItemMeta(meta.mainChain, meta.mainLv);
   floatText(
-    `🎃 이벤트 미션 달성! +${boltGain}⚡ +💎${GameProgression.GEM_REWARDS.holidayMission} & 본게임 [${mainMeta.name}] 획득!`,
+    `🎃 이벤트 미션 달성! ${reward.gems > 0 ? `+💎${reward.gems} & ` : ""}본게임 [${mainMeta.name}] 획득!`,
     e.clientX,
     e.clientY,
     "#10b981"
@@ -1549,13 +1558,12 @@ function collectSelectedHolidayItemToMain(e) {
   state.eventState.board[idx] = null;
   state.eventState.selectedIdx = null;
 
-  state.energy += meta.energyReward;
   sendRewardItemToMainGame(meta.mainChain, meta.mainLv);
 
   const mainMeta = getItemMeta(meta.mainChain, meta.mainLv);
   sfx.serve();
   floatText(
-    `⚡ +${meta.energyReward}번개 & 본게임 [${mainMeta.name}] 전송 완료!`,
+    `🎁 본게임 [${mainMeta.name}] 전송 완료!`,
     e.clientX,
     e.clientY,
     "#38bdf8"

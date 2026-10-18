@@ -1290,6 +1290,14 @@ window.Interior3DEngine = (function () {
     });
 
     document.getElementById("btn-confirm-style").addEventListener("click", () => {
+      // 확정 순간에 다시 검사: 바를 연 뒤 코인이 줄었거나 다음 화가 바뀌었으면 복구하지 않고 바를 최신 상태로 다시 그림
+      if (!spot.done) {
+        const coinsNow = getCoinsCallback ? getCoinsCallback() : 0;
+        if (spot.id !== getZoneProgress().nextSpotId || coinsNow < getSpotCost(currentThemeKey, spot)) {
+          showStyleSelectorBar(spot);
+          return;
+        }
+      }
       const wasAlreadyDone = spot.done;
       spot.styleIdx = previewStyleIdx;
       spot.done = true;

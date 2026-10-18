@@ -21,6 +21,8 @@ window.GameProgression = (function () {
     { gems: 25, energy: 150 },
   ];
   const STARTING_GEMS = 10;
+  // 명절 이벤트 미션: 번개는 주지 않고(무한 번개 방지), 💎는 이벤트당 앞 10회 미션까지만 지급
+  const HOLIDAY_MISSION_GEM_CAP = 10;
 
   // rooms: [{ key, spots: [{ id, done }] }] (ZONE_ORDER 순서)
   function computeZoneProgress(rooms) {
@@ -121,6 +123,12 @@ window.GameProgression = (function () {
     return { level: baseLevel + steps, steps, cost: Math.pow(2, steps) };
   }
 
+  // completedBefore: 이번 미션 이전까지 완료한 미션 수
+  function getHolidayMissionReward(completedBefore) {
+    const gems = completedBefore < HOLIDAY_MISSION_GEM_CAP ? GEM_REWARDS.holidayMission : 0;
+    return { energy: 0, gems, freeSpawns: 0 };
+  }
+
   function getItemGemPrice(level) {
     return Math.max(1, Math.floor(level) || 1) * 2;
   }
@@ -145,6 +153,7 @@ window.GameProgression = (function () {
     nextBoost,
     resolveBoost,
     getItemGemPrice,
+    getHolidayMissionReward,
     convertLegacyStars,
   };
 })();

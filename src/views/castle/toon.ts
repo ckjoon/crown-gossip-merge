@@ -28,6 +28,10 @@ function toToon(m: THREE.MeshStandardMaterial): THREE.MeshToonMaterial {
       transparent: m.transparent,
       opacity: m.opacity,
       side: m.side,
+      // glTF 모델은 색이 텍스처에 들어 있다
+      map: m.map,
+      alphaTest: m.alphaTest,
+      vertexColors: m.vertexColors,
       gradientMap: toonGradient(),
     });
     t.userData = { ...m.userData };

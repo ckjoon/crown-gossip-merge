@@ -47,3 +47,16 @@ test("addOutline: 투명 재질(유리)과 얇은 고리(토러스)에는 외곽
   expect(ring.children.length).toBe(0);
   expect(solid.children.filter((c) => c.userData.outline).length).toBe(1);
 });
+
+test("toonify: 텍스처(map)·알파 컷·버텍스 색을 그대로 유지 (glTF 모델용)", () => {
+  const tex = new THREE.Texture();
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const src = new THREE.MeshStandardMaterial({ map: tex, alphaTest: 0.5, vertexColors: true });
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(), src);
+  toonify(mesh);
+  const t = mesh.material as THREE.MeshToonMaterial;
+  expect(t.isMeshToonMaterial).toBe(true);
+  expect(t.map).toBe(tex);
+  expect(t.alphaTest).toBe(0.5);
+  expect(t.vertexColors).toBe(true);
+});

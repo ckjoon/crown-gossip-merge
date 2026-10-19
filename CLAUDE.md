@@ -33,6 +33,7 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
       - Energy (v3.10, benchmarked to Gossip Harbor; monetization is not a balance goal yet): regen 1 per `ENERGY_REGEN_SEC` 120s up to 100, level-up +20, drops in progression.ts (`ORDER_ENERGY_CHANCE`, `mergeBonusChance`, `MERGE_BONUS_ENERGY_SHARE`).
       - Restore costs come from `SPOT_COIN_COST` by chapter (`getSpotCoinCost(chapter)`), a smooth ~9%/chapter ramp; `balance.test.ts` checks the per-chapter energy curve stays smooth.
       - Item lineage (v3.11): `itemLineage` (codex.ts) gives source (generator/byproduct/drop/recipe), per-level how (spawn/boost/merge/below by owned tier) and open-order demand; `ItemInfo.svelte` (modal `itemInfo`, opened by the inspector 📜) renders it. Generators: first tap only selects, tapping the selected generator spawns (BoardCanvas). Collectible (energy/coin) merges never drop bonus shards.
+      - Orders (v3.12): `rollOrderReqs` rolls levels between `ORDER_LEVEL_MIN` and `ORDER_LEVEL_CAP` per zone (the second req never drops below the min), so later zones stop offering tiny Lv.2 orders.
       - A zone with any restored spot stays open regardless of level, for save compatibility.
     - `chains.ts`, `customers.ts`, `holidays.ts`, `rooms.ts` (spots, dialogues, `ambienceByProgress`), `characters.ts`, `versionHistory.ts`.
   - `actions/*.ts`: every state change is an `Action<P> = (draft, ctx, payload) => GameEvent[]`. Groups are `board`, `orders`, `progress`, `castle`, and `holiday`.

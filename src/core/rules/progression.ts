@@ -9,6 +9,8 @@ export type Boost = 1 | 2 | 4;
 export const ZONE_ORDER: ZoneKey[] = ["alchemy", "harbor", "garden", "banquet", "cellar", "tower"];
 // 구역별 손님 주문 요구 레벨 상한
 export const ORDER_LEVEL_CAP: Record<ZoneKey, number> = { alchemy: 4, harbor: 5, garden: 6, banquet: 8, cellar: 8, tower: 8 };
+// 주문 최저 레벨 (v3.12: 뒤 구역에서 Lv.2짜리 주문은 보상이 없는 느낌 — 생성기도 자랐으니 낮은 주문은 앞 구역에서만)
+export const ORDER_LEVEL_MIN: Record<ZoneKey, number> = { alchemy: 2, harbor: 2, garden: 3, banquet: 4, cellar: 4, tower: 5 };
 // 장소 복구 비용(🪙)을 화(章) 순서로 (v3.10: 예전엔 spot.cost × 구역 단가라 구역이 바뀔 때마다 싸졌다가 다시 올랐다)
 // 제1~2화는 첫걸음이라 싸게, 제3화부터는 화마다 약 9%씩 매끄럽게 오른다 (balance.test의 봇으로 확인)
 export const SPOT_COIN_COST: readonly number[] = [
@@ -109,6 +111,10 @@ export function getOrderLevelCap(zoneKey: string): number {
   return ORDER_LEVEL_CAP[zoneKey as ZoneKey] || ORDER_LEVEL_CAP.alchemy;
 }
 
+export function getOrderLevelMin(zoneKey: string): number {
+  return ORDER_LEVEL_MIN[zoneKey as ZoneKey] || ORDER_LEVEL_MIN.alchemy;
+}
+
 export function getSpotCoinCost(chapter: number): number {
   return SPOT_COIN_COST[Math.min(SPOT_COIN_COST.length, Math.max(1, Math.floor(chapter) || 1)) - 1];
 }
@@ -116,17 +122,18 @@ export function getSpotCoinCost(chapter: number): number {
 // 구역 대표 체인: 그 구역 주문에 40% 확률로 먼저 뽑힌다 (해금돼 있을 때만)
 export const ZONE_FAVORED_CHAIN: Partial<Record<ZoneKey, string>> = { cellar: "candle", tower: "silk" };
 
-// 체인·레벨은 랜덤, 상한만 구역이 결정 (첫 요구 Lv.2~상한, 55% 확률로 한 단계 낮은 두 번째 요구)
+// 체인·레벨은 랜덤, 범위는 구역이 결정 (첫 요구 최저~상한, 55% 확률로 한 단계 낮은 두 번째 요구 — 최저 아래로는 안 내려감)
 export function rollOrderReqs<C extends string>(zoneKey: string, coreChains: readonly C[], rng: () => number = Math.random): Array<{ chain: C; level: number }> {
   const cap = getOrderLevelCap(zoneKey);
+  const min = getOrderLevelMin(zoneKey);
   const fav = ZONE_FAVORED_CHAIN[zoneKey as ZoneKey] as C | undefined;
   const favOk = fav !== undefined && coreChains.includes(fav);
   const pick = () => (favOk && rng() < 0.4 ? fav! : coreChains[Math.min(coreChains.length - 1, Math.floor(rng() * coreChains.length))]);
-  const lv1 = Math.min(cap, 2 + Math.floor(rng() * (cap - 1)));
+  const lv1 = Math.min(cap, min + Math.floor(rng() * (cap - min + 1)));
   const reqs = [{ chain: pick(), level: lv1 }];
   if (rng() < 0.55) {
-    // 두 번째 요구도 Lv.2 이상: ★2·★3 생성기는 Lv.1을 만들지 못한다
-    reqs.push({ chain: pick(), level: Math.max(2, lv1 - 1) });
+    // 두 번째 요구도 최저(Lv.2 이상) 이상: ★2·★3 생성기는 Lv.1을 만들지 못한다
+    reqs.push({ chain: pick(), level: Math.max(min, lv1 - 1) });
   }
   return reqs;
 }

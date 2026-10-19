@@ -8,13 +8,22 @@ export interface VersionEntry {
   changes: string[];
 }
 
-export const APP_VERSION = "v3.11.0";
+export const APP_VERSION = "v3.12.0";
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: "v3.12.0",
+    date: "2026-10-25",
+    badge: "LATEST",
+    title: "뒤 구역 주문은 더 알차게",
+    changes: [
+      "📋 [주문] 이야기가 진행될수록 주문 최저 레벨이 올라가요 (온실 Lv.3, 연회장·저장고 Lv.4, 마탑 Lv.5부터). 뒤 구역에서 Lv.2짜리 작은 주문은 더 나오지 않아요. 이미 받은 주문은 그대로예요.",
+    ],
+  },
+  {
     version: "v3.11.0",
     date: "2026-10-24",
-    badge: "LATEST",
+    badge: "계보",
     title: "아이템 계보 화면 · 생성기는 골라서 생성",
     changes: [
       "👆 [생성기는 골라서] 생성기를 처음 누르면 고르기만 해요 (설명을 보려고 번개를 쓰지 않아요). 고른 생성기를 한 번 더 누르면 재료가 나와요.",

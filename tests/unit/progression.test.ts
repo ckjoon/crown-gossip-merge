@@ -162,3 +162,22 @@ test("생성기 등급별로 바로 나오는 단계와 배속 최대 단계 (�
     expect(r.level).toBeLessThanOrEqual(P.spawnRange(t).max);
   }
 });
+
+// v3.12: 뒤 구역에서도 Lv.2짜리 🪙47 주문이 나오면 보상이 없는 느낌 — 구역마다 주문 최저 레벨이 올라간다 (두 번째 요구 포함)
+test("구역별 주문 최저 레벨: 뒤 구역일수록 낮은 주문이 안 나옴", () => {
+  expect(P.ZONE_ORDER.map((z) => P.getOrderLevelMin(z))).toEqual([2, 2, 3, 4, 4, 5]);
+  const core = ["potion", "tea"];
+  for (const z of P.ZONE_ORDER) {
+    const min = P.getOrderLevelMin(z);
+    for (let i = 0; i < 400; i++) {
+      for (const r of P.rollOrderReqs(z, core)) {
+        expect(r.level, z).toBeGreaterThanOrEqual(min);
+        expect(r.level, z).toBeLessThanOrEqual(P.getOrderLevelCap(z));
+      }
+    }
+  }
+  expect(P.rollOrderReqs("banquet", core, seqRng([0, 0, 0, 0]))).toEqual([
+    { chain: "potion", level: 4 },
+    { chain: "potion", level: 4 },
+  ]);
+});

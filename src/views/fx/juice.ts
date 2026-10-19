@@ -10,6 +10,7 @@ import { getTexture } from "../art/textures";
 import { getMainBoard } from "../board/registry";
 import type { BoardView, ItemNode } from "../board/BoardView";
 import { elementCenter, type FxLayer } from "./FxLayer";
+import { toast } from "../ui/ui.svelte";
 
 const GOLD = [0xfde047, 0xf59e0b, 0xffffff];
 
@@ -131,6 +132,25 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
     });
   }
 
+  // 생성기 흡수 (v3.8): 더는 못 만드는 Lv.1 재료가 진화한 생성기로 빨려 들어간다 (상태에선 이미 빠졌으므로 지금 노드 모습을 복제해 날림)
+  function onAbsorbed(board: BoardView, e: Extract<GameEvent, { type: "absorbed" }>) {
+    const to = board.cellCenterClient(e.generator);
+    const size = Math.min(board.cellSize().w, board.cellSize().h) * 0.8;
+    e.cells.forEach((cell, i) => {
+      const node = board.nodeAt(cell);
+      const tex = node ? getTexture(node.vis.tex) : getTexture(`item:${e.items[i].chain}:1`);
+      if (!tex) return;
+      fx.fly(tex, board.cellCenterClient(cell), to, {
+        size,
+        delay: 0.25 + i * 0.06,
+        duration: 0.45,
+        onArrive: () => fx.burst(to, amount(6), [0xfde047, 0xc084fc, 0xffffff], 2.4),
+      });
+    });
+    const n = e.cells.length + e.bag;
+    toast(`🌀 생성기가 더는 못 만드는 Lv.1 재료 ${n}개를 흡수했어요 +${e.coins}🪙${e.bag ? ` (🎒 ${e.bag}개 포함)` : ""}`, to.x, to.y - 30, "#fde047");
+  }
+
   function onCollected(board: BoardView, e: Extract<GameEvent, { type: "collected" }>) {
     const node = board.nodeAt(e.cell);
     const to = pillCenter(e.currency);
@@ -155,6 +175,9 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
         break;
       case "collected":
         if (board) onCollected(board, e);
+        break;
+      case "absorbed":
+        if (board) onAbsorbed(board, e);
         break;
       case "bonusDropped":
         if (board) board.expectAppear(e.cell, { scale: 0.2 });

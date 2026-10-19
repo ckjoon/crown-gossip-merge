@@ -25,6 +25,8 @@ export type GameEvent =
   | { type: "moved"; from: number; to: number; swapped: boolean }
   | { type: "merged"; from: number; to: number; item: BoardItem; wasCobweb: boolean; generatorEvolved: boolean }
   | { type: "cratesOpened"; cells: number[] }
+  // 생성기가 진화해 더는 만들 수 없게 된 Lv.1 재료를 흡수 (cells: 보드 칸, items: 흡수 전 모습 — 연출용, bag: 보관함에서 흡수한 개수)
+  | { type: "absorbed"; chain: ChainId; generator: number; cells: number[]; items: BoardItem[]; bag: number; coins: number }
   | { type: "bonusDropped"; cell: number; item: BoardItem }
   | { type: "collected"; cell: number; currency: "coins" | "energy"; amount: number }
   | { type: "cobwebUnlocked"; cell: number }

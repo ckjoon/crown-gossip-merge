@@ -6,8 +6,8 @@ import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
 import { CHAINS, getItemMeta } from "../rules/chains";
 import { getGeneratorTierCap, resolveBoost, rollBaseSpawn } from "../rules/progression";
-import { GEN_EVOLVE_XP, bagSize, mergeXP } from "../rules/levels";
-import { COLS, ROWS, TOTAL_CELLS, type BoardItem, type GameState } from "../types";
+import { GEN_EVOLVE_XP, bagSize, mergeXP, sellPrice } from "../rules/levels";
+import { COLS, ROWS, TOTAL_CELLS, type BoardItem, type ChainId, type GameState } from "../types";
 import { gainXP } from "./progress";
 
 const UNLOCK_COBWEB_COST = 20;
@@ -68,6 +68,36 @@ export const spawnFromGenerator: Action<{ cell: number }> = (s, ctx, { cell }) =
 };
 
 // 드래그 드롭: 이동 / 생성기 진화 / 같은 재료 합성(거미줄 포함) / 교체
+// 생성기 흡수 (v3.8): 진화로 그 체인 ★1 생성기가 하나도 안 남으면(보드·보관함) Lv.1 재료는 더 만들 수 없어 짝 없이 남는다.
+// 그 체인 Lv.1(보드 활성·거미줄, 보관함)을 생성기가 빨아들이고 개당 Lv.1 판매가 코인·합성 경험치를 준다. 거미줄 칸이 비면 옆 봉인 상자도 열린다
+function absorbOrphans(s: GameState, ev: GameEvent[], chain: ChainId, generator: number): void {
+  const hasTier1 = [...s.board, ...s.bag].some((it) => it?.isGenerator && it.chain === chain && (it.level || 1) === 1);
+  if (hasTier1) return;
+  const cells: number[] = [];
+  const items: BoardItem[] = [];
+  s.board.forEach((it, i) => {
+    if (!it || it.isGenerator || it.chain !== chain || it.level !== 1 || (it.state !== "active" && it.state !== "cobweb")) return;
+    cells.push(i);
+    items.push({ ...it });
+  });
+  const bagBefore = s.bag.length;
+  s.bag = s.bag.filter((it) => it.isGenerator || it.chain !== chain || it.level !== 1);
+  const bag = bagBefore - s.bag.length;
+  if (!cells.length && !bag) return;
+  const opened: number[] = [];
+  for (const c of cells) {
+    const wasCobweb = s.board[c]!.state === "cobweb";
+    s.board[c] = null;
+    if (wasCobweb) opened.push(...crackAdjacentCrates(s, c));
+  }
+  const n = cells.length + bag;
+  const coins = n * sellPrice(1);
+  ev.push({ type: "absorbed", chain, generator, cells, items, bag, coins });
+  if (opened.length) ev.push({ type: "cratesOpened", cells: opened });
+  grant(s, ev, "coins", coins, "absorb");
+  // 경험치는 주지 않는다 (레벨업 번개·코인으로 경제가 흔들리지 않게 — 정리 자체가 보상)
+}
+
 export const moveOrMerge: Action<{ from: number; to: number }> = (s, ctx, { from, to }) => {
   if (from === to) return [];
   const src = s.board[from];
@@ -89,6 +119,7 @@ export const moveOrMerge: Action<{ from: number; to: number }> = (s, ctx, { from
     s.board[from] = null;
     s.board[to] = item;
     ev.push({ type: "merged", from, to, item: { ...item }, wasCobweb: false, generatorEvolved: true });
+    absorbOrphans(s, ev, item.chain, to);
     gainXP(s, ev, GEN_EVOLVE_XP);
     return ev;
   }

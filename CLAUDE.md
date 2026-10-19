@@ -25,7 +25,9 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
   - `rules/`: data and balance.
     - `progression.ts`: zone unlock (takes `playerLv`), order caps, generator tier caps and `spawnRange`, boost, prices, holiday rewards.
     - `levels.ts` (v3.5): XP curve `xpToNext`, XP sources, level-up rewards, sell price and order coins, and the unlock table.
-      - Unlocks: zone entry levels, bag size `bagSize(lv)`, and new chains (`candle` Lv6, `silk` Lv12).
+      - Unlocks: zone entry levels and bag size `bagSize(lv)`. Levels never hand out new generators (v3.8).
+      - New chains come from finishing a zone (`CHAIN_UNLOCK_ZONE`: candle ← alchemy, silk ← harbor). `castle.renovate` grants the ★1 generator with a `chainUnlocked` event, and RewardDirector plays the `CHAIN_GIFT` handover after the zone showcase. `unlockedChains(state)` also counts a chain the player already owns, so pre-v3.8 saves keep their orders.
+      - Generator absorption (v3.8): when an evolution leaves no ★1 generator of that chain on board or bag, `absorbOrphans` (board.ts) removes that chain's Lv.1 items (active, cobweb, bag) for Lv.1 sell coins (no XP) and cracks crates next to absorbed cobwebs.
       - A zone with any restored spot stays open regardless of level, for save compatibility.
     - `chains.ts`, `customers.ts`, `holidays.ts`, `rooms.ts` (spots, dialogues, `ambienceByProgress`), `characters.ts`, `versionHistory.ts`.
   - `actions/*.ts`: every state change is an `Action<P> = (draft, ctx, payload) => GameEvent[]`. Groups are `board`, `orders`, `progress`, `castle`, and `holiday`.

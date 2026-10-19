@@ -41,7 +41,11 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
     - CSS is the v2 stylesheet (`styles/legacy.css`, class names kept) plus `styles/v3.css`.
   - `board/`: Pixi board. `BoardView.ts` handles cells, tiles, input, slide tweens, and particles. `visuals.ts` maps state to `CellVisual`. `BoardCanvas.svelte` wires the main 7×8 or holiday 5×5 board.
   - `fx/`: `FxLayer` is a full-screen click-through Pixi canvas for flights between the board and the HTML UI. `juice.ts` maps events to effects.
-  - `castle/`: `CastleView.ts` (Three.js), `scenes.ts`/`furniture.ts` (room shell, procedural structures, recipe → meshes), `ambience.ts` (room mood 0–5), `layout.ts` (3D positions), `toon.ts` (toon materials + outlines).
+  - `castle/`: `CastleView.ts` (Three.js), `furniture.ts` (procedural structures, recipe → meshes), `ambience.ts` (room mood 0–5), `layout.ts` (spot furniture types; positions come from modules), `toon.ts` (toon materials + outlines), `scenes.ts` (room lights).
+    - Lego rooms: `modules.ts` is pure data and math (no three). Each zone has an entrance hall plus one module per spot (`ZONE_MODULES`, 1 cell = 5 units). `moduleStates` returns built/ruin/ghost from `rooms[].done`. `moduleEdges` gives walls, doors, and curbs: walls go only on the far sides (-x/-z), facing the camera. `zoneBounds`/`fitZoom`/`panClamp` drive the camera.
+    - `roomBuilder.ts` draws modules (per-zone wall style, ornaments with `glowBase`) and plays the build animation inside `playRestore`.
+    - `floorplan.ts` draws the castle map: a courtyard plus 4 zone wings made of module blocks.
+    - `ZONE_PROPS` coordinates are local to module `step`.
     - `castle/models/`: CC0 glTF models in `public/models` (credits in `public/models/CREDITS.md`). `manifest.ts` lists them, `recipes.ts` places them per spot (`SPOT_RECIPES`, 3 style variants), before-restore clutter (`CLUTTER`), and zone props that appear as more spots are restored (`ZONE_PROPS`). `library.ts` loads them per zone and clones synchronously; until loaded, spots fall back to procedural furniture.
     - To change the model set, edit `PICK` in `tools/prepare-models.mjs`, rerun it against the downloaded packs (macOS `sips` + Pillow), and update `manifest.ts`. `recipes.test.ts` checks every referenced model exists.
   - `reward/RewardDirector.ts`: sequences a restore: 3D drop, ribbon, reaction, cutscene, then (on zone complete) the showcase, a gem flight, and the next-zone reveal. Input stays locked throughout.

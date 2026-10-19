@@ -6,6 +6,7 @@ import { ZONE_ORDER } from "../../src/core/rules/progression";
 // 효율 좋은 봇 기준 (사람은 배속 낭비·덜 효율적인 합성·충전 상한 낭비로 더 오래 걸림). 번개 자연 충전 = 2분당 1개 = 하루 720개
 // net = 쓴 번개 − 게임 안에서 얻은 번개(번개 조각·레벨업) = 자연 충전으로 채워야 하는 양
 // v3.10: 과금 유도가 아니라 처음부터 끝까지 매끄럽게 — Gossip Harbor 속도(2분당 1⚡)에 드롭 상향, 예전(하루 288개로 33일분 이상)보다 훨씬 빠름
+// DAY는 하루 내내 충전을 받는 상한. 충전 상한 100은 3시간 20분이면 차므로 하루 3~4번 들어오는 사람은 하루 300~500개쯤 (봇 7일분 ≈ 사람 2~3주)
 const DAY = 720;
 
 describe("밸런스 시뮬레이션 (실제 액션만 쓰는 봇, 시드 3개)", () => {
@@ -26,10 +27,15 @@ describe("밸런스 시뮬레이션 (실제 액션만 쓰는 봇, 시드 3개)",
   });
 
   // v3.10: 화마다 드는 번개가 매끄럽게 늘어남 — 구역이 바뀌어도 뚝 떨어지거나 한 번에 확 뛰지 않음 (시드 3개 평균, 제3화부터)
-  test("화별 번개 곡선이 매끄러움: 5화 이동평균이 계속 오르고, 마지막 5화는 제3~7화의 6배 이하", () => {
+  // 예전 곡선은 구역이 바뀌는 화에서 0.6배로 떨어지고(제5→6화) 마지막 화에서 1.6배로 뛰었다
+  test("화별 번개 곡선이 매끄러움: 앞 화의 0.7~1.4배, 마지막 5화는 제3~7화의 6배 이하", () => {
     const per = (i: number) => runs.reduce((n, r) => n + r.chapters[i].energy - (r.chapters[i - 1]?.energy ?? 0), 0) / runs.length;
+    for (let i = 3; i < 30; i++) {
+      const ratio = per(i) / per(i - 1);
+      expect(ratio, `ch${i + 1}`).toBeGreaterThanOrEqual(0.7);
+      expect(ratio, `ch${i + 1}`).toBeLessThanOrEqual(1.4);
+    }
     const avg5 = (i: number) => [0, 1, 2, 3, 4].reduce((n, k) => n + per(i + k), 0) / 5;
-    for (let i = 3; i + 4 < 30; i++) expect(avg5(i), `ch${i + 1}~${i + 5}`).toBeGreaterThan(avg5(i - 1) * 0.95);
     expect(avg5(25)).toBeLessThanOrEqual(avg5(2) * 6);
   });
 
@@ -45,6 +51,7 @@ describe("밸런스 시뮬레이션 (실제 액션만 쓰는 봇, 시드 3개)",
   });
 
   // v3.10: 레벨 잠금은 거의 안 걸리게 (코인은 모였는데 레벨 때문에 기다리는 건 매끄럽지 않음). 걸려도 반나절분 이하
+  // 효율 좋은 봇은 잠금에 한 번도 안 걸린다 — 입장 레벨은 이제 진행 속도 조절이 아니라 덜 효율적인 플레이의 안전장치
   test("구역 입장 레벨 때문에 기다리는 번개는 반나절분 이하", () => {
     for (const r of runs) for (const c of r.chapters) expect(c.lockedEnergy, `ch${c.chapter}`).toBeLessThanOrEqual(DAY * 0.5);
   });

@@ -2,7 +2,7 @@
   import { app } from "../context";
   import { ui, act, say } from "../ui.svelte";
   import { getItemSVG } from "../../art/sprites";
-  import { getItemMeta, CHAINS } from "../../../core/rules/chains";
+  import { getItemMeta, getGeneratorTierMeta, CHAINS } from "../../../core/rules/chains";
   import { getItemGemPrice } from "../../../core/rules/progression";
   import { generatorName, generatorCellFor } from "../../../core/codex";
   import { serveOrder, buyOrderRequirement, type OrderStatus } from "../../../core/actions/orders";
@@ -17,11 +17,13 @@
   function explain() {
     app().sfx.tap();
     ui.selectedOrderIdx = selected ? null : idx;
-    // 생성기 이름은 지금 가진 등급 이름으로 (보드에서 보이는 이름과 같게)
+    // 생성기 이름은 그 재료를 만들 보드 위 생성기의 등급 이름으로 (보드에 없으면 가진 최고 등급, 그것도 없으면 ★1)
     const lines = order.reqs.map((r) => {
       const meta = getItemMeta(r.chain, r.level);
       const ch = CHAINS[r.chain];
-      return `${meta.name}(Lv.${r.level}) ← ${ch.generator ? generatorName($game, r.chain) : ch.name}`;
+      const cell = generatorCellFor($game, r.chain, r.level);
+      const name = cell !== -1 ? getGeneratorTierMeta(r.chain, $game.board[cell]!.level).name : generatorName($game, r.chain);
+      return `${meta.name}(Lv.${r.level}) ← ${ch.generator ? name : ch.name}`;
     });
     say(`${order.customer.face} ${order.customer.name}`, lines.join(" · "));
     // 아직 못 채운 첫 재료를 바로 만들 수 있는 생성기를 선택

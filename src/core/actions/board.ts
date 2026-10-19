@@ -156,7 +156,8 @@ export const moveOrMerge: Action<{ from: number; to: number }> = (s, ctx, { from
       if (opened.length) ev.push({ type: "cratesOpened", cells: opened });
     }
     // Lv.4 이상 결과물은 레벨별 확률로 번개/코인 조각 드롭 (progression.mergeBonusChance)
-    if (ctx.rng() < mergeBonusChance(item.level)) {
+    const bonusChance = mergeBonusChance(item.level);
+    if (bonusChance > 0 && ctx.rng() < bonusChance) {
       const cell = findNearestEmptyCell(s, to, ctx.rng);
       if (cell !== -1) {
         const bonus: BoardItem = { uid: newUid(s), state: "active", isGenerator: false, chain: ctx.rng() < MERGE_BONUS_ENERGY_SHARE ? "energy" : "coin", level: 1 };

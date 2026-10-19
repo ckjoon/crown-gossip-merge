@@ -1,10 +1,10 @@
-// layout.ts — 성 3D 화면 전용 데이터: 장소별 3D 위치·카메라 오프셋·가구 종류, 구역별 색과 성 지도 핀 위치 (v2 ROOM_THEMES에서 분리)
+// layout.ts — 성 3D 화면 전용 데이터: 장소별 3D 위치(방 조각 기준)·가구 종류, 구역별 색과 성 지도 핀 위치 (v2 ROOM_THEMES에서 분리)
 
 import type { ZoneKey } from "../../core/rules/progression";
+import { ZONE_MODULES, moduleIndexOf, spotAnchor } from "./modules";
 
 export interface SpotLayout {
   pos: [number, number, number];
-  camOffset: [number, number, number];
   type: string;
 }
 
@@ -16,268 +16,37 @@ export interface ZoneLook {
   castlePinPos: [number, number, number];
 }
 
-export const SPOT_LAYOUT: Record<string, SpotLayout> = {
-  alc_cauldron: {
-    pos: [
-      0,
-      0,
-      0
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "cauldron"
-  },
-  alc_bookcase: {
-    pos: [
-      -3.2,
-      0,
-      -3.2
-    ],
-    camOffset: [
-      5,
-      7,
-      5
-    ],
-    type: "bookcase"
-  },
-  alc_herbtable: {
-    pos: [
-      3,
-      0,
-      -2.8
-    ],
-    camOffset: [
-      6,
-      7,
-      5
-    ],
-    type: "planter"
-  },
-  alc_window: {
-    pos: [
-      0,
-      2.4,
-      -4.7
-    ],
-    camOffset: [
-      5,
-      6,
-      5
-    ],
-    type: "window"
-  },
-  alc_counter: {
-    pos: [
-      -2.6,
-      0,
-      2.4
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "counter"
-  },
-  hb_espresso: {
-    pos: [
-      -2.8,
-      0,
-      -2.8
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "counter"
-  },
-  hb_parasol: {
-    pos: [
-      1.8,
-      0,
-      1.8
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "parasol"
-  },
-  hb_fountain: {
-    pos: [
-      0,
-      0,
-      -0.5
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "fountain"
-  },
-  hb_bakery: {
-    pos: [
-      2.8,
-      0,
-      -2.8
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "oven"
-  },
-  hb_arch: {
-    pos: [
-      0,
-      2.2,
-      -4.7
-    ],
-    camOffset: [
-      5,
-      6,
-      5
-    ],
-    type: "window"
-  },
-  gd_pond: {
-    pos: [
-      0,
-      0,
-      0
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "fountain"
-  },
-  gd_gazebo: {
-    pos: [
-      2.2,
-      0,
-      2
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "parasol"
-  },
-  gd_planter: {
-    pos: [
-      -2.8,
-      0,
-      -2.8
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "planter"
-  },
-  gd_teabar: {
-    pos: [
-      2.8,
-      0,
-      -2.8
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "counter"
-  },
-  gd_dome: {
-    pos: [
-      0,
-      2.3,
-      -4.7
-    ],
-    camOffset: [
-      5,
-      6,
-      5
-    ],
-    type: "window"
-  },
-  bq_astrolabe: {
-    pos: [
-      0,
-      0,
-      0
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "cauldron"
-  },
-  bq_library: {
-    pos: [
-      -3,
-      0,
-      -3
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "bookcase"
-  },
-  bq_feast: {
-    pos: [
-      2,
-      0,
-      2
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "parasol"
-  },
-  bq_hearth: {
-    pos: [
-      3,
-      0,
-      -2.8
-    ],
-    camOffset: [
-      6,
-      7,
-      6
-    ],
-    type: "oven"
-  },
-  bq_portal: {
-    pos: [
-      0,
-      2.4,
-      -4.7
-    ],
-    camOffset: [
-      5,
-      6,
-      5
-    ],
-    type: "window"
-  }
+// 장소별 가구 종류. 창문형(벽에 거는 가구)은 걸리는 높이(wallY)를 갖는다. 위치는 방 조각(modules.ts)에서 계산
+const SPOT_BASE: Record<string, { type: string; wallY?: number }> = {
+  alc_cauldron: { type: "cauldron" },
+  alc_bookcase: { type: "bookcase" },
+  alc_herbtable: { type: "planter" },
+  alc_window: { type: "window", wallY: 2.4 },
+  alc_counter: { type: "counter" },
+  hb_espresso: { type: "counter" },
+  hb_parasol: { type: "parasol" },
+  hb_fountain: { type: "fountain" },
+  hb_bakery: { type: "oven" },
+  hb_arch: { type: "window", wallY: 2.2 },
+  gd_pond: { type: "fountain" },
+  gd_gazebo: { type: "parasol" },
+  gd_planter: { type: "planter" },
+  gd_teabar: { type: "counter" },
+  gd_dome: { type: "window", wallY: 2.3 },
+  bq_astrolabe: { type: "cauldron" },
+  bq_library: { type: "bookcase" },
+  bq_feast: { type: "parasol" },
+  bq_hearth: { type: "oven" },
+  bq_portal: { type: "window", wallY: 2.4 },
 };
+
+function zoneOfSpot(spotId: string): ZoneKey {
+  return (Object.keys(ZONE_MODULES) as ZoneKey[]).find((z) => moduleIndexOf(z, spotId) >= 0)!;
+}
+
+export const SPOT_LAYOUT: Record<string, SpotLayout> = Object.fromEntries(
+  Object.entries(SPOT_BASE).map(([id, b]) => [id, { type: b.type, pos: spotAnchor(zoneOfSpot(id), id, b.wallY ?? null) }]),
+);
 
 export const ZONE_LOOK: Record<ZoneKey, ZoneLook> = {
   alchemy: {

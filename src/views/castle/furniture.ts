@@ -3,7 +3,9 @@
 import * as THREE from "three";
 import type { StylePalette } from "../../core/rules/rooms";
 import { ModelLibrary } from "./models/library";
-import { SPOT_RECIPES, CLUTTER, ZONE_PROPS, recipeModels, type RecipeItem, type TintKey } from "./models/recipes";
+import { SPOT_RECIPES, CLUTTER, ZONE_PROPS, recipeModels, type RecipeItem, type TintKey, type ZoneProp } from "./models/recipes";
+import { ZONE_MODULES, moduleCenter } from "./modules";
+import type { ZoneKey } from "../../core/types";
 
 // 복구 전: 부서진 나무 판자, 잔해 돌멩이
 export function buildRubble(group: THREE.Group): void {
@@ -568,9 +570,17 @@ export function spotModelNames(spotId: string): ReturnType<typeof recipeModels> 
 }
 
 // 구역 분위기 소품: 복구 수(doneCount) 이하 단계만 놓는다
+// 소품 좌표는 그 단계 방 조각 가운데 기준 → 구역(월드) 좌표
+export function zonePropPos(zone: string, prop: ZoneProp): [number, number, number] {
+  const d = ZONE_MODULES[zone as ZoneKey]?.[prop.step];
+  const [cx, cz] = d ? moduleCenter(d) : [0, 0];
+  const [x, y, z] = prop.p ?? [0, 0, 0];
+  return [x + cx, y, z + cz];
+}
+
 export function buildZoneProps(zone: string, doneCount: number, pal: StylePalette): THREE.Group {
   const g = new THREE.Group();
-  const list = (ZONE_PROPS[zone] ?? []).filter((p) => p.step <= doneCount);
+  const list = (ZONE_PROPS[zone] ?? []).filter((p) => p.step <= doneCount).map((p) => ({ ...p, p: zonePropPos(zone, p) }));
   placeItems(g, list, pal);
   return g;
 }

@@ -115,3 +115,34 @@ test("카메라 범위: 지어진 곳 + 폐허만, 홀만이면 최대 확대, �
   expect(panClamp(b0, 100, -100)).toEqual([b0.maxX, b0.minZ]);
   expect(panClamp(b0, -1, 0)).toEqual([-1, 0]);
 });
+
+// ---- Task 2: 장소·소품 좌표가 조각 기준 ----
+import { SPOT_LAYOUT } from "../../src/views/castle/layout";
+import { ZONE_PROPS } from "../../src/views/castle/models/recipes";
+import { zonePropPos } from "../../src/views/castle/furniture";
+
+for (const zone of ZONES) {
+  test(`${zone}: 장소 위치는 조각 계산값`, () => {
+    for (const s of ROOMS[zone].spots) {
+      const l = SPOT_LAYOUT[s.id];
+      expect(l.pos).toEqual(spotAnchor(zone, s.id, l.type === "window" ? l.pos[1] : null));
+    }
+  });
+
+  test(`${zone}: 분위기 소품은 그 단계 조각 안, 가구 한가운데는 피함`, () => {
+    for (const p of ZONE_PROPS[zone]) {
+      const d = ZONE_MODULES[zone][p.step];
+      const [wx, wy, wz] = zonePropPos(zone, p);
+      const inX = wx > (d.gx - 0.5) * CELL + 0.3 && wx < (d.gx + d.w - 0.5) * CELL - 0.3;
+      const inZ = wz > (d.gz - 0.5) * CELL + 0.3 && wz < (d.gz + d.d - 0.5) * CELL - 0.3;
+      expect(inX && inZ, `${zone} step${p.step} ${p.m ?? p.proc} 위치 ${wx},${wz}`).toBe(true);
+      const hanging = p.m === "props/Chandelier";
+      const flat = p.proc === "rug";
+      if (!hanging && !flat) {
+        const [lx, , lz] = p.p ?? [0, 0, 0];
+        expect(Math.hypot(lx, lz + 0.3), `${zone} ${p.m} 가구와 겹침`).toBeGreaterThanOrEqual(1.2);
+      }
+      expect(hanging ? wy >= 3.5 : wy >= 0 && wy < 1).toBe(true);
+    }
+  });
+}

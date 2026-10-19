@@ -27,6 +27,12 @@
   });
 
   const cell = () => ui.selectedCell!;
+  // 계보 화면 (v3.11)
+  function openInfo(generator: boolean) {
+    app().sfx.tap();
+    ui.itemInfo = { chain: item!.chain, level: item!.level, generator };
+    ui.modal = "itemInfo";
+  }
   function afterRemove() {
     if (ui.selectedCell !== null && !app().store.get().board[ui.selectedCell]) ui.selectedCell = null;
   }
@@ -54,7 +60,7 @@
     </div>
     <div class="insp-actions">
       <button class="insp-btn spawn-btn" onclick={(e) => act(spawnFromGenerator, { cell: cell() }, pointOf(e))}>⚡생성{#if $game.boostMultiplier > 1} ×{$game.boostMultiplier}{/if}</button>
-      <button class="insp-btn store-btn" title="이 생성기로 만드는 것" aria-label="이 생성기로 만드는 것" onclick={() => { app().sfx.tap(); ui.codexFocus = item!.chain; ui.modal = "codex"; }}>📜</button>
+      <button class="insp-btn store-btn" title="등급과 나오는 재료" aria-label="등급과 나오는 재료" onclick={() => openInfo(true)}>📜</button>
       <button class="insp-btn store-btn" title="보관함에 넣기" aria-label="보관함에 넣기" onclick={(e) => { act(storeToBag, { cell: cell() }, pointOf(e)); afterRemove(); }}>🎒</button>
     </div>
   {:else if meta}
@@ -78,6 +84,7 @@
       </div>
     {:else if item.state === "active"}
       <div class="insp-actions">
+        <button class="insp-btn store-btn" title="어디서 왔는지와 단계" aria-label="어디서 왔는지와 단계" onclick={() => openInfo(false)}>📜</button>
         {#if meta.isCollectible}
           <button class="insp-btn sell-btn" onclick={(e) => { act(collectItem, { cell: cell() }, pointOf(e)); afterRemove(); }}>수집</button>
         {:else}

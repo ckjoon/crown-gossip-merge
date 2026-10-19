@@ -3,10 +3,10 @@
 import type { Action } from "../../core/store";
 import type { GameEvent, RejectReason } from "../../core/events";
 import { app } from "./context";
-import { ENERGY_REGEN_SEC } from "../../core/types";
+import { ENERGY_REGEN_SEC, type ChainId } from "../../core/types";
 
 export type Screen = "merge" | "castle";
-export type ModalId = "codex" | "bag" | "level" | "settings" | "changelog" | "gemShop" | "storyLog" | "holiday" | "migration";
+export type ModalId = "codex" | "itemInfo" | "bag" | "level" | "settings" | "changelog" | "gemShop" | "storyLog" | "holiday" | "migration";
 
 export type RewardView =
   | { kind: "ribbon"; chapter: number; name: string; chips: string[] }
@@ -27,6 +27,8 @@ export const ui = $state({
   modal: null as ModalId | null,
   // 도감을 열 때 강조할 생성기 체인 (생성기 정보에서 📜로 열면)
   codexFocus: null as string | null,
+  // 계보 화면에 보여 줄 재료/생성기 (인스펙터 📜로 연다)
+  itemInfo: null as { chain: ChainId; level: number; generator: boolean } | null,
   // 말풍선: 할 말이 생길 때만 잠깐 떠오른다 (seq가 바뀌면 다시 표시)
   dialogue: { speaker: "", text: "", seq: 0 },
   inputLocked: false,

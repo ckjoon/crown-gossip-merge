@@ -5,6 +5,7 @@
   import { APP_VERSION } from "../../core/rules/versionHistory";
   import { markVersionSeen } from "../../core/actions/progress";
   import Codex from "./modals/Codex.svelte";
+  import ItemInfo from "./modals/ItemInfo.svelte";
   import Bag from "./modals/Bag.svelte";
   import Level from "./modals/Level.svelte";
   import Settings from "./modals/Settings.svelte";
@@ -42,6 +43,8 @@
   <MigrationReport {report} onclose={close} />
 {:else if ui.modal === "codex"}
   <Codex onclose={close} />
+{:else if ui.modal === "itemInfo" && ui.itemInfo}
+  {#key ui.itemInfo}<ItemInfo onclose={close} />{/key}
 {:else if ui.modal === "bag"}
   <Bag onclose={close} />
 {:else if ui.modal === "level"}

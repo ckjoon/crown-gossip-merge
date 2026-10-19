@@ -36,7 +36,7 @@ export function coachStep(s: GameState): CoachStep | null {
     const gens = s.board.map((c, i) => (c?.isGenerator && c.state === "active" ? i : -1)).filter((i) => i !== -1);
     const chains = new Set(s.orders.flatMap((o) => o.reqs.map((r) => r.chain as string)));
     const pick = gens.find((i) => chains.has(s.board[i]!.chain)) ?? gens[0];
-    if (pick !== undefined) return { step: "spawn", text: "✨ 빛나는 생성기를 탭하면 재료가 나와요", cells: [pick] };
+    if (pick !== undefined) return { step: "spawn", text: "✨ 빛나는 생성기를 눌러 고르고, 한 번 더 누르면 재료가 나와요", cells: [pick] };
   }
 
   const any = findMergePair(s);

@@ -156,7 +156,8 @@ export const moveOrMerge: Action<{ from: number; to: number }> = (s, ctx, { from
       if (opened.length) ev.push({ type: "cratesOpened", cells: opened });
     }
     // Lv.4 이상 결과물은 레벨별 확률로 번개/코인 조각 드롭 (progression.mergeBonusChance)
-    const bonusChance = mergeBonusChance(item.level);
+    // 번개·코인 조각끼리 합칠 때는 보너스 없음 (조각이 조각을 낳지 않게)
+    const bonusChance = meta.isCollectible ? 0 : mergeBonusChance(item.level);
     if (bonusChance > 0 && ctx.rng() < bonusChance) {
       const cell = findNearestEmptyCell(s, to, ctx.rng);
       if (cell !== -1) {

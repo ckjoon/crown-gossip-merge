@@ -1,7 +1,7 @@
 // codex.ts — 도감 발견 기록 (v3.9): 보드·보관함에 보인 재료(봉인 상자 속은 제외)의 체인별 최고 단계를 기억한다
 // 생성기 등급은 따로 저장하지 않는다 — 생성기는 팔 수 없고 합치면 오르기만 하므로 지금 가진 최고 등급이 곧 발견한 등급
 
-import { getGeneratorTierMeta } from "./rules/chains";
+import { CHAINS, getGeneratorTierMeta } from "./rules/chains";
 import { spawnRange } from "./rules/progression";
 import type { ChainId, GameState } from "./types";
 
@@ -41,4 +41,57 @@ export function generatorCellFor(s: Pick<GameState, "board">, chain: ChainId, le
     }
   });
   return best;
+}
+
+// 아이템 계보 (v3.11 계보 화면): 어디서 오는지, 단계마다 어떻게 얻는지(지금 가진 생성기 등급 기준), 지금 단계, 열린 주문이 원하는 수
+// how — spawn: 생성기(또는 출처)에서 바로, boost: ⚡배속으로 바로, merge: 아래 단계 둘을 합쳐서만, below: 지금 생성기로는 안 나오는 낮은 단계
+export type LineageHow = "spawn" | "boost" | "merge" | "below";
+export type LineageSource =
+  | { kind: "generator"; chain: ChainId; tier: number; name: string }
+  | { kind: "byproduct"; chain: ChainId; tier: number; name: string }
+  | { kind: "drop" }
+  | { kind: "recipe" };
+export interface LineageStep {
+  level: number;
+  name: string | null; // 아직 못 본 단계는 null
+  how: LineageHow;
+  current: boolean;
+}
+export interface Lineage {
+  source: LineageSource;
+  steps: LineageStep[];
+  wanted: number;
+}
+
+export function itemLineage(s: Pick<GameState, "board" | "bag" | "codexSeen" | "orders">, chain: ChainId, level: number): Lineage {
+  const ch = CHAINS[chain];
+  const byproductOf = (Object.keys(CHAINS) as ChainId[]).find((k) => CHAINS[k].rareDropChain === chain);
+  let source: LineageSource;
+  let how: (lv: number) => LineageHow;
+  if (ch.generator) {
+    const tier = generatorSeen(s, chain);
+    const r = spawnRange(tier || 1);
+    source = { kind: "generator", chain, tier, name: generatorName(s, chain) };
+    how = (lv) => (lv < r.min ? "below" : lv <= r.max ? "spawn" : lv <= r.boostMax ? "boost" : "merge");
+  } else if (byproductOf) {
+    // 부산물은 생성기 등급과 같은 단계로 나온다 (★1 → Lv.1, ★2 → Lv.2, ★3 → Lv.3)
+    const tier = generatorSeen(s, byproductOf);
+    const from = Math.max(1, tier);
+    source = { kind: "byproduct", chain: byproductOf, tier, name: generatorName(s, byproductOf) };
+    how = (lv) => (lv < from ? "below" : lv === from ? "spawn" : "merge");
+  } else if (ch.isCollectible) {
+    source = { kind: "drop" };
+    how = (lv) => (lv === 1 ? "spawn" : "merge");
+  } else {
+    source = { kind: "recipe" };
+    how = () => "spawn";
+  }
+  const steps = ch.items.map((it) => ({
+    level: it.level,
+    name: ch.isCollectible || itemSeen(s, chain, it.level) || it.level === level ? it.name : null,
+    how: how(it.level),
+    current: it.level === level,
+  }));
+  const wanted = s.orders.reduce((n, o) => n + o.reqs.filter((r) => r.chain === chain && r.level === level).length, 0);
+  return { source, steps, wanted };
 }

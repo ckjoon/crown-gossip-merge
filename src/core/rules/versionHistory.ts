@@ -8,13 +8,24 @@ export interface VersionEntry {
   changes: string[];
 }
 
-export const APP_VERSION = "v3.10.0";
+export const APP_VERSION = "v3.11.0";
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: "v3.11.0",
+    date: "2026-10-24",
+    badge: "LATEST",
+    title: "아이템 계보 화면 · 생성기는 골라서 생성",
+    changes: [
+      "👆 [생성기는 골라서] 생성기를 처음 누르면 고르기만 해요 (설명을 보려고 번개를 쓰지 않아요). 고른 생성기를 한 번 더 누르면 재료가 나와요.",
+      "📜 [계보 화면] 재료나 생성기를 고르고 📜를 누르면 어디서 오는지, Lv.1부터 끝까지 각 단계를 어떻게 얻는지(바로 나옴·⚡배속·합성으로만), 지금 몇 단계인지, 주문이 몇 건 기다리는지 한 화면에서 볼 수 있어요. 아직 못 본 단계는 ???예요.",
+      "🐛 [번개 조각] 번개·코인 조각끼리 합칠 때는 보너스 조각이 더 나오지 않아요.",
+    ],
+  },
+  {
     version: "v3.10.0",
     date: "2026-10-23",
-    badge: "LATEST",
+    badge: "번개",
     title: "번개 넉넉하게 · 매끄러운 진행",
     changes: [
       "⚡ [번개 충전 2분] 번개가 5분이 아니라 2분마다 1개씩 차요 (최대 100개).",

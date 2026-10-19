@@ -352,3 +352,28 @@ button.gh-res-pill {
 }
 body.reduce-motion .coach-bar { animation: none; }
 body.reduce-motion .coach-pulse { animation: none; outline: 3px solid #fbbf24; outline-offset: 2px; }
+
+/* v3.11 계보 화면 */
+.ii-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-bottom: 6px; }
+.ii-hero-icon { width: 84px; height: 84px; }
+.ii-hero-icon svg { width: 100%; height: 100%; }
+.ii-wanted { font-size: 11px; font-weight: 800; color: #92400e; background: #fef3c7; border-radius: 999px; padding: 3px 10px; }
+.ii-h { margin: 10px 0 4px; font-size: 12px; color: #3b0764; }
+.ii-source { display: flex; gap: 8px; align-items: center; background: #faf5ff; border-radius: 12px; padding: 6px 8px; }
+.ii-source p { margin: 0; font-size: 11px; line-height: 1.4; color: #334155; }
+.ii-src-icon { width: 40px; height: 40px; flex-shrink: 0; }
+.ii-tiers { display: grid; gap: 4px; }
+.ii-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.ii-step { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; }
+.ii-step-icon { width: 34px; height: 34px; flex-shrink: 0; }
+.ii-step-icon svg { width: 100%; height: 100%; }
+.ii-step-name { flex: 1; font-size: 11.5px; color: #1e293b; min-width: 0; }
+.ii-tag { font-size: 9.5px; font-weight: 800; border-radius: 999px; padding: 2px 7px; white-space: nowrap; background: #e2e8f0; color: #475569; }
+.ii-spawn .ii-tag { background: #dcfce7; color: #166534; }
+.ii-boost .ii-tag { background: #fef9c3; color: #854d0e; }
+.ii-merge .ii-tag { background: #ede9fe; color: #5b21b6; }
+.ii-step.ii-current { background: #fef3c7; border-color: #f59e0b; box-shadow: inset 0 0 0 1px #f59e0b; }
+.ii-step.ii-current .ii-tag { background: #f59e0b; color: #fff; }
+.ii-step.cs-unknown .ii-step-name { color: #94a3b8; }
+.ii-join { text-align: center; font-size: 9px; color: #a78bfa; font-weight: 700; line-height: 1.2; }
+.ii-codex-btn { margin-top: 10px; width: 100%; padding: 9px; border-radius: 12px; border: none; background: #7c3aed; color: #fff; font-weight: 800; font-size: 12px; }

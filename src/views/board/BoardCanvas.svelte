@@ -97,7 +97,12 @@
       const item = s.board[cell];
       if (!item) return;
       if (item.isGenerator && item.state === "active") {
-        ui.selectedCell = cell;
+        // v3.11: 처음 누르면 고르기만 (설명을 보려고 번개를 쓰지 않게), 고른 생성기를 다시 누르면 생성
+        if (ui.selectedCell !== cell) {
+          ui.selectedCell = cell;
+          app().sfx.tap();
+          return;
+        }
         const ev = act(spawnFromGenerator, { cell }, at);
         if (ev.some((e) => e.type === "rejected" && e.reason === "boardFull")) {
           const cells = hintCells();

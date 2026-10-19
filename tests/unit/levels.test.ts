@@ -129,3 +129,31 @@ describe("구역 입장 레벨", () => {
     expect(ev.find((e) => e.type === "zoneCompleted")).toMatchObject({ revealKey: null });
   });
 });
+
+import { ensureGenerators } from "../../src/services/save/restore";
+import { createOrder as mkOrder } from "../../src/core/actions/orders";
+
+describe("새 체인 해금 (세이브·주문)", () => {
+  test("해금 레벨을 넘긴 세이브는 불러올 때 새 체인 생성기를 받고, 그 전 레벨은 받지 않음", () => {
+    s.playerLv = 5;
+    ensureGenerators(s);
+    expect(s.board.some((c) => c?.isGenerator && c.chain === "candle")).toBe(false);
+    s.playerLv = 12;
+    ensureGenerators(s);
+    expect(s.board.filter((c) => c?.isGenerator && (c.chain === "candle" || c.chain === "silk")).length).toBe(2);
+    ensureGenerators(s);
+    expect(s.board.filter((c) => c?.isGenerator && c.chain === "candle").length).toBe(1);
+  });
+  test("해금 전에는 주문에 새 체인이 나오지 않고, 해금 뒤에는 나옴", () => {
+    const seen = (lv: number) => {
+      s.playerLv = lv;
+      const set = new Set<string>();
+      for (let i = 0; i < 300; i++) for (const r of mkOrder(s, fixedCtx([Math.random(), Math.random(), Math.random(), Math.random()]), i % 3).reqs) set.add(r.chain);
+      return set;
+    };
+    expect(seen(5).has("candle")).toBe(false);
+    expect(seen(6).has("candle")).toBe(true);
+    expect(seen(11).has("silk")).toBe(false);
+    expect(seen(12).has("silk")).toBe(true);
+  });
+});

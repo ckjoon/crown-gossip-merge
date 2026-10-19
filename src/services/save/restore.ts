@@ -5,8 +5,8 @@ import { newUid, type Ctx } from "../../core/ctx";
 import { initCustomerOrders, createOrder, getZoneProgress } from "../../core/actions/orders";
 import { initHolidayBoard } from "../../core/actions/holiday";
 import { createInitialState } from "../../core/state";
-import { CHAINS, CORE_CHAINS } from "../../core/rules/chains";
-import { BAG_MAX } from "../../core/rules/levels";
+import { CHAINS } from "../../core/rules/chains";
+import { BAG_MAX, unlockedChains } from "../../core/rules/levels";
 import { ALL_SPOTS_IN_ORDER } from "../../core/rules/rooms";
 import { sanitizeBoost, ZONE_ORDER } from "../../core/rules/progression";
 import { getHolidayConfig } from "../../core/rules/holidays";
@@ -60,9 +60,9 @@ export function restoreBoard(s: GameState, raw: unknown, now: number): void {
   s.board = raw.map((c, i) => restoreBoardItem(c, `restored_${i}_${now}`));
 }
 
-// 필수 생성기(5종)가 보드에도 보관함에도 없으면 빈칸에 자동 지급 (보관함에 넣어 두고 새로고침해 공짜로 받는 것 방지)
+// 필수 생성기(기본 5종 + 레벨로 해금된 체인)가 보드에도 보관함에도 없으면 빈칸에 자동 지급 (보관함에 넣어 두고 새로고침해 공짜로 받는 것 방지)
 export function ensureGenerators(s: GameState): void {
-  for (const chain of CORE_CHAINS) {
+  for (const chain of unlockedChains(s.playerLv)) {
     const owned = [...s.board, ...s.bag].some((it) => it && it.isGenerator && it.chain === chain);
     if (owned) continue;
     const empty = s.board.findIndex((it) => it === null);

@@ -69,8 +69,8 @@ export function onTexturesReady(fn: () => void): () => void {
 
 export async function preloadTextures(): Promise<void> {
   const keys: TexKey[] = ["crate", "eventGen"];
-  for (const c of ["potion", "grimoire", "herb", "bakery", "tea", "gem"]) for (let l = 1; l <= 8; l++) keys.push(itemKey(c, l, false));
-  for (const c of ["potion", "grimoire", "herb", "bakery", "tea"]) for (let l = 1; l <= 3; l++) keys.push(itemKey(c, l, true));
+  for (const c of ["potion", "grimoire", "herb", "bakery", "tea", "gem", "candle", "silk"]) for (let l = 1; l <= 8; l++) keys.push(itemKey(c, l, false));
+  for (const c of ["potion", "grimoire", "herb", "bakery", "tea", "candle", "silk"]) for (let l = 1; l <= 3; l++) keys.push(itemKey(c, l, true));
   for (const c of ["coin", "energy"]) for (let l = 1; l <= 4; l++) keys.push(itemKey(c, l, false));
   for (let l = 1; l <= 5; l++) keys.push(`event:${l}`);
   await Promise.all(keys.map(load));

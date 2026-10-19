@@ -19,6 +19,8 @@ const CHAIN_ACCENT: Record<string, number> = {
   herb: 0x22c55e,
   bakery: 0xec4899,
   tea: 0x06b6d4,
+  candle: 0xf59e0b,
+  silk: 0xec4899,
   gem: 0x3b82f6,
   combo: 0xf59e0b,
   coin: 0xeab308,

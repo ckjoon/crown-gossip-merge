@@ -6,7 +6,7 @@ function shape(svg: string) {
   return svg.replace(/id="[^"]*"/g, "").replace(/url\(#[^)]*\)/g, "url()");
 }
 
-for (const chain of ["potion", "grimoire", "herb", "bakery", "tea", "gem"]) {
+for (const chain of ["potion", "grimoire", "herb", "bakery", "tea", "gem", "candle", "silk"]) {
   test(`${chain} 체인 Lv.1~8은 모두 서로 다른 그림`, () => {
     const seen = new Map<string, number>();
     for (let lv = 1; lv <= 8; lv++) {
@@ -48,11 +48,19 @@ function xmlAttrErrors(svg: string): string[] {
 test("모든 보드 그림은 XML로 올바름 (값 없는 속성 없음)", () => {
   const bad: string[] = [];
   const chk = (k: string, s: string) => xmlAttrErrors(s).forEach((e) => bad.push(`${k}: ${e}`));
-  for (const c of ["potion", "grimoire", "herb", "bakery", "tea", "gem", "combo", "coin", "energy"])
+  for (const c of ["potion", "grimoire", "herb", "bakery", "tea", "gem", "combo", "coin", "energy", "candle", "silk"])
     for (let l = 1; l <= 8; l++) chk(`item:${c}:${l}`, getItemSVG(c, l, false));
-  for (const c of ["potion", "grimoire", "herb", "bakery", "tea"]) for (let l = 1; l <= 3; l++) chk(`gen:${c}:${l}`, getItemSVG(c, l, true));
+  for (const c of ["potion", "grimoire", "herb", "bakery", "tea", "candle", "silk"]) for (let l = 1; l <= 3; l++) chk(`gen:${c}:${l}`, getItemSVG(c, l, true));
   for (let l = 1; l <= 5; l++) chk(`event:${l}`, getEventSVG(l, false));
   chk("eventGen", getEventSVG(1, true));
   chk("crate", getCrateSVG());
   expect(bad).toEqual([]);
+});
+
+test("새 체인 생성기 ★1~3은 서로 다른 그림이고 다른 체인 생성기와도 다름", () => {
+  for (const c of ["candle", "silk"]) {
+    const shapes = [1, 2, 3].map((l) => shape(getItemSVG(c, l, true)));
+    expect(new Set(shapes).size).toBe(3);
+    expect(shapes).not.toContain(shape(getItemSVG("potion", 1, true)));
+  }
 });

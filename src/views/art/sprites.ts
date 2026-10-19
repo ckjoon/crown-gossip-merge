@@ -292,6 +292,10 @@ function baseItemSVG(chain: string, level: number): string {
       return getEnergySVG(level);
     case "event":
       return getEventSVG(level, false);
+    case "candle":
+      return getCandleSVG(level);
+    case "silk":
+      return getSilkSVG(level);
     default:
       return getGemSVG(1);
   }
@@ -300,6 +304,8 @@ function baseItemSVG(chain: string, level: number): string {
 // ==================== 5종 생성기 아이콘 (Lv.1 ➔ Lv.2 ➔ Lv.3 합성 진화별 고유 외형!) ====================
 function getGeneratorSVG(chain: string, level = 1): string {
   const uid = `gen_${chain}_${level}`;
+  if (chain === "candle") return getCandleGeneratorSVG(level);
+  if (chain === "silk") return getSilkGeneratorSVG(level);
   if (chain === "potion") {
     if (level === 1) {
       // Lv.1 수습 마법 가마솥 (무쇠 가마솥 + 보라 거품)
@@ -1214,5 +1220,97 @@ export function getCrateSVG(): string {
     "crateG",
     "#b45309",
     "#78350f"
+  );
+}
+
+// ==================== v3.5 새 체인: 🕯️ 마법 촛불 · 🧵 요정 비단 (Lv.1~8 + 생성기 ★1~3) ====================
+// 불꽃: 바닥 (x, y) 기준 높이 h
+function flame(x: number, y: number, h: number, outer = "#f97316", inner = "#fde047"): string {
+  const w = h * 0.45;
+  return `<path d="M${x} ${y - h} Q${x + w} ${y - h * 0.45} ${x + w * 0.6} ${y - h * 0.12} Q${x} ${y + h * 0.08} ${x - w * 0.6} ${y - h * 0.12} Q${x - w} ${y - h * 0.45} ${x} ${y - h} Z" fill="${outer}"/>
+    <path d="M${x} ${y - h * 0.62} Q${x + w * 0.45} ${y - h * 0.3} ${x} ${y - h * 0.08} Q${x - w * 0.45} ${y - h * 0.3} ${x} ${y - h * 0.62} Z" fill="${inner}"/>`;
+}
+
+const CANDLE_ART: Array<{ c1: string; c2: string; inner: (u: string) => string }> = [
+  // Lv.1 양초 토막
+  { c1: "#fef3c7", c2: "#d6b46a", inner: (u) => `<rect x="24" y="34" width="16" height="16" rx="3" fill="url(#${u})" stroke="#92400e" stroke-width="2"/><ellipse cx="32" cy="34" rx="8" ry="2.5" fill="#fffbeb" stroke="#92400e" stroke-width="1.5"/><line x1="32" y1="34" x2="32" y2="29" stroke="#451a03" stroke-width="1.6"/>${flame(32, 29, 9)}<ellipse cx="32" cy="52" rx="13" ry="3" fill="#a16207"/>` },
+  // Lv.2 밀랍 양초 (촛농 흐름)
+  { c1: "#fffbeb", c2: "#f5d78e", inner: (u) => `<rect x="25" y="22" width="14" height="30" rx="3" fill="url(#${u})" stroke="#92400e" stroke-width="2"/><path d="M25 26 Q27 33 29 26 Q31 36 34 26" fill="#fffbeb" stroke="#d6b46a" stroke-width="1"/><line x1="32" y1="22" x2="32" y2="17" stroke="#451a03" stroke-width="1.6"/>${flame(32, 17, 11)}<ellipse cx="32" cy="53" rx="14" ry="3.2" fill="#b45309"/>` },
+  // Lv.3 달빛 향초 (유리병 + 초승달)
+  { c1: "#c4b5fd", c2: "#6d28d9", inner: (u) => `<path d="M18 26 H46 V50 Q46 54 42 54 H22 Q18 54 18 50 Z" fill="#e0e7ff" fill-opacity="0.55" stroke="#4c1d95" stroke-width="2"/><rect x="20" y="34" width="24" height="18" rx="3" fill="url(#${u})"/><path d="M36 41 A5 5 0 1 1 30 46 A4 4 0 1 0 36 41 Z" fill="#fde68a"/><line x1="32" y1="34" x2="32" y2="30" stroke="#1e1b4b" stroke-width="1.5"/>${flame(32, 30, 9, "#a78bfa", "#f5f3ff")}<rect x="16" y="22" width="32" height="5" rx="2" fill="#a78bfa" stroke="#4c1d95" stroke-width="1.5"/>` },
+  // Lv.4 별꽃 랜턴
+  { c1: "#fde68a", c2: "#f59e0b", inner: (u) => `<path d="M26 14 Q32 8 38 14" fill="none" stroke="#78350f" stroke-width="2.5"/><rect x="20" y="16" width="24" height="5" rx="2" fill="#92400e"/><rect x="21" y="21" width="22" height="26" rx="3" fill="url(#${u})" stroke="#78350f" stroke-width="2.5"/><line x1="32" y1="21" x2="32" y2="47" stroke="#78350f" stroke-width="1.5"/><path d="M32 26 L34.5 32 L41 32 L36 36 L38 42 L32 38.5 L26 42 L28 36 L23 32 L29.5 32 Z" fill="#fffbeb"/><rect x="18" y="47" width="28" height="6" rx="2" fill="#92400e" stroke="#451a03" stroke-width="1.5"/>` },
+  // Lv.5 수정 촛대
+  { c1: "#e0f2fe", c2: "#38bdf8", inner: (u) => `<path d="M22 54 L42 54 L37 46 L27 46 Z" fill="url(#${u})" stroke="#0c4a6e" stroke-width="2"/><path d="M29 46 L30 34 L34 34 L35 46 Z" fill="url(#${u})" stroke="#0c4a6e" stroke-width="1.8"/><path d="M24 34 L40 34 L36 30 L28 30 Z" fill="#bae6fd" stroke="#0c4a6e" stroke-width="1.8"/><rect x="28" y="16" width="8" height="14" rx="2" fill="#fffbeb" stroke="#92400e" stroke-width="1.5"/>${flame(32, 16, 10, "#38bdf8", "#f0f9ff")}` },
+  // Lv.6 불사조 횃불
+  { c1: "#fecaca", c2: "#dc2626", inner: (u) => `<path d="M28 56 L36 56 L38 30 L26 30 Z" fill="#78350f" stroke="#451a03" stroke-width="2"/><path d="M22 30 H42 L40 25 H24 Z" fill="#fbbf24" stroke="#92400e" stroke-width="1.8"/><path d="M24 26 Q12 20 14 10 Q20 18 26 20 Z" fill="url(#${u})" stroke="#7f1d1d" stroke-width="1.5"/><path d="M40 26 Q52 20 50 10 Q44 18 38 20 Z" fill="url(#${u})" stroke="#7f1d1d" stroke-width="1.5"/>${flame(32, 25, 20, "#ef4444", "#fde047")}` },
+  // Lv.7 성운 샹들리에
+  { c1: "#f5d0fe", c2: "#a21caf", inner: (u) => `<line x1="32" y1="6" x2="32" y2="20" stroke="#fbbf24" stroke-width="2"/><path d="M12 34 Q32 46 52 34" fill="none" stroke="#fbbf24" stroke-width="3"/><ellipse cx="32" cy="24" rx="7" ry="5" fill="url(#${u})" stroke="#86198f" stroke-width="1.8"/><path d="M32 28 L32 40" stroke="#fbbf24" stroke-width="2.5"/>${[14, 32, 50].map((x, i) => `<rect x="${x - 3}" y="${i === 1 ? 32 : 26}" width="6" height="8" rx="1.5" fill="#fffbeb" stroke="#86198f" stroke-width="1.2"/>${flame(x, i === 1 ? 32 : 26, 8, "#e879f9", "#fdf4ff")}`).join("")}<circle cx="32" cy="46" r="3" fill="#f0abfc"/>` },
+  // Lv.8 영원의 성화 (황금 성화대 + 무지개 불꽃)
+  { c1: "#fef08a", c2: "#ca8a04", inner: (u) => `<path d="M20 40 H44 L40 50 H24 Z" fill="url(#${u})" stroke="#713f12" stroke-width="2.2"/><rect x="28" y="50" width="8" height="5" fill="#a16207"/><path d="M20 56 H44" stroke="#713f12" stroke-width="3" stroke-linecap="round"/>${flame(32, 41, 30, "#ec4899", "#fde047")}${flame(32, 41, 20, "#8b5cf6", "#e0f2fe")}<circle cx="18" cy="20" r="2" fill="#fde047"/><circle cx="47" cy="16" r="2.4" fill="#f9a8d4"/>` },
+];
+
+const SILK_ART: Array<{ c1: string; c2: string; inner: (u: string) => string }> = [
+  // Lv.1 요정 실타래 (실패)
+  { c1: "#fbcfe8", c2: "#db2777", inner: (u) => `<rect x="20" y="14" width="24" height="5" rx="2" fill="#a16207" stroke="#451a03" stroke-width="1.6"/><rect x="20" y="45" width="24" height="5" rx="2" fill="#a16207" stroke="#451a03" stroke-width="1.6"/><rect x="23" y="19" width="18" height="26" fill="url(#${u})" stroke="#831843" stroke-width="1.8"/>${[24, 29, 34, 39].map((y) => `<line x1="23" y1="${y}" x2="41" y2="${y + 2}" stroke="#fdf2f8" stroke-width="1.2"/>`).join("")}<path d="M41 36 Q52 42 46 52" fill="none" stroke="#ec4899" stroke-width="2"/>` },
+  // Lv.2 무지개 실뭉치
+  { c1: "#a5f3fc", c2: "#0891b2", inner: (u) => `<circle cx="32" cy="34" r="17" fill="url(#${u})" stroke="#164e63" stroke-width="2"/><path d="M17 30 Q32 22 47 32" fill="none" stroke="#f472b6" stroke-width="3"/><path d="M16 38 Q32 30 48 40" fill="none" stroke="#fde047" stroke-width="3"/><path d="M20 46 Q32 38 44 48" fill="none" stroke="#a78bfa" stroke-width="3"/><path d="M47 40 Q56 48 50 56" fill="none" stroke="#f472b6" stroke-width="2.2"/>` },
+  // Lv.3 레이스 리본
+  { c1: "#fce7f3", c2: "#ec4899", inner: (u) => `<path d="M32 32 L12 20 Q8 32 12 44 Z" fill="url(#${u})" stroke="#9d174d" stroke-width="2"/><path d="M32 32 L52 20 Q56 32 52 44 Z" fill="url(#${u})" stroke="#9d174d" stroke-width="2"/><path d="M30 34 L22 54 L27 51 L30 56 Z" fill="#f472b6" stroke="#9d174d" stroke-width="1.6"/><path d="M34 34 L42 54 L37 51 L34 56 Z" fill="#f472b6" stroke="#9d174d" stroke-width="1.6"/><circle cx="32" cy="32" r="5.5" fill="#fdf2f8" stroke="#9d174d" stroke-width="2"/>` },
+  // Lv.4 비단 손수건 (레이스 테두리)
+  { c1: "#e0e7ff", c2: "#6366f1", inner: (u) => `<path d="M14 18 L50 14 L46 50 L18 54 Z" fill="url(#${u})" stroke="#312e81" stroke-width="2"/><path d="M14 18 L50 14 L46 50 L18 54 Z" fill="none" stroke="#f8fafc" stroke-width="1.6" stroke-dasharray="2 2.5" transform="translate(32 34) scale(0.82) translate(-32 -34)"/><path d="M32 26 Q36 30 32 36 Q28 30 32 26 Z" fill="#f9a8d4"/><circle cx="32" cy="38" r="2" fill="#fde047"/>` },
+  // Lv.5 달빛 망토
+  { c1: "#818cf8", c2: "#1e1b4b", inner: (u) => `<path d="M24 12 H40 L44 18 Q52 40 50 56 H14 Q12 40 20 18 Z" fill="url(#${u})" stroke="#0f0a2e" stroke-width="2.2"/><path d="M24 12 Q32 20 40 12" fill="#c7d2fe" stroke="#0f0a2e" stroke-width="1.6"/><circle cx="32" cy="19" r="2.8" fill="#fbbf24"/><path d="M38 34 A6 6 0 1 1 30 41 A4.5 4.5 0 1 0 38 34 Z" fill="#fde68a"/><circle cx="22" cy="46" r="1.4" fill="#e0e7ff"/><circle cx="44" cy="28" r="1.2" fill="#e0e7ff"/>` },
+  // Lv.6 요정 날개 드레스
+  { c1: "#bbf7d0", c2: "#10b981", inner: (u) => `<path d="M26 22 Q12 10 10 26 Q14 34 26 30 Z" fill="#e0f2fe" fill-opacity="0.9" stroke="#0e7490" stroke-width="1.5"/><path d="M38 22 Q52 10 54 26 Q50 34 38 30 Z" fill="#e0f2fe" fill-opacity="0.9" stroke="#0e7490" stroke-width="1.5"/><path d="M27 14 H37 L36 28 Q48 46 48 56 H16 Q16 46 28 28 Z" fill="url(#${u})" stroke="#065f46" stroke-width="2"/><path d="M24 44 Q32 48 40 44" fill="none" stroke="#fde047" stroke-width="1.8"/><circle cx="32" cy="22" r="2.2" fill="#f9a8d4"/>` },
+  // Lv.7 마법 양탄자 (술 장식)
+  { c1: "#fca5a5", c2: "#b91c1c", inner: (u) => `<path d="M8 34 Q20 26 32 34 Q44 42 56 34 L56 44 Q44 52 32 44 Q20 36 8 44 Z" fill="url(#${u})" stroke="#450a0a" stroke-width="2"/><path d="M12 37 Q22 31 32 38 Q42 45 52 38" fill="none" stroke="#fde047" stroke-width="1.8" stroke-dasharray="3 2"/>${[8, 56].map((x) => `<path d="M${x} 36 l-4 3 M${x} 40 l-4 3 M${x} 44 l-4 2" stroke="#fde047" stroke-width="1.6"/>`).join("")}<path d="M20 22 Q24 18 28 22" fill="none" stroke="#e0f2fe" stroke-width="1.6"/><path d="M38 20 Q42 16 46 20" fill="none" stroke="#e0f2fe" stroke-width="1.6"/>` },
+  // Lv.8 별자리 태피스트리
+  { c1: "#93c5fd", c2: "#1e3a8a", inner: (u) => `<rect x="12" y="8" width="40" height="4" rx="2" fill="#a16207" stroke="#451a03" stroke-width="1.5"/><path d="M15 12 H49 V50 L44 46 L39 50 L34 46 L29 50 L24 46 L19 50 L15 46 Z" fill="url(#${u})" stroke="#0f172a" stroke-width="2"/><polyline points="21,22 28,30 36,24 43,34 33,40" fill="none" stroke="#fde68a" stroke-width="1.4"/>${[[21, 22], [28, 30], [36, 24], [43, 34], [33, 40]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="2.3" fill="#fef9c3"/>`).join("")}` },
+];
+
+function chainArt(name: string, art: typeof CANDLE_ART, level: number): string {
+  const a = art[Math.min(art.length, Math.max(1, level)) - 1];
+  const uid = `${name}_${level}`;
+  return svgWrap(a.inner(uid), uid, a.c1, a.c2);
+}
+
+function getCandleSVG(level: number): string {
+  return chainArt("candle", CANDLE_ART, level);
+}
+
+function getSilkSVG(level: number): string {
+  return chainArt("silk", SILK_ART, level);
+}
+
+// 생성기: 촛대 제단(돌 → 은 → 황금 성화) · 요정 물레(나무 → 은빛 베틀 → 별자리 직조기)
+function getCandleGeneratorSVG(level: number): string {
+  const uid = `gen_candle_${level}`;
+  const [c1, c2, trim] = level === 1 ? ["#cbd5e1", "#475569", "#94a3b8"] : level === 2 ? ["#f1f5f9", "#64748b", "#e2e8f0"] : ["#fde68a", "#b45309", "#fbbf24"];
+  const candles = level === 1 ? [26, 38] : level === 2 ? [22, 32, 42] : [18, 26, 38, 46];
+  return svgWrap(
+    `<path d="M12 56 H52 L48 44 H16 Z" fill="url(#${uid})" stroke="#1e293b" stroke-width="2.2"/><rect x="14" y="40" width="36" height="5" rx="2" fill="${trim}" stroke="#1e293b" stroke-width="1.6"/>${candles
+      .map((x, i) => {
+        const h = 12 + ((i * 5) % 9);
+        return `<rect x="${x - 3}" y="${40 - h}" width="6" height="${h}" rx="1.5" fill="#fffbeb" stroke="#92400e" stroke-width="1.2"/>${flame(x, 40 - h, 7)}`;
+      })
+      .join("")}${level === 3 ? flame(32, 40, 22, "#f59e0b", "#fef9c3") : ""}`,
+    uid,
+    c1,
+    c2
+  );
+}
+
+function getSilkGeneratorSVG(level: number): string {
+  const uid = `gen_silk_${level}`;
+  const [c1, c2, rim] = level === 1 ? ["#fcd34d", "#92400e", "#78350f"] : level === 2 ? ["#e2e8f0", "#64748b", "#334155"] : ["#c7d2fe", "#312e81", "#fbbf24"];
+  const spokes = [0, 45, 90, 135].map((a) => `<line x1="${32 - 14 * Math.cos((a * Math.PI) / 180)}" y1="${28 - 14 * Math.sin((a * Math.PI) / 180)}" x2="${32 + 14 * Math.cos((a * Math.PI) / 180)}" y2="${28 + 14 * Math.sin((a * Math.PI) / 180)}" stroke="${rim}" stroke-width="2"/>`).join("");
+  return svgWrap(
+    `<path d="M16 56 L26 36 M48 56 L38 36" stroke="${rim}" stroke-width="3" stroke-linecap="round"/><rect x="12" y="52" width="40" height="5" rx="2" fill="${rim}"/><circle cx="32" cy="28" r="16" fill="url(#${uid})" stroke="${rim}" stroke-width="3"/>${spokes}<circle cx="32" cy="28" r="3.5" fill="${rim}"/>${
+      level >= 2 ? `<path d="M48 28 Q56 34 52 44" fill="none" stroke="#f472b6" stroke-width="2.2"/><circle cx="52" cy="46" r="4" fill="#f9a8d4" stroke="#9d174d" stroke-width="1.4"/>` : ""
+    }${level === 3 ? [[20, 12], [44, 10], [32, 6]].map(([x, y]) => `<path d="M${x} ${y - 3} L${x + 1} ${y - 1} L${x + 3} ${y} L${x + 1} ${y + 1} L${x} ${y + 3} L${x - 1} ${y + 1} L${x - 3} ${y} L${x - 1} ${y - 1} Z" fill="#fde047"/>`).join("") : ""}`,
+    uid,
+    c1,
+    c2
   );
 }

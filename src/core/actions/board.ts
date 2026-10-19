@@ -72,7 +72,7 @@ export const spawnFromGenerator: Action<{ cell: number }> = (s, ctx, { cell }) =
 // 생성기 흡수 (v3.8): 진화로 그 체인 ★1 생성기가 하나도 안 남으면(보드·보관함) Lv.1 재료는 더 만들 수 없어 짝 없이 남는다.
 // 그 체인 Lv.1(보드 활성·거미줄, 보관함)을 생성기가 빨아들이고 개당 Lv.1 판매가 코인을 준다(경험치 없음). 거미줄 칸이 비면 옆 봉인 상자도 열리고,
 // 그 상자가 같은 체인 Lv.1 거미줄이 되면 그것도 흡수. 열린 주문이 요구하는 Lv.1은 요구 개수만큼 남긴다(활성 재료 먼저)
-function absorbOrphans(s: GameState, ev: GameEvent[], chain: ChainId, generator: number): void {
+export function absorbOrphans(s: GameState, ev: GameEvent[], chain: ChainId, generator: number): void {
   const hasTier1 = [...s.board, ...s.bag].some((it) => it?.isGenerator && it.chain === chain && (it.level || 1) === 1);
   if (hasTier1) return;
   let keep = s.orders.reduce((n, o) => n + o.reqs.filter((r) => r.chain === chain && r.level === 1).length, 0);

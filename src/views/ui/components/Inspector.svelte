@@ -4,6 +4,7 @@
   import { getItemSVG, getCrateSVG } from "../../art/sprites";
   import { CHAINS, getItemMeta, getGeneratorTierMeta, formatGeneratorStars } from "../../../core/rules/chains";
   import { spawnRange } from "../../../core/rules/progression";
+  import { generatorSeen } from "../../../core/codex";
   import { spawnFromGenerator, storeToBag, sellItem, collectItem, unlockCobweb, sortBoard } from "../../../core/actions/board";
 
   const game = app().store;
@@ -12,12 +13,17 @@
   const tier = $derived(item && item.isGenerator ? getGeneratorTierMeta(item.chain, item.level) : null);
   const range = $derived(item && item.isGenerator ? spawnRange(item.level) : null);
 
-  // 이 재료가 어디서 오는지 (v3.9): Lv.1은 생성기에서, 그 위는 한 단계 아래 둘을 합쳐서
+  // 이 재료가 어디서 오는지 (v3.9): 지금 가진 생성기 등급이 바로 만드는 단계면 생성기에서, 아니면 한 단계 아래 둘을 합쳐서
   const origin = $derived.by(() => {
     if (!item || item.isGenerator || !meta) return "";
+    if (item.chain === "combo") return meta.chainName;
     const src = CHAINS[item.chain]?.shortGen ?? "";
-    if (item.level === 1) return `${src}에서 나와요 · 둘을 합치면 Lv.2`;
-    return `Lv.${item.level - 1} 둘을 합쳐서 · ${src}${item.level < meta.maxLv ? ` · 다음 Lv.${item.level + 1}` : " · 최고 단계!"}`;
+    const tier = generatorSeen($game, item.chain);
+    const r = tier ? spawnRange(tier) : null;
+    const direct = r !== null && item.level >= r.min && item.level <= r.max;
+    const next = item.level < meta.maxLv ? `둘을 합치면 Lv.${item.level + 1}` : "최고 단계!";
+    if (item.level === 1) return `${tier && !direct ? `이제 ${src} 생성은 Lv.${r!.min}부터` : `${src}에서 나와요`} · ${next}`;
+    return `${direct ? `${src}에서 바로 · ` : ""}Lv.${item.level - 1} 둘을 합쳐서 · ${next}`;
   });
 
   const cell = () => ui.selectedCell!;

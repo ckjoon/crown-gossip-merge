@@ -15,6 +15,7 @@ import { createAutosave } from "./services/save/autosave";
 import { setApp } from "./views/ui/context";
 import { ui, say } from "./views/ui/ui.svelte";
 import { getGeneratorTierMeta } from "./core/rules/chains";
+import { takeTidyNote, tidyText } from "./views/ui/tidyNote";
 import { attachFeedback } from "./views/ui/feedback";
 import { preloadTextures } from "./views/art/textures";
 import { FxLayer } from "./views/fx/FxLayer";
@@ -83,15 +84,10 @@ async function boot(): Promise<void> {
   // 업데이트 노트 등 모달이 떠 있으면 닫힌 뒤에
   const announce = (text: string) => (ui.modal !== null ? setTimeout(() => announce(text), 600) : say("대마녀 셀레네", text));
   if (granted.length) announce(`구역을 완성한 보상으로 새 생성기를 놓아 두었어 — ${granted.map((c) => getGeneratorTierMeta(c, 1).name).join(", ")}. 탭해서 새 재료를 만들어 봐!`);
-  // v3.9: 같은 체인에 ★★★가 있으면 나머지 생성기는 쓸모없는 중복 → 불러올 때 정리하고 코인으로 돌려줌. 대화 바는 한 줄이라 한 번에 알림
-  const tidyLines: string[] = [];
-  if (tidy.trimmed.length) {
-    const n = tidy.trimmed.reduce((k, t) => k + t.count, 0);
-    const coins = tidy.trimmed.reduce((k, t) => k + t.coins, 0);
-    tidyLines.push(`★★★가 있는 체인의 겹치는 생성기 ${n}개를 ${coins}🪙로 바꿔 두었어 (체인마다 ★★★ 하나면 충분해)`);
-  }
-  if (tidy.adjusted) tidyLines.push(`더 만들 수 없는 Lv.1 주문 ${tidy.adjusted}건은 Lv.2로 바꿨어`);
-  if (tidyLines.length) setTimeout(() => announce(tidyLines.join(" · ")), granted.length ? 6000 : 0);
+  // v3.9: 불러오며 정리한 것(겹치는 ★★★ 생성기·짝 없는 Lv.1·Lv.1 주문)을 한 줄로 — 백업 복원 직후면 새로고침 전에 넘겨 둔 문구
+  const stashed = takeTidyNote();
+  const note = tidyText(tidy) ?? stashed;
+  if (note) setTimeout(() => announce(note), granted.length ? 6000 : 0);
   const fx = new FxLayer();
   await fx.init();
   attachJuice(store, fx, sfx);

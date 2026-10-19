@@ -139,3 +139,44 @@ describe("불러올 때 정리", () => {
     expect(state.orders[0].reqs[0]).toEqual({ chain: "potion", level: 2 });
   });
 });
+
+import { createStore } from "../../src/core/store";
+import { sellItem } from "../../src/core/actions/board";
+describe("리뷰: 남겨 둔 Lv.1이 사라지면", () => {
+  test("주문 몫으로 남긴 Lv.1을 팔면 그 주문은 바로 Lv.2로 (store가 행동마다 맞춤)", () => {
+    const s = createInitialState(fixedCtx());
+    emptyBoard(s);
+    s.bag = [];
+    for (const [i, c] of (["potion", "grimoire", "bakery", "tea"] as const).entries()) s.board[i] = gen(c, 1);
+    s.board[5] = gen("herb", 2);
+    s.board[9] = item("herb", 1);
+    const cust = { name: "a", face: "x", line: "" };
+    s.orders = [{ id: "o", customer: cust, reqs: [{ chain: "herb", level: 1 }], coins: 23 }];
+    const store = createStore(s, fixedCtx());
+    const ev = store.dispatch(sellItem, { cell: 9 });
+    expect(store.get().orders[0].reqs[0]).toEqual({ chain: "herb", level: 2 });
+    expect(ev.find((e) => e.type === "ordersAdjusted")).toMatchObject({ count: 1 });
+  });
+
+  test("불러올 때 남는 생성기를 정리해 ★1이 사라지면 그 체인 Lv.1도 흡수(주문 몫 제외)", () => {
+    const s = createInitialState(fixedCtx());
+    emptyBoard(s);
+    s.bag = [item("potion", 1)];
+    for (const [i, c] of (["grimoire", "herb", "bakery", "tea"] as const).entries()) s.board[i] = gen(c, 1);
+    s.board[10] = gen("potion", 3);
+    s.board[11] = gen("potion", 1);
+    s.board[20] = item("potion", 1);
+    s.board[21] = item("potion", 1, { state: "cobweb" });
+    const cust = { name: "a", face: "x", line: "" };
+    s.orders = [
+      { id: "o1", customer: cust, reqs: [{ chain: "potion", level: 1 }], coins: 23 },
+      { id: "o2", customer: cust, reqs: [{ chain: "tea", level: 2 }], coins: 31 },
+      { id: "o3", customer: cust, reqs: [{ chain: "herb", level: 3 }], coins: 47 },
+    ];
+    const { state, tidy } = restoreState({ id: "main_save_v1", schemaVersion: 4, updatedAt: 1_800_000_000_000, data: JSON.parse(JSON.stringify(s)) }, 1_800_000_000_000, fixedCtx());
+    const lv1 = [...state.board, ...state.bag].filter((c) => c && !c.isGenerator && c.chain === "potion" && c.level === 1);
+    expect(lv1.length).toBe(1); // 주문 하나 몫만 남김
+    expect(state.orders[0].reqs[0]).toEqual({ chain: "potion", level: 1 });
+    expect(tidy.absorbed).toBe(2);
+  });
+});

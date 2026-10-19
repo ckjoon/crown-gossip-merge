@@ -4,6 +4,7 @@ import type { Ctx } from "./ctx";
 import type { GameEvent } from "./events";
 import type { GameState } from "./types";
 import { sweepCodex } from "./codex";
+import { fitOrdersToGenerators } from "./actions/orders";
 
 export type Action<P> = (draft: GameState, ctx: Ctx, payload: P) => GameEvent[];
 
@@ -56,7 +57,12 @@ export function createStore(initial: GameState, ctx: Ctx): Store {
       const draft = structuredClone(state);
       const events = action(draft, ctx, payload);
       // 도감 발견은 행동마다 보드·보관함을 훑어 기록 (어느 행동이 재료를 만들었는지와 상관없이 한 곳에서)
-      if (!opts?.transient) sweepCodex(draft);
+      // 주문 몫으로 남겨 둔 Lv.1이 팔리거나 합쳐져 사라지면 그 요구는 다시 만들 수 없음 → 행동마다 주문을 생성기에 맞춘다 (v3.9)
+      if (!opts?.transient) {
+        sweepCodex(draft);
+        const adjusted = fitOrdersToGenerators(draft);
+        if (adjusted && !events.some((e) => e.type === "ordersAdjusted")) events.push({ type: "ordersAdjusted", count: adjusted });
+      }
       state = draft;
       notify();
       const info: CommitInfo = { transient: !!opts?.transient, events };

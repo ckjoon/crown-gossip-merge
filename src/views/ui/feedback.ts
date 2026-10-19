@@ -21,7 +21,7 @@ export function attachFeedback(store: Store, sfx: SoundEngine): () => void {
         break;
       case "ordersAdjusted":
         // 생성기가 자라 Lv.1이 더 안 나오면 그 주문 요구를 Lv.2로 (core orders.fitOrdersToGenerators)
-        toast(`📜 생성기가 자라 주문 ${e.count}건을 한 단계 높였어요 (보상도 올라요)`, undefined, 180, "#a855f7");
+        toast(`📜 더 만들 수 없는 Lv.1 주문 ${e.count}건을 Lv.2로 바꿨어요 (보상도 올라요)`, undefined, 180, "#a855f7");
         break;
       case "cobwebUnlocked":
         sfx.merge(3, true);

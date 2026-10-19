@@ -290,6 +290,7 @@ button.gh-res-pill {
 .cs-body { flex: 1; min-width: 0; }
 .cs-name { font-size: 12px; font-weight: 900; color: #3b0764; margin-bottom: 4px; }
 .cs-name span { font-size: 10px; font-weight: 700; color: #94a3b8; margin-left: 6px; }
+.cs-gen, .cs-gen-icon, .cs-gen-stars, .cs-body, .cs-name, .cs-item, .cs-svg { display: block; }
 .cs-items { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; }
 .cs-item { position: relative; border-radius: 8px; padding: 1px; border: 2px solid transparent; }
 .cs-item .cs-svg { width: 100%; aspect-ratio: 1; }

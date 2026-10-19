@@ -1,5 +1,6 @@
 <script lang="ts">
   import Modal from "./Modal.svelte";
+  import { stashTidyNote, tidyText } from "../tidyNote";
   import { app } from "../context";
   import { act, toast, pointOf, ui } from "../ui.svelte";
   import { setSetting } from "../../../core/actions/progress";
@@ -38,7 +39,8 @@
     }
     // v2·v4 백업 모두 복원 경로(마이그레이션 포함)를 거쳐 검증한 뒤 저장
     // v2처럼 복원 시점을 기준으로 삼는다 (백업 이후 경과 시간만큼 번개가 쌓이지 않게)
-    const { state } = restoreState({ ...rec, updatedAt: Date.now() }, Date.now(), createCtx());
+    const { state, tidy } = restoreState({ ...rec, updatedAt: Date.now() }, Date.now(), createCtx());
+    stashTidyNote(tidyText(tidy));
     app().store.replace(state);
     await app().repo.save(state, Date.now());
     app().sfx.serve();

@@ -12,29 +12,30 @@
   const shownTier = $derived(tier ?? 1);
   const range = $derived(spawnRange(shownTier));
   const kind = (lv: number) => (lv >= range.min && lv <= range.max ? "spawn" : lv > range.max && lv <= range.boostMax ? "boost" : lv < range.min ? "below" : "merge");
-  let open = $state(false);
-  const expanded = $derived(open || focus);
+  // 처음엔 focus(인스펙터 📜로 연 체인)면 펼친 채로, 그 뒤로는 누를 때마다 접고 펼침
+  let open = $state<boolean | null>(null);
+  const expanded = $derived(open ?? focus);
   const tiers = [1, 2, 3];
 </script>
 
 <div class="chain-strip" class:locked={locked !== null} class:focus>
   <button class="cs-head" aria-expanded={expanded} onclick={() => (open = !expanded)}>
-    <div class="cs-gen">
-      <div class="cs-gen-icon">{@html getItemSVG(chain, shownTier, true)}</div>
-      <div class="cs-gen-stars">{locked !== null ? `🔒 ${locked}` : tier ? "★".repeat(tier) + "☆".repeat(3 - tier) : "없음"}</div>
-    </div>
-    <div class="cs-body">
-      <div class="cs-name">{locked !== null ? "???" : getGeneratorTierMeta(chain, shownTier).name}<span>{ch.name.replace(" 체인", "")}</span><i>{expanded ? "▴" : "▾"}</i></div>
-      <div class="cs-items">
+    <span class="cs-gen">
+      <span class="cs-gen-icon">{@html getItemSVG(chain, shownTier, true)}</span>
+      <span class="cs-gen-stars">{locked !== null ? `🔒 ${locked}` : tier ? "★".repeat(tier) + "☆".repeat(3 - tier) : "없음"}</span>
+    </span>
+    <span class="cs-body">
+      <span class="cs-name">{locked !== null ? "???" : getGeneratorTierMeta(chain, shownTier).name}<span>{ch.name.replace(" 체인", "")}</span><i>{expanded ? "▴" : "▾"}</i></span>
+      <span class="cs-items" aria-hidden="true">
         {#each ch.items as it (it.level)}
           {@const known = it.level <= seen}
-          <div class="cs-item cs-{kind(it.level)}" class:cs-unknown={!known} title={known ? `Lv.${it.level} ${it.name}` : `Lv.${it.level} ???`}>
-            <div class="cs-svg">{@html getItemSVG(chain, it.level, false)}</div>
+          <span class="cs-item cs-{kind(it.level)}" class:cs-unknown={!known} title={known ? `Lv.${it.level} ${it.name}` : `Lv.${it.level} ???`}>
+            <span class="cs-svg">{@html getItemSVG(chain, it.level, false)}</span>
             <b>{it.level}</b>
-          </div>
+          </span>
         {/each}
-      </div>
-    </div>
+      </span>
+    </span>
   </button>
   {#if expanded}
     <div class="cs-tiers">

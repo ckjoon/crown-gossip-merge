@@ -5,6 +5,8 @@ import { newUid, type Ctx } from "../../core/ctx";
 import type { GenChain } from "../../core/types";
 import { initCustomerOrders, createOrder, getZoneProgress, fitOrdersToGenerators } from "../../core/actions/orders";
 import { trimSurplusGenerators } from "../../core/actions/progress";
+import { absorbOrphans } from "../../core/actions/board";
+import type { GameEvent } from "../../core/events";
 import { sweepCodex } from "../../core/codex";
 import { initHolidayBoard } from "../../core/actions/holiday";
 import { createInitialState } from "../../core/state";
@@ -142,7 +144,7 @@ export function restoreCodexSeen(raw: unknown): GameState["codexSeen"] {
   const o = asObj(raw);
   const out: GameState["codexSeen"] = {};
   if (!o) return out;
-  for (const [k, v] of Object.entries(o)) if (isChain(k) && typeof v === "number" && v >= 1) out[k as ChainId] = Math.min(8, Math.floor(v));
+  for (const [k, v] of Object.entries(o)) if (isChain(k) && typeof v === "number" && v >= 1) out[k as ChainId] = Math.min(CHAINS[k as ChainId].items.length, Math.floor(v));
   return out;
 }
 
@@ -255,6 +257,7 @@ function restoreV4(data: Raw, updatedAt: number, now: number, ctx: Ctx): { s: Ga
 export interface LoadTidy {
   trimmed: Array<{ chain: GenChain; count: number; coins: number }>;
   adjusted: number;
+  absorbed: number; // ★1이 없는 체인의 짝 없는 Lv.1을 흡수한 수 (코인은 이미 지급)
 }
 export function restoreState(
   record: SaveRecord | null,
@@ -262,7 +265,7 @@ export function restoreState(
   ctx: Ctx,
 ): { state: GameState; report: MigrationReport | null; isNew: boolean; granted: GenChain[]; tidy: LoadTidy } {
   const data = asObj(record?.data);
-  if (!record || !data) return { state: newGame(ctx), report: null, isNew: true, granted: [], tidy: { trimmed: [], adjusted: 0 } };
+  if (!record || !data) return { state: newGame(ctx), report: null, isNew: true, granted: [], tidy: { trimmed: [], adjusted: 0, absorbed: 0 } };
   const updatedAt = num(record.updatedAt, now);
   if (num(record.schemaVersion, 0) < 4) {
     const { state, report } = migrateV2ToV4(data, updatedAt, now, ctx);
@@ -276,7 +279,12 @@ export function restoreState(
 function tidyLoaded(s: GameState): LoadTidy {
   sweepCodex(s);
   const trimmed = trimSurplusGenerators(s, []);
-  return { trimmed, adjusted: fitOrdersToGenerators(s) };
+  // ★1 생성기가 없는 체인(정리로 사라졌거나 예전 세이브)의 Lv.1은 더 짝을 만들 수 없음 → 진화 때처럼 흡수 (열린 주문 몫은 남김)
+  const ev: GameEvent[] = [];
+  const chains = new Set([...s.board, ...s.bag].filter((it) => it?.isGenerator).map((it) => it!.chain));
+  for (const c of chains) absorbOrphans(s, ev, c, -1);
+  const absorbed = ev.reduce((n, e) => (e.type === "absorbed" ? n + e.cells.length + e.bag : n), 0);
+  return { trimmed, adjusted: fitOrdersToGenerators(s), absorbed };
 }
 
 export function hasReportContent(r: MigrationReport | null): boolean {

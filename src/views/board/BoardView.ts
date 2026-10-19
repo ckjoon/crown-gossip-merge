@@ -64,6 +64,8 @@ export class BoardView {
   onDrop: (from: number, to: number, at: Point) => void = () => {};
   onDragStart: (from: number) => Set<number> = () => new Set();
   onDragMove: (at: Point, node: ItemNode) => void = () => {};
+  // 보드를 누를 때마다 (넛지 힌트 대기 시간 초기화용)
+  onInput: () => void = () => {};
 
   constructor(
     private readonly host: HTMLElement,
@@ -115,6 +117,8 @@ export class BoardView {
     this.offWindow?.();
     this.offReady?.();
     gsap.killTweensOf(this.hintG);
+    for (const n of this.nudges) n.tl.kill();
+    this.nudges = [];
     try {
       // 텍스처·그래픽 컨텍스트는 다른 보드·fx 캔버스와 공유하므로 남기고 이 앱만 정리
       this.app.destroy({ removeView: true }, { children: true, texture: false, textureSource: false, context: false });
@@ -256,9 +260,65 @@ export class BoardView {
     for (const [key, node] of this.nodes) {
       if (alive.has(key)) continue;
       if (this.drag?.node === node) this.drag = null;
+      this.dropNudge(node);
       node.c.destroy({ children: true });
       this.nodes.delete(key);
     }
+  }
+
+  // ---------- 넛지 힌트 (v3.7) ----------
+  // 합칠 두 타일이 서로를 향해 "톡톡" 기울어지고, 한 칸이면 위로 통통 — 입력이 들어오면 멈춘다
+  // 위치(position)는 render·드래그가 맡으므로 건드리지 않고 pivot만 흔든다
+  private nudges: { node: ItemNode; tl: gsap.core.Timeline }[] = [];
+
+  nudge(cells: number[]): void {
+    this.stopNudge();
+    const pts = cells.map((c) => this.cellCenter(c));
+    cells.forEach((cell, k) => {
+      const node = this.nodeAt(cell);
+      if (!node || this.drag?.node === node) return;
+      const other = pts[cells.length === 2 ? 1 - k : k];
+      let dx = other.x - pts[k].x;
+      let dy = other.y - pts[k].y;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) {
+        dx = 0;
+        dy = -1;
+      } else {
+        dx /= len;
+        dy /= len;
+      }
+      const amp = Math.min(this.cw, this.ch) * 0.12;
+      const bx = node.w / 2;
+      const by = node.h / 2;
+      const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.1, delay: 0.3 + k * 0.08 });
+      for (let n = 0; n < 2; n++) {
+        tl.to(node.c.pivot, { x: bx - dx * amp, y: by - dy * amp, duration: 0.14, ease: "sine.out" });
+        tl.to(node.c.pivot, { x: bx, y: by, duration: 0.26, ease: "back.out(3)" });
+      }
+      this.nudges.push({ node, tl });
+    });
+  }
+
+  stopNudge(): void {
+    for (const n of this.nudges) this.resetNudge(n);
+    this.nudges = [];
+  }
+
+  isNudging(): boolean {
+    return this.nudges.length > 0;
+  }
+
+  private dropNudge(node: ItemNode): void {
+    const i = this.nudges.findIndex((n) => n.node === node);
+    if (i === -1) return;
+    this.nudges[i].tl.kill();
+    this.nudges.splice(i, 1);
+  }
+
+  private resetNudge(n: { node: ItemNode; tl: gsap.core.Timeline }): void {
+    n.tl.kill();
+    if (!n.node.c.destroyed) n.node.c.pivot.set(n.node.w / 2, n.node.h / 2);
   }
 
   setHints(cells: Set<number>): void {
@@ -363,6 +423,8 @@ export class BoardView {
 
   private handleDown(e: FederatedPointerEvent): void {
     if (!this.inputEnabled) return;
+    this.stopNudge();
+    this.onInput();
     // 이전 포인터가 움직임 없이 남아 있으면(취소된 터치) 버리고 새로 시작
     if (this.drag && this.drag.pointerId !== e.pointerId && !this.drag.active) this.drag = null;
     if (this.drag) return;

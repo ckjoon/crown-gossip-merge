@@ -6,7 +6,7 @@
   import { setMainBoard } from "./registry";
   import { mainBoardVisuals, holidayBoardVisuals } from "./visuals";
   import { computeWanted } from "../../core/actions/orders";
-  import { spawnFromGenerator, collectItem, moveOrMerge, getMergeTargets } from "../../core/actions/board";
+  import { spawnFromGenerator, collectItem, moveOrMerge, getMergeTargets, findMergePair } from "../../core/actions/board";
   import { holidaySpawn, holidayMoveOrMerge } from "../../core/actions/holiday";
   import { getItemMeta } from "../../core/rules/chains";
   import { getHolidayConfig } from "../../core/rules/holidays";
@@ -20,16 +20,20 @@
     if (!host) return;
     const view = mode === "main" ? new BoardView(host, 7, 8) : new BoardView(host, 5, 5);
     let alive = true;
+    let idleTimer: ReturnType<typeof setInterval> | null = null;
     void view.init().then(() => {
       if (!alive) return;
-      if (mode === "main") wireMain(view);
-      else wireHoliday(view);
+      if (mode === "main") {
+        wireMain(view);
+        idleTimer = setInterval(() => idleHint(view), 1000);
+      } else wireHoliday(view);
       bv = view;
       if (mode === "main") setMainBoard(view);
       onReady?.(view);
     });
     return () => {
       alive = false;
+      if (idleTimer) clearInterval(idleTimer);
       bv = null;
       if (mode === "main") setMainBoard(null);
       view.destroy();
@@ -47,14 +51,38 @@
     bv?.setInputEnabled(!ui.inputLocked && (mode === "holiday" ? ui.modal === "holiday" : ui.modal === null && ui.screen === "merge"));
   });
 
+  // 막혔을 때 힌트 (v3.7): 보드를 IDLE_MS 동안 안 만지면 합칠 쌍을 톡톡 넛지, 보드가 가득 차 거절되면 바로
+  const IDLE_MS = 5000;
+  let lastInput = performance.now();
+
+  function hintCells(): number[] {
+    return findMergePair(app().store.get()) ?? [];
+  }
+
+  function idleHint(view: BoardView) {
+    const visible = ui.screen === "merge" && ui.modal === null && !ui.inputLocked;
+    if (!visible) {
+      if (view.isNudging()) view.stopNudge();
+      return;
+    }
+    if (view.isNudging() || performance.now() - lastInput < IDLE_MS) return;
+    const cells = hintCells();
+    if (cells.length) view.nudge(cells);
+  }
+
   function wireMain(view: BoardView) {
+    view.onInput = () => (lastInput = performance.now());
     view.onTap = (cell, isDouble, at) => {
       const s = app().store.get();
       const item = s.board[cell];
       if (!item) return;
       if (item.isGenerator && item.state === "active") {
         ui.selectedCell = cell;
-        act(spawnFromGenerator, { cell }, at);
+        const ev = act(spawnFromGenerator, { cell }, at);
+        if (ev.some((e) => e.type === "rejected" && e.reason === "boardFull")) {
+          const cells = hintCells();
+          if (cells.length) view.nudge(cells);
+        }
         return;
       }
       const meta = getItemMeta(item.chain, item.level);

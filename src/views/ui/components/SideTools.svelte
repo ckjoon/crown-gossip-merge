@@ -14,7 +14,7 @@
   const canRenovate = $derived.by(() => {
     const next = getZoneProgress($game).nextSpotId;
     const f = next ? findSpot(next) : null;
-    return !!f && $game.coins >= getSpotCoinCost(f.zoneKey, f.spot.cost);
+    return !!f && $game.coins >= getSpotCoinCost(f.chapter);
   });
 
   const coachCastle = $derived(coachFor($game)?.step === "castle");

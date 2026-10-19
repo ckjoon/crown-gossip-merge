@@ -109,7 +109,7 @@ describe("이동·합성", () => {
     expect(moveOrMerge(s, fixedCtx(), { from: 2, to: 5 })).toEqual([]);
     expect(moveOrMerge(s, fixedCtx(), { from: 1, to: 1 })).toEqual([]);
   });
-  test("Lv.4 결과 합성은 12% 확률로 보너스 드롭", () => {
+  test("Lv.4 결과 합성은 15% 확률로 보너스 드롭", () => {
     s.board[0] = item("potion", 3);
     s.board[1] = item("potion", 3);
     const ev = moveOrMerge(s, fixedCtx([0.05, 0.2]), { from: 0, to: 1 });

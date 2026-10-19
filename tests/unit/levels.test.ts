@@ -45,14 +45,14 @@ describe("경험치 곡선과 출처", () => {
 });
 
 describe("레벨업 보상", () => {
-  test("매 레벨 코인 25×L·번개 5·💎3, 생성기 파츠는 짝수 레벨만", () => {
-    expect(levelUpReward(2)).toEqual({ coins: 50, energy: 5, gems: 3, genPart: true });
-    expect(levelUpReward(3)).toEqual({ coins: 75, energy: 5, gems: 3, genPart: false });
+  test("매 레벨 코인 25×L·번개 20·💎3, 생성기 파츠는 짝수 레벨만", () => {
+    expect(levelUpReward(2)).toEqual({ coins: 50, energy: 20, gems: 3, genPart: true });
+    expect(levelUpReward(3)).toEqual({ coins: 75, energy: 20, gems: 3, genPart: false });
     const ev: GameEvent[] = [];
     const e0 = s.energy;
     gainXP(s, ev, 150);
     expect(s.playerLv).toBe(2);
-    expect(s.energy).toBe(e0 + 5);
+    expect(s.energy).toBe(e0 + 20);
     expect(ev.filter((e) => e.type === "generatorPartGranted").length).toBe(1);
     const ev3: GameEvent[] = [];
     gainXP(s, ev3, xpToNext(2));
@@ -191,7 +191,7 @@ describe("새 구역: 지하 저장고·달빛 마탑 (제21~30화)", () => {
     expect(ZONE_ORDER).toEqual(["alchemy", "harbor", "garden", "banquet", "cellar", "tower"]);
     expect(ALL_SPOTS_IN_ORDER.length).toBe(30);
     expect(ALL_SPOTS_IN_ORDER[20].spot.id).toBe("cel_wine");
-    expect(ZONE_REQUIRED_LEVEL).toMatchObject({ cellar: 17, tower: 21 });
+    expect(ZONE_REQUIRED_LEVEL).toMatchObject({ cellar: 17, tower: 20 });
     for (const e of ALL_SPOTS_IN_ORDER.slice(20)) {
       expect(e.spot.dialogues.length, e.spot.id).toBeGreaterThanOrEqual(2);
       for (const d of e.spot.dialogues) expect(["selene", "quinn", "nero", "quinn_nero", "lucian", "margaret", "oberon", "arthur"]).toContain(d.characterId);

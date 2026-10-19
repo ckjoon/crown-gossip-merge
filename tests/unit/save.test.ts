@@ -51,9 +51,9 @@ describe("v2.5 세이브 → v4", () => {
     expect(state.board[17]).toMatchObject({ isGenerator: true, chain: "potion", level: 2 });
     expect(state.orders[1].reqs).toEqual([{ chain: "bakery", level: 3 }]);
   });
-  test("오프라인 10분 경과 → 번개 +2", () => {
+  test("오프라인 10분 경과 → 번개 +5 (2분당 1)", () => {
     const later = restoreState(clone(v25) as SaveRecord, NOW + 10 * 60 * 1000, fixedCtx()).state;
-    expect(later.energy).toBe(82);
+    expect(later.energy).toBe(85);
   });
 });
 

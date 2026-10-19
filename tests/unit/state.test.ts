@@ -6,7 +6,7 @@ import { fixedCtx } from "./helpers";
 
 test("v2.5와 같은 초기값", () => {
   const s = createInitialState(fixedCtx());
-  expect(s).toMatchObject({ playerLv: 1, xp: 0, energy: 100, energyCountdown: 300, coins: 350, gems: 10, boostMultiplier: 1, currentThemeKey: "alchemy", lastSeenVersion: null });
+  expect(s).toMatchObject({ playerLv: 1, xp: 0, energy: 100, energyCountdown: 120, coins: 350, gems: 10, boostMultiplier: 1, currentThemeKey: "alchemy", lastSeenVersion: null });
   expect(s.settings).toEqual({ sound: true, reduceMotion: false });
   expect(s.holiday).toMatchObject({ activeHolidayId: "halloween", targetLv: 3, freeSpawns: 12, completedCount: 0 });
   expect(s.orders).toEqual([]);

@@ -6,7 +6,7 @@ import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
 import { CUSTOMERS_BY_ZONE } from "../rules/customers";
 import { ROOMS } from "../rules/rooms";
-import { computeZoneProgress, getItemGemPrice, rollOrderReqs, spawnRange, ZONE_ORDER, type ZoneProgress } from "../rules/progression";
+import { ORDER_ENERGY_CHANCE, computeZoneProgress, getItemGemPrice, rollOrderReqs, spawnRange, ZONE_ORDER, type ZoneProgress } from "../rules/progression";
 import { bagSize, orderCoins, orderXP, unlockedChains } from "../rules/levels";
 import { type BoardItem, type GameState, type Order, type OrderReq, type ZoneKey } from "../types";
 import { findNearestEmptyCell } from "./board";
@@ -111,9 +111,9 @@ export const serveOrder: Action<{ orderIdx: number }> = (s, ctx, { orderIdx }) =
   for (const c of st.matchedCells) s.board[c] = null;
   grant(s, ev, "coins", ord.coins, "orderServed");
   gainXP(s, ev, orderXP(ord.reqs));
-  // 주문 완료 시 번개 조각은 8% 확률로만
+  // 주문 완료 시 번개 조각은 ORDER_ENERGY_CHANCE 확률로
   let bonusCell: number | null = null;
-  if (ctx.rng() < 0.08) {
+  if (ctx.rng() < ORDER_ENERGY_CHANCE) {
     const cell = findNearestEmptyCell(s, 27, ctx.rng);
     if (cell !== -1) {
       s.board[cell] = { uid: newUid(s), state: "active", isGenerator: false, chain: "energy", level: 1 };

@@ -60,7 +60,7 @@ describe("주문 완료·구매", () => {
     expect(s.xp).toBe(5 + 3 * (2 + 1)); // orderXP: 5 + 3×요구 레벨 합
     expect(s.orders[0].reqs).not.toEqual([{ chain: "tea", level: 2 }, { chain: "herb", level: 1 }]);
   });
-  test("재료가 부족하면 아무 일도 없음, 8% 미만이면 번개 조각", () => {
+  test("재료가 부족하면 아무 일도 없음, 20% 미만이면 번개 조각", () => {
     s.board[3] = item("tea", 2);
     expect(serveOrder(s, fixedCtx(), { orderIdx: 0 })).toEqual([]);
     s.board[9] = item("herb", 1);

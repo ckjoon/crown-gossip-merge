@@ -3,19 +3,19 @@ import { createInitialState } from "../../src/core/state";
 import { tickEnergy, buyEnergyPack, toggleBoost, setSetting } from "../../src/core/actions/progress";
 import { fixedCtx } from "./helpers";
 
-test("번개 자연 충전: 300초마다 +1, 100에서 멈춤", () => {
+test("번개 자연 충전: 120초마다 +1, 100에서 멈춤", () => {
   const s = createInitialState(fixedCtx());
   s.energy = 98;
-  tickEnergy(s, fixedCtx(), { seconds: 300 });
+  tickEnergy(s, fixedCtx(), { seconds: 120 });
   expect(s.energy).toBe(99);
-  expect(s.energyCountdown).toBe(300);
+  expect(s.energyCountdown).toBe(120);
   tickEnergy(s, fixedCtx(), { seconds: 900 });
   expect(s.energy).toBe(100);
   s.energy = 150;
   s.energyCountdown = 12;
   tickEnergy(s, fixedCtx(), { seconds: 1 });
   expect(s.energy).toBe(150);
-  expect(s.energyCountdown).toBe(300);
+  expect(s.energyCountdown).toBe(120);
 });
 
 test("💎 상점: 💎10 → +50⚡, 부족하면 거부", () => {

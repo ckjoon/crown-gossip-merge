@@ -10,7 +10,6 @@ export interface Dialogue {
 export interface SpotDef {
   id: string;
   name: string;
-  cost: number;
   story: string;
   dialogues: Dialogue[];
 }
@@ -75,7 +74,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "alc_cauldron",
         name: "마법 가마솥 화로",
-        cost: 1,
         story: "가마솥 바닥에서 붉은 달의 밤에 누군가 몰래 넣은 '금지된 흑요석 폭약' 파편을 발견했습니다!",
         dialogues: [
           {
@@ -95,7 +93,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "alc_bookcase",
         name: "고대 마도서 서가",
-        cost: 2,
         story: "쏟아진 마도서들을 마법 책장에 정리하자 찢겨 나간 '성배의 비전서' 흔적이 드러났습니다!",
         dialogues: [
           {
@@ -115,7 +112,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "alc_herbtable",
         name: "달빛 약초 화분대",
-        cost: 3,
         story: "화분대 흙 속에서 범인이 흘리고 간 은빛 열쇠 반쪽을 찾아냈습니다!",
         dialogues: [
           {
@@ -135,7 +131,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "alc_window",
         name: "스테인드글라스 창문",
-        cost: 4,
         story: "스테인드글라스를 통과한 달빛이 바닥을 비추며 숨겨진 마법진 지도를 드러냈습니다!",
         dialogues: [
           {
@@ -151,7 +146,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "alc_counter",
         name: "연금술 포션 카운터",
-        cost: 5,
         story: "성 본관 1층 마녀의 연금술 공방이 완벽히 부활했습니다! 이제 성 앞마당 정원으로 나가 단서를 추적하세요!",
         dialogues: [
           {
@@ -178,7 +172,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "hb_espresso",
         name: "달빛 가든 에스프레소 바",
-        cost: 2,
         story: "성 앞마당을 찾은 손님들에게 마법 원두로 내린 에스프레소를 대접할 수 있게 되었습니다!",
         dialogues: [
           {
@@ -194,7 +187,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "hb_parasol",
         name: "정원 파라솔 브런치석",
-        cost: 2,
         story: "파라솔 의자 밑에서 침입자가 떨어뜨린 황실 천문대 인장을 발견했습니다!",
         dialogues: [
           {
@@ -210,7 +202,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "hb_fountain",
         name: "성 앞마당 수호 분수대",
-        cost: 3,
         story: "수호 분수대에서 맑은 마력수가 솟구치며 성 외곽 결계가 다시 빛나기 시작합니다!",
         dialogues: [
           {
@@ -226,7 +217,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "hb_bakery",
         name: "정원 화덕 베이커리",
-        cost: 3,
         story: "따끈따끈한 마법 크루아상과 타르트를 굽는 정원 화덕이 복원되었습니다!",
         dialogues: [
           {
@@ -242,7 +232,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "hb_arch",
         name: "마녀의 성 달빛 정문 아치",
-        cost: 4,
         story: "마녀의 성 앞마당과 정문 아치가 화려하게 부활했습니다! 이제 동쪽 별관 유리온실로 향하세요!",
         dialogues: [
           {
@@ -269,7 +258,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "gd_pond",
         name: "에메랄드 수련 분수 연못",
-        cost: 2,
         story: "투명한 연못 위로 빛나는 수련꽃이 피어나며 온실의 생명력이 되살아납니다!",
         dialogues: [
           {
@@ -285,7 +273,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "gd_gazebo",
         name: "로얄 티타임 가제보 테이블",
-        cost: 3,
         story: "온실 속에서 오로라 밀크티와 다과를 즐기는 로얄 가제보 테이블이 완성되었습니다.",
         dialogues: [
           {
@@ -301,7 +288,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "gd_planter",
         name: "세계수 묘목 화단",
-        cost: 3,
         story: "상처 입었던 세계수의 묘목이 다시 황금빛 잎사귀와 불사조의 마력을 틔웠습니다!",
         dialogues: [
           {
@@ -313,7 +299,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "gd_teabar",
         name: "연금술 허브티 브루잉 바",
-        cost: 3,
         story: "갓 딴 캐모마일과 달빛 이슬을 블렌딩하는 온실 전용 티 바가 완성되었습니다.",
         dialogues: [
           {
@@ -325,7 +310,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "gd_dome",
         name: "크리스탈 보타니컬 아치창",
-        cost: 4,
         story: "동쪽 별관 유리돔 온실이 완벽히 복구되었습니다! 이제 마녀의 성 최상층 첨탑으로 올라가세요!",
         dialogues: [
           {
@@ -352,7 +336,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "bq_astrolabe",
         name: "황금 천문대 천구의",
-        cost: 3,
         story: "거대한 황금 천구의가 회전하며 밤하늘의 별자리 에너지를 성 전체로 끌어모읍니다!",
         dialogues: [
           {
@@ -368,7 +351,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "bq_library",
         name: "황실 비전 기록보관소",
-        cost: 3,
         story: "도난당했던 성배의 비전서 페이지가 기록보관소 비밀 금고 안에서 무사히 발견되었습니다!",
         dialogues: [
           {
@@ -384,7 +366,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "bq_feast",
         name: "대리석 황실 만찬 테이블",
-        cost: 4,
         story: "3단 로얄 케이크와 황실 다과가 세팅된 화려한 대연회장 만찬석입니다!",
         dialogues: [
           {
@@ -396,7 +377,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "bq_hearth",
         name: "드래곤 브레스 황금 화로",
-        cost: 4,
         story: "꺼지지 않는 드래곤의 황금 불꽃이 마녀의 성 최상층 연회장을 따뜻하게 밝힙니다.",
         dialogues: [
           {
@@ -408,7 +388,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "bq_portal",
         name: "차원 성운 스테인드글라스",
-        cost: 5,
         story: "최상층 대연회장이 완성되었습니다! 그런데 차원 스테인드글라스 너머로 연회장 아래 지하로 이어지는 숨겨진 계단이 비칩니다…",
         dialogues: [
           {
@@ -435,7 +414,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "cel_wine",
         name: "오크통 와인 셀러",
-        cost: 3,
         story: "와인 오크통 뒤 벽에서 은빛 열쇠가 꼭 맞는 자물쇠 구멍을 찾아냈습니다! 그런데 열쇠가 끝까지 돌아가지 않아요.",
         dialogues: [
           {
@@ -451,7 +429,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "cel_candle",
         name: "촛불 제단",
-        cost: 3,
         story: "촛불 제단에 불을 밝히자 벽에 흑요석 폭약과 같은 검은 그을음이 드러났습니다!",
         dialogues: [
           {
@@ -467,7 +444,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "cel_passage",
         name: "비밀 통로 책장 문",
-        cost: 4,
         story: "책장 문 뒤 비밀 통로 바닥에서 별무늬 은단추 하나가 발견되었습니다!",
         dialogues: [
           {
@@ -483,7 +459,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "cel_vault",
         name: "봉인 금고",
-        cost: 4,
         story: "봉인 금고를 열자 비전서 마지막 장 대신 '달빛 마탑' 설계도와 은빛 열쇠의 별 장식이 나왔습니다!",
         dialogues: [
           {
@@ -499,7 +474,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "cel_map",
         name: "지하 수맥 지도 벽",
-        cost: 5,
         story: "별 장식을 끼운 은빛 열쇠를 꽂자 지하 수맥 지도가 빛나며 성 서쪽 달빛 마탑으로 가는 길이 열렸습니다!",
         dialogues: [
           {
@@ -526,7 +500,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "tw_loom",
         name: "별자리 직조기",
-        cost: 4,
         story: "멈춰 있던 별자리 직조기가 다시 돌며 마탑의 결계 무늬를 짜기 시작했습니다.",
         dialogues: [
           {
@@ -542,7 +515,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "tw_tapestry",
         name: "태피스트리 홀",
-        cost: 4,
         story: "새로 짠 태피스트리에 붉은 달의 밤, 공방으로 숨어드는 오베론의 모습이 수놓아졌습니다!",
         dialogues: [
           {
@@ -558,7 +530,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "tw_carpet",
         name: "마법 양탄자 라운지",
-        cost: 4,
         story: "마법 양탄자에 둘러앉아 오베론이 숨겨 온 진실을 털어놓았습니다.",
         dialogues: [
           {
@@ -574,7 +545,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "tw_mirror",
         name: "진실의 거울",
-        cost: 5,
         story: "진실의 거울이 마지막 장에 깃든 저주의 정체, '그림자 왕관'을 비추었습니다!",
         dialogues: [
           {
@@ -590,7 +560,6 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "tw_crown",
         name: "달빛 왕관 제단",
-        cost: 6,
         story: "모두의 마력을 모아 달빛 왕관 제단에서 저주를 정화했습니다! 마녀의 성 6대 구역이 완전히 부활했습니다!",
         dialogues: [
           {

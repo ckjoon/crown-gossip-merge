@@ -5,7 +5,7 @@ import { grant, spend } from "../economy";
 import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
 import { CHAINS, getItemMeta } from "../rules/chains";
-import { getGeneratorTierCap, resolveBoost, rollBaseSpawn } from "../rules/progression";
+import { MERGE_BONUS_ENERGY_SHARE, getGeneratorTierCap, mergeBonusChance, resolveBoost, rollBaseSpawn } from "../rules/progression";
 import { GEN_EVOLVE_XP, bagSize, mergeXP, sellPrice } from "../rules/levels";
 import { COLS, ROWS, TOTAL_CELLS, type BoardItem, type ChainId, type GameState } from "../types";
 import { gainXP } from "./progress";
@@ -155,11 +155,11 @@ export const moveOrMerge: Action<{ from: number; to: number }> = (s, ctx, { from
       const opened = crackAdjacentCrates(s, to);
       if (opened.length) ev.push({ type: "cratesOpened", cells: opened });
     }
-    // Lv.4 이상 결과물은 12% 확률로 번개/코인 조각 드롭
-    if (item.level >= 4 && ctx.rng() < 0.12) {
+    // Lv.4 이상 결과물은 레벨별 확률로 번개/코인 조각 드롭 (progression.mergeBonusChance)
+    if (ctx.rng() < mergeBonusChance(item.level)) {
       const cell = findNearestEmptyCell(s, to, ctx.rng);
       if (cell !== -1) {
-        const bonus: BoardItem = { uid: newUid(s), state: "active", isGenerator: false, chain: ctx.rng() < 0.5 ? "energy" : "coin", level: 1 };
+        const bonus: BoardItem = { uid: newUid(s), state: "active", isGenerator: false, chain: ctx.rng() < MERGE_BONUS_ENERGY_SHARE ? "energy" : "coin", level: 1 };
         s.board[cell] = bonus;
         ev.push({ type: "bonusDropped", cell, item: { ...bonus } });
       }

@@ -57,8 +57,18 @@ test("구역별 주문 상한과 복구 비용", () => {
   expect(P.getOrderLevelCap("harbor")).toBe(5);
   expect(P.getOrderLevelCap("garden")).toBe(6);
   expect(P.getOrderLevelCap("banquet")).toBe(8);
-  expect(P.getSpotCoinCost("alchemy", 2)).toBe(2000);
-  expect(P.getSpotCoinCost("banquet", 5)).toBe(18000);
+});
+
+// v3.10: 복구 비용은 화(章)마다 매끄럽게 오름 — 예전엔 구역이 바뀔 때마다 싸졌다가 다시 오르는 톱니 모양이었다
+test("복구 비용 곡선: 30화 모두 있고, 화가 갈수록 오르되 한 화에 25% 넘게 뛰지 않음", () => {
+  expect(P.SPOT_COIN_COST.length).toBe(30);
+  for (let ch = 2; ch <= 30; ch++) {
+    const ratio = P.getSpotCoinCost(ch) / P.getSpotCoinCost(ch - 1);
+    expect(ratio, `ch${ch}`).toBeGreaterThan(1);
+    if (ch >= 4) expect(ratio, `ch${ch}`).toBeLessThanOrEqual(1.25);
+  }
+  expect(P.getSpotCoinCost(1)).toBe(P.SPOT_COIN_COST[0]);
+  expect(P.getSpotCoinCost(99)).toBe(P.SPOT_COIN_COST[29]);
 });
 
 test("주문 요구 레벨은 항상 2..상한 범위 (상한 끝값 포함)", () => {

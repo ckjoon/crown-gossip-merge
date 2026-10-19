@@ -178,7 +178,7 @@ export function restoreRooms(s: GameState, raw: unknown): void {
   }
 }
 
-// 오프라인 경과 시간 동안 번개 자동 충전 (5분당 +1, 100까지)
+// 오프라인 경과 시간 동안 번개 자동 충전 (ENERGY_REGEN_SEC당 +1, 100까지)
 export function applyOfflineEnergy(s: GameState, updatedAt: number, now: number): void {
   const elapsed = Math.max(0, Math.floor((now - (updatedAt || now)) / 1000));
   if (s.energy >= NATURAL_ENERGY_CAP) {

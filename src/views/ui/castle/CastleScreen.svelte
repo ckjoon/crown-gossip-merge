@@ -27,7 +27,7 @@
   const doneInRoom = $derived(room.spots.filter((sp) => $game.rooms[sp.id]?.done).length);
   const totalDone = $derived(ALL_SPOTS_IN_ORDER.filter((e) => $game.rooms[e.spot.id]?.done).length);
   const next = $derived(zp.nextSpotId ? findSpot(zp.nextSpotId) : null);
-  const nextCost = $derived(next ? getSpotCoinCost(next.zoneKey, next.spot.cost) : 0);
+  const nextCost = $derived(next ? getSpotCoinCost(next.chapter) : 0);
   const anyOrderReady = $derived(computeWanted($game).status.some((s) => s.allReady));
 
   $effect(() => {
@@ -126,7 +126,7 @@
   const pick = $derived(ui.stylePick);
   const pickSpot = $derived(pick ? findSpot(pick.spotId) : null);
   const pickDone = $derived(pick ? !!$game.rooms[pick.spotId]?.done : false);
-  const pickCost = $derived(pickSpot ? getSpotCoinCost(pickSpot.zoneKey, pickSpot.spot.cost) : 0);
+  const pickCost = $derived(pickSpot ? getSpotCoinCost(pickSpot.chapter) : 0);
 </script>
 
 <section class="screen-view" class:hidden={ui.screen !== "castle"} id="view-castle">
@@ -160,7 +160,7 @@
           {#each room.spots as sp (sp.id)}
             {@const st = $game.rooms[sp.id]}
             {@const isNext = sp.id === zp.nextSpotId}
-            {@const cost = getSpotCoinCost($game.currentThemeKey, sp.cost)}
+            {@const cost = getSpotCoinCost(findSpot(sp.id)?.chapter ?? 1)}
             {#if pins[sp.id] && (st?.done || isNext)}
               <button
                 class="room-pin"

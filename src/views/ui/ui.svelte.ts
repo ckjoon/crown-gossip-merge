@@ -3,6 +3,7 @@
 import type { Action } from "../../core/store";
 import type { GameEvent, RejectReason } from "../../core/events";
 import { app } from "./context";
+import { ENERGY_REGEN_SEC } from "../../core/types";
 
 export type Screen = "merge" | "castle";
 export type ModalId = "codex" | "bag" | "level" | "settings" | "changelog" | "gemShop" | "storyLog" | "holiday" | "migration";
@@ -90,7 +91,7 @@ export function say(speaker: string, text: string): void {
 }
 
 const REJECT_TEXT: Record<RejectReason, string> = {
-  noEnergy: "⚡ 번개가 부족합니다! 5분마다 충전되거나 💎 상점에서 구매하세요!",
+  noEnergy: `⚡ 번개가 부족합니다! ${ENERGY_REGEN_SEC / 60}분마다 충전되거나 💎 상점에서 구매하세요!`,
   boardFull: "보드가 가득 찼습니다! 재료를 합치거나 보관함에 넣으세요!",
   bagFull: "보관함이 가득 찼습니다!",
   notEnoughCoins: "🪙 코인이 부족해요!",

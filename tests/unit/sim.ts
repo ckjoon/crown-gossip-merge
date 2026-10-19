@@ -73,7 +73,7 @@ export function simulate(seed = 7, maxEnergy = 80000): SimResult {
     const zp = getZoneProgress(s);
     if (!zp.nextSpotId) break;
     const found = findSpot(zp.nextSpotId)!;
-    if (zp.nextSpotLockedLv === null && s.coins >= getSpotCoinCost(found.zoneKey, found.spot.cost)) {
+    if (zp.nextSpotLockedLv === null && s.coins >= getSpotCoinCost(found.chapter)) {
       renovate(s, ctx, { spotId: zp.nextSpotId, styleIdx: 0 });
       gained();
       const stars: Record<string, number> = {};

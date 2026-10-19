@@ -88,5 +88,5 @@ export const COLS = 7;
 export const ROWS = 8;
 export const TOTAL_CELLS = COLS * ROWS;
 export const NATURAL_ENERGY_CAP = 100;
-export const ENERGY_REGEN_SEC = 300;
+export const ENERGY_REGEN_SEC = 120; // v3.10: 5분 → 2분 (Gossip Harbor와 같은 속도)
 export const EVENT_CELLS = 25;

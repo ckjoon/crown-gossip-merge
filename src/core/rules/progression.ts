@@ -9,8 +9,16 @@ export type Boost = 1 | 2 | 4;
 export const ZONE_ORDER: ZoneKey[] = ["alchemy", "harbor", "garden", "banquet", "cellar", "tower"];
 // 구역별 손님 주문 요구 레벨 상한
 export const ORDER_LEVEL_CAP: Record<ZoneKey, number> = { alchemy: 4, harbor: 5, garden: 6, banquet: 8, cellar: 8, tower: 8 };
-// 장소 복구 비용 = spot.cost × 구역 단가(🪙)
-export const ZONE_COIN_UNIT: Record<ZoneKey, number> = { alchemy: 1000, harbor: 1400, garden: 2400, banquet: 3600, cellar: 5400, tower: 7600 };
+// 장소 복구 비용(🪙)을 화(章) 순서로 (v3.10: 예전엔 spot.cost × 구역 단가라 구역이 바뀔 때마다 싸졌다가 다시 올랐다)
+// 제1~2화는 첫걸음이라 싸게, 제3화부터는 화마다 약 9%씩 매끄럽게 오른다 (balance.test의 봇으로 확인)
+export const SPOT_COIN_COST: readonly number[] = [
+  1000, 2000, 3000, 3300, 3600,
+  3900, 4300, 4700, 5100, 5600,
+  6100, 6600, 7300, 7900, 8700,
+  9500, 10300, 11300, 12300, 13500,
+  14700, 16100, 17600, 19200, 21000,
+  22900, 25000, 27300, 29900, 32600
+];
 // 생성기 등급(★)별 한 번에 나오게 할 수 있는 최대 재료 레벨
 export const GENERATOR_TIER_CAP: Record<number, number> = { 1: 3, 2: 5, 3: 6 };
 // 배속별 추가 단계 (×2 = +1단계, ×4 = +2단계)
@@ -19,6 +27,16 @@ export const BOOST_CYCLE: Boost[] = [1, 2, 4];
 export const LEGACY_STAR_TO_COINS = 100;
 
 export const GEM_REWARDS = { holidayMission: 5, zoneComplete: 50, levelUp: LEVEL_UP_GEMS } as const;
+// 번개 드롭 (v3.10: 번개가 너무 안 나와서 상향 — 예전엔 합성 Lv.4 이상 12%·그중 절반 번개, 주문 8%)
+// 합성 결과 레벨별 보너스 조각 확률: Lv.3 이하 없음, Lv.4 15%, Lv.5 20%, Lv.6 이상 25%
+export function mergeBonusChance(resultLv: number): number {
+  return resultLv >= 6 ? 0.25 : resultLv === 5 ? 0.2 : resultLv === 4 ? 0.15 : 0;
+}
+// 보너스 조각이 번개일 확률 (나머지는 코인 조각)
+export const MERGE_BONUS_ENERGY_SHARE = 0.7;
+// 주문 완료 때 번개 조각 Lv.1이 나올 확률
+export const ORDER_ENERGY_CHANCE = 0.2;
+
 export const GEM_SHOP_ENERGY: ReadonlyArray<{ gems: number; energy: number }> = [
   { gems: 10, energy: 50 },
   { gems: 25, energy: 150 },
@@ -91,8 +109,8 @@ export function getOrderLevelCap(zoneKey: string): number {
   return ORDER_LEVEL_CAP[zoneKey as ZoneKey] || ORDER_LEVEL_CAP.alchemy;
 }
 
-export function getSpotCoinCost(zoneKey: string, baseCost: number): number {
-  return Math.max(1, Math.floor(baseCost || 1)) * (ZONE_COIN_UNIT[zoneKey as ZoneKey] || ZONE_COIN_UNIT.alchemy);
+export function getSpotCoinCost(chapter: number): number {
+  return SPOT_COIN_COST[Math.min(SPOT_COIN_COST.length, Math.max(1, Math.floor(chapter) || 1)) - 1];
 }
 
 // 구역 대표 체인: 그 구역 주문에 40% 확률로 먼저 뽑힌다 (해금돼 있을 때만)

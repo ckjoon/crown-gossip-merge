@@ -42,16 +42,16 @@ export interface LevelUpReward {
   genPart: boolean;
 }
 
-// 💎3은 규칙상 고정. 번개는 5로 줄여 생성 → 경험치 → 번개 눈덩이를 끊는다. 생성기 파츠는 짝수 레벨만
+// 💎3은 규칙상 고정. 번개는 20 (v3.10: 5는 체감이 없었음 — 레벨 하나에 번개 수백 개를 쓰므로 눈덩이는 생기지 않음). 생성기 파츠는 짝수 레벨만
 // 레벨업 💎 (규칙상 고정 — progression의 GEM_REWARDS.levelUp도 이 값)
 export const LEVEL_UP_GEMS = 3;
 
 export function levelUpReward(newLv: number): LevelUpReward {
-  return { coins: 25 * newLv, energy: 5, gems: LEVEL_UP_GEMS, genPart: newLv % 2 === 0 };
+  return { coins: 25 * newLv, energy: 20, gems: LEVEL_UP_GEMS, genPart: newLv % 2 === 0 };
 }
 
 // 구역 입장 레벨 (이미 장소를 하나라도 복구한 구역은 레벨과 상관없이 입장 가능 — 세이브 호환)
-export const ZONE_REQUIRED_LEVEL: Record<ZoneKey, number> = { alchemy: 1, harbor: 6, garden: 11, banquet: 14, cellar: 17, tower: 21 };
+export const ZONE_REQUIRED_LEVEL: Record<ZoneKey, number> = { alchemy: 1, harbor: 6, garden: 11, banquet: 14, cellar: 17, tower: 20 };
 
 // 새 체인은 이 구역을 완성하면 그 구역 보상으로 ★1 생성기를 받고 주문에 나오기 시작한다 (v3.8: 레벨이 아니라 이야기에서 얻음)
 // 공방 구석에서 할머니의 촛대 제단을 찾고, 하버를 되살리면 퀸의 배가 요정 물레를 싣고 온다

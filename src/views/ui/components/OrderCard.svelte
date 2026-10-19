@@ -4,6 +4,7 @@
   import { getItemSVG } from "../../art/sprites";
   import { getItemMeta, CHAINS } from "../../../core/rules/chains";
   import { getItemGemPrice } from "../../../core/rules/progression";
+  import { generatorName, generatorCellFor } from "../../../core/codex";
   import { serveOrder, buyOrderRequirement, type OrderStatus } from "../../../core/actions/orders";
   import type { Order } from "../../../core/types";
   import Portrait from "./Portrait.svelte";
@@ -16,13 +17,16 @@
   function explain() {
     app().sfx.tap();
     ui.selectedOrderIdx = selected ? null : idx;
+    // 생성기 이름은 지금 가진 등급 이름으로 (보드에서 보이는 이름과 같게)
     const lines = order.reqs.map((r) => {
       const meta = getItemMeta(r.chain, r.level);
       const ch = CHAINS[r.chain];
-      return `${meta.name}(Lv.${r.level}) ← ${ch.generator ? ch.generator.name : ch.name}`;
+      return `${meta.name}(Lv.${r.level}) ← ${ch.generator ? generatorName($game, r.chain) : ch.name}`;
     });
     say(`${order.customer.face} ${order.customer.name}`, lines.join(" · "));
-    const genIdx = $game.board.findIndex((it) => it && it.isGenerator && it.chain === order.reqs[0].chain);
+    // 아직 못 채운 첫 재료를 바로 만들 수 있는 생성기를 선택
+    const req = order.reqs[status.reqFulfilled.findIndex((f) => !f)] ?? order.reqs[0];
+    const genIdx = generatorCellFor($game, req.chain, req.level);
     if (genIdx !== -1) ui.selectedCell = genIdx;
   }
 

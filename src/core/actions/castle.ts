@@ -31,7 +31,7 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
   const before = getZoneProgress(s);
   if (before.nextSpotId !== spotId) return [rejected("notNextChapter")];
   if (before.nextSpotLockedLv !== null) return [rejected("levelLocked")];
-  const coinCost = getSpotCoinCost(found.zoneKey, found.spot.cost);
+  const coinCost = getSpotCoinCost(found.chapter);
   const ev: GameEvent[] = [];
   if (!spend(s, ev, "coins", coinCost, "renovate")) return [rejected("notEnoughCoins")];
 

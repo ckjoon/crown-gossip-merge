@@ -2,7 +2,7 @@
   import { app } from "../context";
   import { ui } from "../ui.svelte";
   import { getRequiredXP } from "../../../core/rules/chains";
-  import { NATURAL_ENERGY_CAP } from "../../../core/types";
+  import { ENERGY_REGEN_SEC, NATURAL_ENERGY_CAP } from "../../../core/types";
 
   const game = app().store;
   const reqXP = $derived(getRequiredXP($game.playerLv));
@@ -41,7 +41,7 @@
   </button>
 
   <div class="gh-resources">
-    <div class="gh-res-pill energy" class:res-bump={bump.energy} data-fx-target="energy" title="번개(⚡): 100개까지 5분마다 1개씩 자동 충전됩니다">
+    <div class="gh-res-pill energy" class:res-bump={bump.energy} data-fx-target="energy" title={`번개(⚡): ${NATURAL_ENERGY_CAP}개까지 ${ENERGY_REGEN_SEC / 60}분마다 1개씩 자동 충전됩니다`}>
       <span class="res-ico">⚡</span>
       <div class="res-val-wrap">
         <span>{$game.energy}</span>

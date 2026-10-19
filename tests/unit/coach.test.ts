@@ -39,7 +39,7 @@ describe("coachStep", () => {
   });
 
   test("코인이 제1화 비용 이상이면 castle", () => {
-    s.coins = getSpotCoinCost("alchemy", first.cost);
+    s.coins = getSpotCoinCost(1);
     expect(coachStep(s)!.step).toBe("castle");
   });
 

@@ -157,3 +157,37 @@ describe("새 체인 해금 (세이브·주문)", () => {
     expect(seen(12).has("silk")).toBe(true);
   });
 });
+
+import { ALL_SPOTS_IN_ORDER } from "../../src/core/rules/rooms";
+import { CUSTOMERS_BY_ZONE } from "../../src/core/rules/customers";
+import { ZONE_ORDER, rollOrderReqs } from "../../src/core/rules/progression";
+import { characterIdForName } from "../../src/core/rules/characters";
+
+describe("새 구역: 지하 저장고·달빛 마탑 (제21~30화)", () => {
+  test("6구역 30화, 새 구역 입장 레벨 16·20, 대사 화자는 모두 등록된 캐릭터", () => {
+    expect(ZONE_ORDER).toEqual(["alchemy", "harbor", "garden", "banquet", "cellar", "tower"]);
+    expect(ALL_SPOTS_IN_ORDER.length).toBe(30);
+    expect(ALL_SPOTS_IN_ORDER[20].spot.id).toBe("cel_wine");
+    expect(ZONE_REQUIRED_LEVEL).toMatchObject({ cellar: 16, tower: 20 });
+    for (const e of ALL_SPOTS_IN_ORDER.slice(20)) {
+      expect(e.spot.dialogues.length, e.spot.id).toBeGreaterThanOrEqual(2);
+      for (const d of e.spot.dialogues) expect(["selene", "quinn", "nero", "quinn_nero", "lucian", "margaret", "oberon", "arthur"]).toContain(d.characterId);
+    }
+    for (const z of ["cellar", "tower"] as const) {
+      expect(CUSTOMERS_BY_ZONE[z].length).toBeGreaterThanOrEqual(4);
+      for (const c of CUSTOMERS_BY_ZONE[z]) expect(characterIdForName(c.name), c.name).not.toBeNull();
+    }
+  });
+  test("새 구역 주문은 그 구역 대표 체인(저장고 촛불·마탑 비단)이 자주 나옴", () => {
+    const pool = unlockedChains(20);
+    const count = (zone: string, chain: string) => {
+      let n = 0;
+      let seed = 1;
+      const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      for (let i = 0; i < 400; i++) for (const r of rollOrderReqs(zone, pool, rng)) if (r.chain === chain) n++;
+      return n;
+    };
+    expect(count("cellar", "candle")).toBeGreaterThan(count("banquet", "candle") * 2);
+    expect(count("tower", "silk")).toBeGreaterThan(count("banquet", "silk") * 2);
+  });
+});

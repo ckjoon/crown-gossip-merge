@@ -122,7 +122,7 @@ export class CastleView {
     const h = this.host.clientHeight || 320;
     if (w <= 0 || h <= 0) return;
     const aspect = w / h;
-    const minHalfW = this.mode === "map" ? 7.4 : 7.5;
+    const minHalfW = this.mode === "map" ? 8.6 : 7.5;
     const minHalfH = this.mode === "map" ? 7.0 : 5.5;
     let halfW = minHalfH * aspect;
     let halfH = minHalfH;

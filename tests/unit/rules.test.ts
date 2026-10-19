@@ -36,12 +36,13 @@ describe("체인 데이터", () => {
 });
 
 describe("방·스토리 데이터", () => {
-  test("4개 구역 × 5개 장소, 제1화~제20화", () => {
+  test("6개 구역 × 5개 장소, 제1화~제30화", () => {
     expect(Object.keys(ROOMS)).toEqual(ZONE_ORDER);
     for (const z of ZONE_ORDER) expect(ROOMS[z].spots.length).toBe(5);
-    expect(ALL_SPOTS_IN_ORDER.map((e) => e.chapter)).toEqual(Array.from({ length: 20 }, (_, i) => i + 1));
+    expect(ALL_SPOTS_IN_ORDER.map((e) => e.chapter)).toEqual(Array.from({ length: 30 }, (_, i) => i + 1));
     expect(ALL_SPOTS_IN_ORDER[0].spot.id).toBe("alc_cauldron");
     expect(ALL_SPOTS_IN_ORDER[19].spot.id).toBe("bq_portal");
+    expect(ALL_SPOTS_IN_ORDER[29].spot.id).toBe("tw_crown");
     expect(findSpot("hb_arch")?.zoneKey).toBe("harbor");
     expect(STYLE_PALETTES.length).toBe(3);
   });

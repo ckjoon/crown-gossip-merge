@@ -292,6 +292,137 @@ export const SPOT_RECIPES: Record<string, SpotRecipe> = {
       [{ m: "props/Vase_4", p: [1.2, -2.4, 0.6], s: 0.8, tint: "secondary" }],
     ],
   },
+  // ===== 지하 비밀 저장고 =====
+  cel_wine: {
+    items: [
+      { m: "props/Barrel", p: [-1.6, 0, -0.6], s: 1.4, tint: "wood" },
+      { m: "props/Barrel", p: [-0.2, 0, -0.9], s: 1.4, tint: "wood" },
+      { m: "props/Barrel", p: [-0.9, 1.2, -0.75], s: 1.2, r: 0.4, tint: "wood" },
+      { m: "props/Shelf_Simple", p: [1.6, 0, -0.9], s: 2.0, tint: "wood" },
+      { m: "food/wine-red", p: [1.3, 0.95, -0.85], s: 0.4 },
+      { m: "food/wine-red", p: [1.85, 0.95, -0.85], s: 0.4 },
+    ],
+    styles: [
+      [{ m: "food/grapes", p: [0.9, 0, 1.0], s: 0.45 }, { m: "props/Crate_Wooden", p: [2.2, 0, 0.9], s: 0.8, r: 0.3 }],
+      [{ m: "props/Mug", p: [0.9, 0, 1.0], s: 0.35 }, { m: "props/Bag", p: [2.2, 0, 0.9], s: 0.8, tint: "primary" }],
+      [{ m: "food/glass-wine", p: [0.9, 0, 1.0], s: 0.3 }, { m: "props/Chalice", p: [2.2, 0, 0.9], s: 0.4 }],
+    ],
+  },
+  cel_candle: {
+    items: [
+      { m: "props/Table_Large", s: 2.4, tint: "secondary" },
+      { m: "props/CandleStick_Triple", on: 0, p: [0, 0, 0], s: 0.9 },
+      { m: "props/Candle_1", on: 0, p: [-0.8, 0, 0.2], s: 0.45 },
+      { m: "props/Candle_2", on: 0, p: [0.8, 0, -0.1], s: 0.45 },
+      { m: "props/CandleStick_Stand", p: [-1.7, 0, 0.6], s: 1.6 },
+      { m: "props/CandleStick_Stand", p: [1.7, 0, 0.6], s: 1.6 },
+    ],
+    styles: [
+      [{ m: "props/Chalice", p: [0, 0, 1.4], s: 0.4 }],
+      [{ m: "props/Scroll_1", p: [0, 0, 1.4], s: 0.5 }],
+      [{ m: "props/Vase_2", p: [0, 0, 1.4], s: 0.6, tint: "primary" }],
+    ],
+  },
+  cel_passage: {
+    items: [
+      { m: "props/Bookcase_2", s: 3.0, tint: "wood" },
+      { m: "props/Scroll_2", p: [1.6, 0, 0.9], s: 0.5 },
+      { m: "props/BookGroup_Medium_1", p: [-1.5, 0, 0.9], s: 0.7 },
+    ],
+    styles: [
+      [{ m: "props/Lantern_Wall", p: [1.7, 1.6, -0.3], s: 0.6 }],
+      [{ m: "props/CandleStick", p: [0.6, 0, 1.3], s: 0.6 }],
+      [{ m: "props/Rope_1", p: [0.6, 0, 1.3], s: 0.6 }],
+    ],
+  },
+  cel_vault: {
+    items: [
+      { m: "props/Chest_Wood", s: 1.7, tint: "primary" },
+      { m: "props/Coin_Pile", p: [-1.3, 0, 0.8], s: 0.7 },
+      { m: "props/Bag", p: [1.3, 0, 0.7], s: 0.8, tint: "secondary" },
+      { m: "props/Crate_Wooden", p: [1.6, 0, -0.9], s: 0.9, r: -0.3 },
+    ],
+    styles: [
+      [{ m: "props/Chalice", p: [-0.4, 0, 1.4], s: 0.4 }],
+      [{ m: "props/Coin_Pile", p: [-0.4, 0, 1.4], s: 0.5 }],
+      [{ m: "props/Scroll_1", p: [-0.4, 0, 1.4], s: 0.5 }],
+    ],
+  },
+  cel_map: {
+    items: [
+      { proc: "alc_window" },
+      { m: "props/Table_Plate", p: [0, -2.3, 1.0], s: 1.4, tint: "wood" },
+    ],
+    styles: [
+      [{ m: "props/Lantern_Wall", p: [-1.8, -0.2, 0.25], s: 0.7 }, { m: "props/Lantern_Wall", p: [1.8, -0.2, 0.25], s: 0.7 }],
+      [{ m: "props/CandleStick_Stand", p: [-1.6, -2.3, 0.6], s: 1.5 }, { m: "props/CandleStick_Stand", p: [1.6, -2.3, 0.6], s: 1.5 }],
+      [{ m: "props/Banner_1", p: [-1.9, -2.3, 0.2], s: 2.2, tint: "primary" }, { m: "props/Banner_1", p: [1.9, -2.3, 0.2], s: 2.2, tint: "primary" }],
+    ],
+  },
+  // ===== 달빛 마탑 =====
+  tw_loom: {
+    items: [
+      { m: "props/Workbench", s: 2.6, tint: "secondary" },
+      { m: "props/Scroll_2", on: 0, p: [-0.6, 0, 0], s: 0.5 },
+      { m: "props/Bucket_Wooden_1", p: [1.6, 0, 0.6], s: 0.6, tint: "primary" },
+      { m: "props/Stool", p: [0, 0, 1.2], s: 0.8, tint: "wood" },
+    ],
+    styles: [
+      [{ m: "props/Bag", p: [-1.6, 0, 0.8], s: 0.7, tint: "primary" }],
+      [{ m: "props/Vase_4", p: [-1.6, 0, 0.8], s: 0.7, tint: "accent" }],
+      [{ m: "props/Book_Stack_1", p: [-1.6, 0, 0.8], s: 0.6 }],
+    ],
+  },
+  tw_tapestry: {
+    items: [
+      { proc: "bq_portal" },
+      { m: "props/Banner_2", p: [-1.9, -2.4, 0.2], s: 2.4, tint: "secondary" },
+      { m: "props/Banner_2", p: [1.9, -2.4, 0.2], s: 2.4, tint: "secondary" },
+    ],
+    styles: [
+      [{ m: "props/CandleStick_Stand", p: [-1.2, -2.4, 0.7], s: 1.5 }],
+      [{ m: "props/Bench", p: [0, -2.4, 1.3], s: 1.6, tint: "primary" }],
+      [{ m: "props/Vase_4", p: [1.2, -2.4, 0.7], s: 0.8, tint: "accent" }],
+    ],
+  },
+  tw_carpet: {
+    items: [
+      { proc: "rug" },
+      { m: "props/Table_Large", s: 1.8, tint: "wood" },
+      { m: "props/Bench", p: [0, 0, 1.3], s: 1.6, r: Math.PI, tint: "primary" },
+      { m: "food/cup-tea", on: 1, p: [-0.3, 0, 0], s: 0.3 },
+      { m: "food/cookie", on: 1, p: [0.35, 0, 0.1], s: 0.3 },
+    ],
+    styles: [
+      [{ m: "props/Book_Stack_2", p: [1.5, 0, -0.9], s: 0.6 }],
+      [{ m: "nature/Plant_7", p: [1.5, 0, -0.9], s: 0.9 }],
+      [{ m: "food/pie", p: [1.5, 0, -0.9], s: 0.4 }],
+    ],
+  },
+  tw_mirror: {
+    items: [
+      { proc: "gd_dome" },
+      { m: "props/CandleStick_Stand", p: [-1.6, 0, 0.6], s: 1.5 },
+      { m: "props/CandleStick_Stand", p: [1.6, 0, 0.6], s: 1.5 },
+    ],
+    styles: [
+      [{ m: "props/Vase_2", p: [0, 0, 1.4], s: 0.6, tint: "primary" }],
+      [{ m: "nature/Flower_3_Group", p: [0, 0, 1.4], s: 0.6 }],
+      [{ m: "props/Chalice", p: [0, 0, 1.4], s: 0.4 }],
+    ],
+  },
+  tw_crown: {
+    items: [
+      { proc: "bq_astrolabe" },
+      { m: "props/Chest_Wood", p: [-1.6, 0, 0.8], s: 1.0, tint: "primary" },
+      { m: "props/Coin_Pile", p: [1.5, 0, 0.9], s: 0.6 },
+    ],
+    styles: [
+      [{ m: "props/Banner_1", p: [1.8, 0, -1.2], s: 2.2, tint: "secondary" }],
+      [{ m: "props/Chandelier", p: [0, 3.4, 0], s: 1.6 }],
+      [{ m: "props/Vase_4", p: [1.8, 0, -1.2], s: 0.8, tint: "accent" }],
+    ],
+  },
 };
 
 // 복구 전 잔해 3종 (장소마다 돌아가며) — 먼지 쌓인 깨진 항아리·쓰러진 상자·밧줄·흩어진 책
@@ -374,5 +505,27 @@ export const ZONE_PROPS: Record<string, ZoneProp[]> = {
     { step: 4, m: "props/Coin_Pile", p: [1.8, 0, 1.8], s: 0.6 },
     { step: 5, m: "props/Banner_2", p: [-2.0, 0, 0.8], s: 2.6, r: HALF },
     { step: 5, m: "props/Vase_4", p: [1.8, 0, 1.7], s: 0.8 },
+  ],
+  cellar: [
+    { step: 1, m: "props/CandleStick_Stand", p: [-3.4, 0, 1.6], s: 1.5 },
+    { step: 2, m: "props/Crate_Wooden", p: [1.8, 0, 1.7], s: 0.8, r: 0.4 },
+    { step: 2, m: "props/Candle_1", p: [-1.8, 0, 1.6], s: 0.5 },
+    { step: 3, m: "props/Barrel", p: [-1.8, 0, 1.6], s: 0.9 },
+    { step: 3, m: "props/Rope_1", p: [1.8, 0, 1.7], s: 0.6 },
+    { step: 4, m: "props/Chandelier", p: [0, 3.8, 0], s: 1.6 },
+    { step: 4, m: "props/Barrel_Apples", p: [-1.8, 0, 1.6], s: 0.9 },
+    { step: 5, m: "props/Bucket_Wooden_1", p: [1.8, 0, 1.7], s: 0.6 },
+    { step: 5, m: "nature/Mushroom_Common", p: [-1.8, 0, 1.6], s: 0.5 },
+  ],
+  tower: [
+    { step: 1, m: "props/CandleStick_Stand", p: [-1.8, 0, 1.6], s: 1.6 },
+    { step: 2, m: "props/Vase_4", p: [1.8, 0, 1.7], s: 0.8 },
+    { step: 2, m: "props/Book_Stack_1", p: [-1.8, 0, 1.6], s: 0.6 },
+    { step: 3, m: "nature/Plant_7", p: [-1.8, 0, 3.6], s: 1.0 },
+    { step: 3, m: "props/Chandelier", p: [0, 3.8, 0.4], s: 1.7 },
+    { step: 4, m: "props/Banner_2", p: [-2.0, 0, 0.8], s: 2.4, r: HALF },
+    { step: 4, m: "props/Chest_Wood", p: [1.8, 0, 1.7], s: 0.9, r: 0.4 },
+    { step: 5, m: "props/Coin_Pile", p: [-1.8, 0, 1.7], s: 0.6 },
+    { step: 5, m: "nature/Flower_4_Group", p: [1.8, 0, 1.8], s: 0.8 },
   ],
 };

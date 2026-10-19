@@ -7,7 +7,7 @@ import { PROC_BUILDERS, buildSpotFurniture } from "../../src/views/castle/furnit
 import { ALL_SPOTS_IN_ORDER, STYLE_PALETTES } from "../../src/core/rules/rooms";
 import * as THREE from "three";
 
-test("20개 장소 모두 모델 배치표가 있고, 스타일 3종의 추가 소품이 서로 다름", () => {
+test("30개 장소 모두 모델 배치표가 있고, 스타일 3종의 추가 소품이 서로 다름", () => {
   for (const e of ALL_SPOTS_IN_ORDER) {
     const r = SPOT_RECIPES[e.spot.id];
     expect(r, e.spot.id).toBeTruthy();
@@ -38,8 +38,8 @@ test("모델이 아직 없으면(로딩 전) 절차적 가구로 대체 — 빈 
   expect(meshes).toBeGreaterThanOrEqual(3);
 });
 
-test("구역 분위기 소품은 4구역 모두 있고 1~5단계에 고루 나뉨", () => {
-  for (const z of ["alchemy", "harbor", "garden", "banquet"]) {
+test("구역 분위기 소품은 6구역 모두 있고 1~5단계에 고루 나뉨", () => {
+  for (const z of ["alchemy", "harbor", "garden", "banquet", "cellar", "tower"]) {
     const steps = new Set(ZONE_PROPS[z].map((p) => p.step));
     expect([...steps].sort(), z).toEqual([1, 2, 3, 4, 5]);
   }

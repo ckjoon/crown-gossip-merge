@@ -12,6 +12,8 @@ export const ZONE_RESIDENT: Record<ZoneKey, { id: string; robe: string; pos: [nu
   harbor: { id: "quinn", robe: "#155e75", pos: [1.3, 0, 1.3] },
   garden: { id: "nero", robe: "#1f2937", pos: [1.3, 0, 1.3] },
   banquet: { id: "lucian", robe: "#7f1d1d", pos: [1.3, 0, 1.3] },
+  cellar: { id: "margaret", robe: "#57534e", pos: [1.3, 0, 1.3] },
+  tower: { id: "oberon", robe: "#312e81", pos: [1.3, 0, 1.3] },
 };
 
 function loadImage(src: string): Promise<HTMLImageElement> {

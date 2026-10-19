@@ -36,7 +36,7 @@ export function levelUpReward(newLv: number): LevelUpReward {
 }
 
 // 구역 입장 레벨 (이미 장소를 하나라도 복구한 구역은 레벨과 상관없이 입장 가능 — 세이브 호환)
-export const ZONE_REQUIRED_LEVEL: Record<ZoneKey, number> = { alchemy: 1, harbor: 4, garden: 8, banquet: 12 };
+export const ZONE_REQUIRED_LEVEL: Record<ZoneKey, number> = { alchemy: 1, harbor: 4, garden: 8, banquet: 12, cellar: 16, tower: 20 };
 
 // 새 체인은 이 레벨이 되면 ★1 생성기를 주고 주문에 나오기 시작한다
 export const CHAIN_UNLOCK_LEVEL: Record<ExtraChain, number> = { candle: 6, silk: 12 };
@@ -70,6 +70,8 @@ const ZONE_LABEL: Record<ZoneKey, string> = {
   harbor: "🏖️ 하버 오션카페",
   garden: "🌿 보타니컬 온실",
   banquet: "👑 황실 대연회장",
+  cellar: "🕯️ 지하 비밀 저장고",
+  tower: "🌙 달빛 마탑",
 };
 const CHAIN_LABEL: Record<ExtraChain, string> = { candle: "🕯️ 마법 촛불", silk: "🧵 요정 비단" };
 

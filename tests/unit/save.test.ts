@@ -77,7 +77,7 @@ describe("v4 왕복과 손상 값", () => {
     expect(state.boostMultiplier).toBe(1);
     expect(state.board.length).toBe(TOTAL_CELLS);
     expect(state.energy).toBe(100);
-    expect(Object.keys(state.rooms).length).toBe(20);
+    expect(Object.keys(state.rooms).length).toBe(30);
     expect(state.currentThemeKey).toBe("alchemy");
   });
   test("필수 생성기가 없으면 빈칸에 보충", () => {

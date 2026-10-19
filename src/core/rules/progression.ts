@@ -2,15 +2,15 @@
 
 import { ZONE_REQUIRED_LEVEL } from "./levels";
 
-export type ZoneKey = "alchemy" | "harbor" | "garden" | "banquet";
+export type ZoneKey = "alchemy" | "harbor" | "garden" | "banquet" | "cellar" | "tower";
 export type Boost = 1 | 2 | 4;
 
 // 마녀의 성 구역 순서 (세이브 호환을 위해 기존 키 유지)
-export const ZONE_ORDER: ZoneKey[] = ["alchemy", "harbor", "garden", "banquet"];
+export const ZONE_ORDER: ZoneKey[] = ["alchemy", "harbor", "garden", "banquet", "cellar", "tower"];
 // 구역별 손님 주문 요구 레벨 상한
-export const ORDER_LEVEL_CAP: Record<ZoneKey, number> = { alchemy: 4, harbor: 5, garden: 6, banquet: 8 };
+export const ORDER_LEVEL_CAP: Record<ZoneKey, number> = { alchemy: 4, harbor: 5, garden: 6, banquet: 8, cellar: 8, tower: 8 };
 // 장소 복구 비용 = spot.cost × 구역 단가(🪙)
-export const ZONE_COIN_UNIT: Record<ZoneKey, number> = { alchemy: 150, harbor: 300, garden: 600, banquet: 1200 };
+export const ZONE_COIN_UNIT: Record<ZoneKey, number> = { alchemy: 150, harbor: 300, garden: 600, banquet: 1200, cellar: 1800, tower: 2600 };
 // 생성기 등급(★)별 한 번에 나오게 할 수 있는 최대 재료 레벨
 export const GENERATOR_TIER_CAP: Record<number, number> = { 1: 3, 2: 5, 3: 6 };
 // 배속별 추가 단계 (×2 = +1단계, ×4 = +2단계)
@@ -91,10 +91,15 @@ export function getSpotCoinCost(zoneKey: string, baseCost: number): number {
   return Math.max(1, Math.floor(baseCost || 1)) * (ZONE_COIN_UNIT[zoneKey as ZoneKey] || ZONE_COIN_UNIT.alchemy);
 }
 
+// 구역 대표 체인: 그 구역 주문에 40% 확률로 먼저 뽑힌다 (해금돼 있을 때만)
+export const ZONE_FAVORED_CHAIN: Partial<Record<ZoneKey, string>> = { cellar: "candle", tower: "silk" };
+
 // 체인·레벨은 랜덤, 상한만 구역이 결정 (첫 요구 Lv.2~상한, 55% 확률로 한 단계 낮은 두 번째 요구)
 export function rollOrderReqs<C extends string>(zoneKey: string, coreChains: readonly C[], rng: () => number = Math.random): Array<{ chain: C; level: number }> {
   const cap = getOrderLevelCap(zoneKey);
-  const pick = () => coreChains[Math.min(coreChains.length - 1, Math.floor(rng() * coreChains.length))];
+  const fav = ZONE_FAVORED_CHAIN[zoneKey as ZoneKey] as C | undefined;
+  const favOk = fav !== undefined && coreChains.includes(fav);
+  const pick = () => (favOk && rng() < 0.4 ? fav! : coreChains[Math.min(coreChains.length - 1, Math.floor(rng() * coreChains.length))]);
   const lv1 = Math.min(cap, 2 + Math.floor(rng() * (cap - 1)));
   const reqs = [{ chain: pick(), level: lv1 }];
   if (rng() < 0.55) {

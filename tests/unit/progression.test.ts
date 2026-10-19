@@ -48,7 +48,8 @@ test("모두 완성: 현재 구역은 마지막 구역, 다음 화 없음", () =
 
 test("다음 구역 키", () => {
   expect(P.getNextZoneKey("alchemy")).toBe("harbor");
-  expect(P.getNextZoneKey("banquet")).toBe(null);
+  expect(P.getNextZoneKey("banquet")).toBe("cellar");
+  expect(P.getNextZoneKey("tower")).toBe(null);
 });
 
 test("구역별 주문 상한과 복구 비용", () => {

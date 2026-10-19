@@ -10,7 +10,7 @@ test("v2.5와 같은 초기값", () => {
   expect(s.settings).toEqual({ sound: true, reduceMotion: false });
   expect(s.holiday).toMatchObject({ activeHolidayId: "halloween", targetLv: 3, freeSpawns: 12, completedCount: 0 });
   expect(s.orders).toEqual([]);
-  expect(Object.keys(s.rooms).length).toBe(20);
+  expect(Object.keys(s.rooms).length).toBe(30);
   expect(Object.values(s.rooms).every((r) => !r.done && r.styleIdx === 0)).toBe(true);
 });
 

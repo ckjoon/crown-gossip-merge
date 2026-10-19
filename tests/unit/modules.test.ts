@@ -16,7 +16,7 @@ import {
 
 const ZONES = Object.keys(ROOMS) as ZoneKey[];
 // 벽에 거는 장소 (창문형 가구)
-const WALL_SPOTS = new Set(["alc_window", "hb_arch", "gd_dome", "bq_portal"]);
+const WALL_SPOTS = new Set(["alc_window", "hb_arch", "gd_dome", "bq_portal", "cel_map", "tw_tapestry"]);
 const doneUpTo = (zone: ZoneKey, n: number) => (id: string) => ROOMS[zone].spots.findIndex((s) => s.id === id) < n;
 
 for (const zone of ZONES) {

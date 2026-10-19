@@ -1,4 +1,4 @@
-// rooms.ts — 마녀의 성 4개 구역·20개 장소(제1화~제20화)·대사 데이터와 방 분위기 단계 (3D 배치는 views/castle/layout.ts)
+// rooms.ts — 마녀의 성 6개 구역·30개 장소(제1화~제30화)·대사 데이터와 방 분위기 단계 (3D 배치는 views/castle/layout.ts)
 
 import type { ZoneKey } from "./progression";
 
@@ -409,7 +409,7 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
         id: "bq_portal",
         name: "차원 성운 스테인드글라스",
         cost: 5,
-        story: "축하합니다! 마녀 셀레네의 성 4대 구역의 모든 인테리어 복원과 스토리를 완성했습니다!",
+        story: "최상층 대연회장이 완성되었습니다! 그런데 차원 스테인드글라스 너머로 연회장 아래 지하로 이어지는 숨겨진 계단이 비칩니다…",
         dialogues: [
           {
             characterId: "selene",
@@ -417,7 +417,189 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
           },
           {
             characterId: "quinn_nero",
-            line: "진정한 마녀의 성 주인이자 전설의 대연금술사로 등극하신 걸 축하드려요! 앞으로도 성 전체 지도에서 언제든 각 방의 스타일을 자유롭게 꾸며보세요!"
+            line: "잠깐, 스테인드글라스에 비친 저 계단… 침입자의 흔적이 지하로 이어져요! 은빛 열쇠의 나머지 반쪽도 거기 있을지 몰라요!"
+          }
+        ]
+      }
+    ]
+  },
+  cellar: {
+    id: "cellar",
+    sectionIcon: "🕯️",
+    shortName: "🕯️ 지하 저장고",
+    mergeBtnLabel: "지하 저장고 합성",
+    castleZoneTitle: "성 지하 1층 · 비밀 저장고",
+    title: "🕯️ 마녀의 성 지하: 비밀 저장고",
+    subtitle: "연회장 아래 숨겨진 계단 끝, 먼지 쌓인 지하 저장고에서 침입자의 흔적을 쫓으세요",
+    spots: [
+      {
+        id: "cel_wine",
+        name: "오크통 와인 셀러",
+        cost: 3,
+        story: "와인 오크통 뒤 벽에서 은빛 열쇠 반쪽이 꼭 맞는 자물쇠 구멍을 찾아냈습니다!",
+        dialogues: [
+          {
+            characterId: "quinn",
+            line: "셀레네, 화분대에서 찾은 은빛 열쇠 반쪽 기억나요? 이 자물쇠 구멍, 모양이 똑같아요!"
+          },
+          {
+            characterId: "nero",
+            line: "나머지 반쪽은 어디 있을까냥? 와인 냄새 사이로 촛농 냄새가 난다냥."
+          }
+        ]
+      },
+      {
+        id: "cel_candle",
+        name: "촛불 제단",
+        cost: 3,
+        story: "촛불 제단에 불을 밝히자 벽에 흑요석 폭약과 같은 검은 그을음이 드러났습니다!",
+        dialogues: [
+          {
+            characterId: "margaret",
+            line: "이 제단은 선대 마녀님께서 쓰시던 곳이에요. 누군가 최근에 촛불을 켠 흔적이 있네요."
+          },
+          {
+            characterId: "selene",
+            line: "그을음 색이 공방 가마솥 밑에서 나온 흑요석 폭약이랑 똑같아… 범인이 여기서 폭약을 다뤘어!"
+          }
+        ]
+      },
+      {
+        id: "cel_passage",
+        name: "비밀 통로 책장 문",
+        cost: 4,
+        story: "책장 문 뒤 비밀 통로 바닥에서 별무늬 은단추 하나가 발견되었습니다!",
+        dialogues: [
+          {
+            characterId: "quinn",
+            line: "이 별무늬 은단추… 궁정 마술사 오베론 님의 예복 단추예요!"
+          },
+          {
+            characterId: "lucian",
+            line: "오베론이라니, 말도 안 되네. 그는 이 성을 수십 년간 지켜 온 마술사일세."
+          }
+        ]
+      },
+      {
+        id: "cel_vault",
+        name: "봉인 금고",
+        cost: 4,
+        story: "봉인 금고를 열자 비전서 마지막 장 대신 '달빛 마탑' 설계도와 나머지 열쇠 반쪽이 나왔습니다!",
+        dialogues: [
+          {
+            characterId: "selene",
+            line: "열쇠 반쪽이 맞춰졌어! 그런데 비전서 마지막 장은 없고 서쪽 마탑 설계도만 남아 있네."
+          },
+          {
+            characterId: "nero",
+            line: "마지막 장은 마탑에 있다는 뜻이다냥! 냄새가 서쪽으로 이어진다냥."
+          }
+        ]
+      },
+      {
+        id: "cel_map",
+        name: "지하 수맥 지도 벽",
+        cost: 5,
+        story: "완성된 은빛 열쇠를 꽂자 지하 수맥 지도가 빛나며 성 서쪽 달빛 마탑으로 가는 길이 열렸습니다!",
+        dialogues: [
+          {
+            characterId: "selene",
+            line: "지하 저장고까지 되찾았어! 이제 달빛 마탑으로 가서 오베론에게 직접 물어보자."
+          },
+          {
+            characterId: "quinn_nero",
+            line: "진실은 마탑 꼭대기에 있어요. 조심해서 올라가요!"
+          }
+        ]
+      }
+    ]
+  },
+  tower: {
+    id: "tower",
+    sectionIcon: "🌙",
+    shortName: "🌙 달빛 마탑",
+    mergeBtnLabel: "달빛 마탑 합성",
+    castleZoneTitle: "성 서쪽 · 달빛 마탑",
+    title: "🌙 마녀의 성 서쪽: 달빛 마탑",
+    subtitle: "오랫동안 봉인되었던 서쪽 마탑을 되살리고 붉은 달의 밤에 일어난 일의 진실을 밝히세요",
+    spots: [
+      {
+        id: "tw_loom",
+        name: "별자리 직조기",
+        cost: 4,
+        story: "멈춰 있던 별자리 직조기가 다시 돌며 마탑의 결계 무늬를 짜기 시작했습니다.",
+        dialogues: [
+          {
+            characterId: "oberon",
+            line: "오, 셀레네 님. 이 낡은 마탑까지 어쩐 일이십니까? 직조기를 고쳐 주셔서 고맙군요."
+          },
+          {
+            characterId: "quinn",
+            line: "오베론 님, 지하 통로에서 당신의 별무늬 단추가 나왔어요. 설명해 주시겠어요?"
+          }
+        ]
+      },
+      {
+        id: "tw_tapestry",
+        name: "태피스트리 홀",
+        cost: 4,
+        story: "새로 짠 태피스트리에 붉은 달의 밤, 공방으로 숨어드는 오베론의 모습이 수놓아졌습니다!",
+        dialogues: [
+          {
+            characterId: "nero",
+            line: "태피스트리가 거짓말을 할 리 없다냥! 그날 밤 그림자는 오베론이었다냥!"
+          },
+          {
+            characterId: "oberon",
+            line: "…그래요, 그날 밤 공방에 들어간 건 접니다. 하지만 이유가 있었습니다."
+          }
+        ]
+      },
+      {
+        id: "tw_carpet",
+        name: "마법 양탄자 라운지",
+        cost: 4,
+        story: "마법 양탄자에 둘러앉아 오베론이 숨겨 온 진실을 털어놓았습니다.",
+        dialogues: [
+          {
+            characterId: "oberon",
+            line: "비전서 마지막 장에는 성을 집어삼킬 저주가 깃들어 있었습니다. 가마솥 불로 태워 없애려다 폭발을 일으키고 말았지요."
+          },
+          {
+            characterId: "selene",
+            line: "그래서 혼자 숨어서 저주를 막으려 했던 거구나… 왜 우리한테 말하지 않았어?"
+          }
+        ]
+      },
+      {
+        id: "tw_mirror",
+        name: "진실의 거울",
+        cost: 5,
+        story: "진실의 거울이 마지막 장에 깃든 저주의 정체, '그림자 왕관'을 비추었습니다!",
+        dialogues: [
+          {
+            characterId: "lucian",
+            line: "그림자 왕관… 옛 왕조를 무너뜨린 저주로군. 혼자서는 감당할 수 없는 힘일세."
+          },
+          {
+            characterId: "margaret",
+            line: "아서 전하께 알려야 해요. 왕실의 마력까지 모아야 정화할 수 있을 거예요."
+          }
+        ]
+      },
+      {
+        id: "tw_crown",
+        name: "달빛 왕관 제단",
+        cost: 6,
+        story: "모두의 마력을 모아 달빛 왕관 제단에서 저주를 정화했습니다! 마녀의 성 6대 구역이 완전히 부활했습니다!",
+        dialogues: [
+          {
+            characterId: "arthur",
+            line: "셀레네, 오베론, 그리고 모두 고맙소. 이제 이 성은 왕국에서 가장 빛나는 곳이 되었소!"
+          },
+          {
+            characterId: "selene",
+            line: "지하 저장고부터 달빛 마탑까지, 성 전체가 진짜로 돌아왔어! 앞으로도 마음껏 꾸며 보자!"
           }
         ]
       }

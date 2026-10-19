@@ -12,20 +12,24 @@ const C = CELL * MAP_SCALE; // 지도 위 한 칸
 // 날개의 입구 홀 위치. 세로 화면을 채우도록 위(공방)→왼쪽(정원)·오른쪽(하버)→아래(연회장)로 늘어놓는다
 // (화면 가로 ≈ x−z, 세로 ≈ x+z. 날개끼리·안뜰과 0.6 이상 떨어짐)
 export const WING_OFFSET: Record<ZoneKey, [number, number]> = {
-  alchemy: [-2.8, -5.4],
-  harbor: [5.0, 1.7],
-  garden: [-4.4, -1.3],
-  banquet: [3.0, 7.4],
+  alchemy: [-9.5, -5.1],
+  harbor: [-2.4, -6.1],
+  garden: [-7.8, -0.6],
+  banquet: [-1.3, 7.4],
+  cellar: [6.0, -0.7],
+  tower: [7.3, 4.7],
 };
 
 // 지도 카메라가 바라보는 점 (날개 전체의 화면 가운데)
-export const MAP_CENTER: [number, number, number] = [0.98, 1, -0.62];
+export const MAP_CENTER: [number, number, number] = [-1.15, 1, -0.9];
 
 export const WING_COLOR: Record<ZoneKey, number> = {
   alchemy: 0x8b5cf6,
   harbor: 0x38bdf8,
   garden: 0x22c55e,
   banquet: 0xf59e0b,
+  cellar: 0xea580c,
+  tower: 0x6366f1,
 };
 
 export function wingBox(zone: ZoneKey): Bounds {

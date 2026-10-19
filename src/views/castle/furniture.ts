@@ -387,10 +387,39 @@ const UNIQUE: Record<string, (g: THREE.Group, M: Mats) => void> = {
   bq_portal: nebulaPortal,
 };
 
+// v3.5 새 구역: 모델이 오기 전 보일 절차적 가구 (기존 종류 바탕 + 장소마다 다른 표식 소품)
+function candles(g: THREE.Group, M: Mats, xs: number[], y: number, z: number): void {
+  for (const x of xs) {
+    put(g, new THREE.CylinderGeometry(0.09, 0.09, 0.4, 8), M.white, x, y + 0.2, z);
+    put(g, new THREE.SphereGeometry(0.09, 8, 6), M.accent, x, y + 0.48, z);
+  }
+}
+const NEW_ZONE_SPOTS: Record<string, { base: string; extra: (g: THREE.Group, M: Mats) => void }> = {
+  cel_wine: { base: "counter", extra: (g, M) => [-1.7, 1.7].forEach((x) => put(g, new THREE.CylinderGeometry(0.45, 0.45, 0.9, 14), M.wood, x, 0.45, -0.6, Math.PI / 2)) },
+  cel_candle: { base: "cauldron", extra: (g, M) => { put(g, new THREE.BoxGeometry(2.2, 0.8, 0.9), M.secondary, 0, 0.4, -1.2); candles(g, M, [-0.7, 0, 0.7], 0.8, -1.2); } },
+  cel_passage: { base: "bookcase", extra: (g, M) => put(g, new THREE.CylinderGeometry(0.12, 0.12, 0.8, 10), M.gold, 1.5, 0.12, 0.9, 0, 0, Math.PI / 2) },
+  cel_vault: { base: "oven", extra: (g, M) => { put(g, new THREE.BoxGeometry(1.2, 0.8, 0.8), M.primary, -1.5, 0.4, 0.8); [0, 1, 2].forEach((i) => put(g, new THREE.CylinderGeometry(0.2, 0.2, 0.06, 12), M.gold, 1.4, 0.03 + i * 0.07, 0.9)); } },
+  cel_map: { base: "window", extra: (g, M) => put(g, new THREE.BoxGeometry(1.6, 0.12, 0.8), M.wood, 0, -1.6, 0.9) },
+  tw_loom: { base: "planter", extra: (g, M) => put(g, new THREE.TorusGeometry(0.6, 0.06, 6, 20), M.gold, 1.5, 0.7, 0.4, 0, Math.PI / 2) },
+  tw_tapestry: { base: "window", extra: (g, M) => [-1.8, 1.8].forEach((x) => put(g, new THREE.BoxGeometry(0.7, 1.8, 0.05), M.secondary, x, -0.9, 0.15)) },
+  tw_carpet: { base: "parasol", extra: (g, M) => put(g, new THREE.CylinderGeometry(1.5, 1.5, 0.03, 28), M.secondary, 0, 0.02, 0.6) },
+  tw_mirror: { base: "fountain", extra: (g, M) => { put(g, new THREE.CircleGeometry(0.8, 24), M.white, 0, 1.6, -1.0); candles(g, M, [-1.5, 1.5], 0, 0.6); } },
+  tw_crown: { base: "cauldron", extra: (g, M) => { put(g, new THREE.CylinderGeometry(0.45, 0.4, 0.3, 8, 1, true), M.gold, 0, 1.9, 0); [0, 1, 2, 3].forEach((i) => put(g, new THREE.ConeGeometry(0.08, 0.25, 6), M.gold, Math.cos(i * 1.57) * 0.42, 2.15, Math.sin(i * 1.57) * 0.42)); } },
+};
+
 // 장소 id → 가구 빌더 (첫 구역의 8곳은 원래 종류별 모델, 나머지 12곳은 장소 전용 모델)
 export const SPOT_BUILDERS: Record<string, (g: THREE.Group, pal: StylePalette) => void> = {
   ...Object.fromEntries(Object.entries(TYPE_OF).map(([id, type]) => [id, (g: THREE.Group, pal: StylePalette) => buildFurniture(g, type, pal)])),
   ...Object.fromEntries(Object.entries(UNIQUE).map(([id, fn]) => [id, (g: THREE.Group, pal: StylePalette) => fn(g, mats(pal))])),
+  ...Object.fromEntries(
+    Object.entries(NEW_ZONE_SPOTS).map(([id, d]) => [
+      id,
+      (g: THREE.Group, pal: StylePalette) => {
+        buildFurniture(g, d.base, pal);
+        d.extra(g, mats(pal));
+      },
+    ]),
+  ),
 };
 
 // ==================== v3.3: CC0 모델 배치 ====================

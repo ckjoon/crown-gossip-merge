@@ -50,9 +50,11 @@ describe("장소 복구", () => {
     expect(ev.find((e) => e.type === "zoneCompleted")).toMatchObject({ revealKey: "garden" });
   });
   test("마지막 구역 완성은 revealKey null", () => {
-    for (const id of Object.keys(s.rooms)) s.rooms[id].done = id !== "bq_portal";
-    const ev = renovate(s, fixedCtx(), { spotId: "bq_portal", styleIdx: 0 });
-    expect(ev.find((e) => e.type === "zoneCompleted")).toMatchObject({ zoneKey: "banquet", revealKey: null });
+    s.playerLv = 20;
+    s.coins = 99999;
+    for (const id of Object.keys(s.rooms)) s.rooms[id].done = id !== "tw_crown";
+    const ev = renovate(s, fixedCtx(), { spotId: "tw_crown", styleIdx: 0 });
+    expect(ev.find((e) => e.type === "zoneCompleted")).toMatchObject({ zoneKey: "tower", revealKey: null });
   });
   test("이미 복구한 장소의 스타일 변경은 무료", () => {
     s.rooms.alc_cauldron = { done: true, styleIdx: 0 };

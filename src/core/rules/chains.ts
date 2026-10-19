@@ -1,6 +1,6 @@
 // chains.ts — 아이템 체인(재료 Lv.1~8, 생성기 ★1~3, 수집 아이템) 데이터와 조회 함수 (v2.5 game.js CHAINS 이전)
 
-import type { ChainId, CoreChain, ZoneKey } from "../types";
+import type { ChainId, CoreChain, GenChain, ZoneKey } from "../types";
 
 export interface ChainItem {
   level: number;
@@ -688,8 +688,8 @@ export function formatGeneratorStars(lv: number): string {
 // 레벨 곡선은 levels.ts (v3.5)
 export { xpToNext as getRequiredXP } from "./levels";
 
-const THEME_GENERATOR: Record<ZoneKey, CoreChain> = { alchemy: "potion", harbor: "bakery", garden: "herb", banquet: "grimoire" };
+const THEME_GENERATOR: Record<ZoneKey, GenChain> = { alchemy: "potion", harbor: "bakery", garden: "herb", banquet: "grimoire", cellar: "candle", tower: "silk" };
 
-export function getGeneratorChainForTheme(zoneKey: ZoneKey): CoreChain {
+export function getGeneratorChainForTheme(zoneKey: ZoneKey): GenChain {
   return THEME_GENERATOR[zoneKey] ?? "potion";
 }

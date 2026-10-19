@@ -37,6 +37,16 @@ const SPOT_BASE: Record<string, { type: string; wallY?: number }> = {
   bq_feast: { type: "parasol" },
   bq_hearth: { type: "oven" },
   bq_portal: { type: "window", wallY: 2.4 },
+  cel_wine: { type: "counter" },
+  cel_candle: { type: "cauldron" },
+  cel_passage: { type: "bookcase" },
+  cel_vault: { type: "oven" },
+  cel_map: { type: "window", wallY: 2.3 },
+  tw_loom: { type: "planter" },
+  tw_tapestry: { type: "window", wallY: 2.4 },
+  tw_carpet: { type: "parasol" },
+  tw_mirror: { type: "fountain" },
+  tw_crown: { type: "cauldron" },
 };
 
 function zoneOfSpot(spotId: string): ZoneKey {
@@ -71,5 +81,17 @@ export const ZONE_LOOK: Record<ZoneKey, ZoneLook> = {
     floorColor1: 0x4c1d95,
     floorColor2: 0x3b0764,
     ambientColor: 0xfde047
+  },
+  cellar: {
+    wallColor: 0x3f1d14,
+    floorColor1: 0x57534e,
+    floorColor2: 0x44403c,
+    ambientColor: 0xfdba74
+  },
+  tower: {
+    wallColor: 0x1e1b4b,
+    floorColor1: 0x3730a3,
+    floorColor2: 0x312e81,
+    ambientColor: 0xa5b4fc
   }
 };

@@ -23,6 +23,8 @@ const STYLES: Record<ZoneKey, ZoneStyle> = {
   harbor: { wall: "rail", wallH: 1.1, wallColor: 0xf8fafc, trim: 0x0ea5e9, glow: [0xfde047, 0xf472b6, 0x38bdf8] },
   garden: { wall: "hedge", wallH: 1.8, wallColor: 0x15803d, trim: 0x166534, glow: [0xf9a8d4, 0xfde047, 0xc4b5fd] },
   banquet: { wall: "stone", wallH: WALL_H, wallColor: ZONE_LOOK.banquet.wallColor, trim: 0xfbbf24, glow: [0xfde047, 0xfbbf24] },
+  cellar: { wall: "stone", wallH: WALL_H, wallColor: 0x7c2d12, trim: 0xa8a29e, glow: [0xfbbf24, 0xf97316] },
+  tower: { wall: "stone", wallH: WALL_H, wallColor: 0x1e1b4b, trim: 0xc4b5fd, glow: [0xa5b4fc, 0xfde68a, 0xf0abfc] },
 };
 
 const T = 0.3; // 벽 두께
@@ -240,8 +242,20 @@ function buildOrnament(g: THREE.Group, zone: ZoneKey, e: EdgeSpec): void {
       b.position.set(bx + ix * (T / 2 + 0.2), 2.63, bz + iz * (T / 2 + 0.2));
       g.add(tag(b, e.mod, "ornament"));
     }
-  } else if (zone === "banquet") {
-    at(box(1.1, 2.0, 0.06, std(0x7f1d1d)), 2.6, T / 2 + 0.04);
+  } else if (zone === "cellar") {
+    // 벽 촛대: 쇠 받침 + 촛불
+    at(box(0.5, 0.12, 0.4, M.trim), 2.2, T / 2 + 0.2);
+    for (const k of [0, 1]) {
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.36, 8), std(0xfffbeb));
+      const [bx, bz] = alongEdge(e, 0.15 + (k - 0.5) * 0.06);
+      c.position.set(bx + ix * (T / 2 + 0.2), 2.44, bz + iz * (T / 2 + 0.2));
+      g.add(tag(c, e.mod, "ornament"));
+      const f = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 6), M.glow[k % M.glow.length]);
+      f.position.set(c.position.x, 2.7, c.position.z);
+      g.add(tag(f, e.mod, "ornament"));
+    }
+  } else if (zone === "banquet" || zone === "tower") {
+    at(box(1.1, 2.0, 0.06, std(zone === "tower" ? 0x312e81 : 0x7f1d1d)), 2.6, T / 2 + 0.04);
     const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.28), M.glow[0]);
     at(star, 2.9, T / 2 + 0.12);
   } else if (zone === "harbor") {

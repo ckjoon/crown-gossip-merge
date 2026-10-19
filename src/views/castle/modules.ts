@@ -80,6 +80,22 @@ export const ZONE_MODULES: Record<ZoneKey, ModuleDef[]> = {
     m("bq_hearth", 1, -1, "alcove", 3),
     m("bq_portal", 0, -2, "tower", 1),
   ],
+  cellar: [
+    hall(),
+    m("cel_wine", -2, 0, "corridor", 0, 2, 1),
+    m("cel_candle", 0, -1, "alcove", 0),
+    m("cel_passage", -2, -1, "corridor", 1),
+    m("cel_vault", 1, 0, "alcove", 0),
+    m("cel_map", 1, -1, "alcove", 4),
+  ],
+  tower: [
+    hall(),
+    m("tw_loom", 0, -1, "tower", 0),
+    m("tw_tapestry", -1, -1, "alcove", 1),
+    m("tw_carpet", 1, 0, "terrace", 0, 1, 2),
+    m("tw_mirror", 0, -2, "alcove", 1),
+    m("tw_crown", 1, -1, "tower", 1),
+  ],
 };
 
 export function moduleCells(d: ModuleDef): [number, number][] {

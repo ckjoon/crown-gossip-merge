@@ -19,12 +19,11 @@ const WEAPON = /Sword|Shield|Axe|Crossbow|Knife|Throwable/;
 
 const io = new NodeIO();
 
-// 애니메이션을 지울 때 샘플러가 쓰던 키프레임 데이터(accessor)까지 함께 지운다 (안 그러면 파일에 남음)
+// 애니메이션을 지울 때 샘플러·채널까지 지워야 prune이 키프레임 데이터(accessor)를 치운다
+// (accessor는 클립끼리 공유되므로 직접 지우면 남긴 클립이 깨진다)
 function dropAnimation(a) {
-  for (const smp of a.listSamplers()) {
-    smp.getInput()?.dispose();
-    smp.getOutput()?.dispose();
-  }
+  for (const c of a.listChannels()) c.dispose();
+  for (const smp of a.listSamplers()) smp.dispose();
   a.dispose();
 }
 
@@ -42,14 +41,11 @@ for (const b of BODIES) {
 const doc = await io.read(path.join(SRC, "Mage.glb"));
 const root = doc.getRoot();
 for (const a of root.listAnimations()) if (!CLIPS.includes(a.getName())) dropAnimation(a);
+// 메시·스킨은 노드에서 떼어 내기만 하고 실제 정리는 prune에 맡긴다 (직접 지우면 끊긴 참조가 남음)
 for (const n of root.listNodes()) {
   if (n.getMesh()) n.setMesh(null);
   if (n.getSkin()) n.setSkin(null);
 }
-for (const m of root.listMeshes()) m.dispose();
-for (const t of root.listTextures()) t.dispose();
-for (const m of root.listMaterials()) m.dispose();
-for (const s of root.listSkins()) s.dispose();
 await doc.transform(prune({ keepLeaves: true }), dedup());
 await io.write(path.join(OUT, "anims.glb"), doc);
 console.log("anims", fs.statSync(path.join(OUT, "anims.glb")).size);

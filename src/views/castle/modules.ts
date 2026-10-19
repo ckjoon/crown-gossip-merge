@@ -31,6 +31,7 @@ export interface EdgeSpec {
   x: number; // 변 중심 (월드)
   z: number;
   along: "x" | "z"; // 변이 뻗는 방향
+  other?: number; // 맞닿은 이웃 조각 (없으면 바깥)
 }
 
 export interface Bounds {
@@ -140,7 +141,7 @@ export function moduleEdges(defs: ModuleDef[], states: ModuleState[]): EdgeSpec[
           kind = defs[o!].parent === i || d.parent === o ? "door" : "open";
         } else if (far) kind = o === undefined ? "wall" : "low";
         else kind = "curb";
-        out.push({ mod: i, kind, side, x: (cx + dx / 2) * CELL, z: (cz + dz / 2) * CELL, along: dx === 0 ? "x" : "z" });
+        out.push({ mod: i, kind, side, x: (cx + dx / 2) * CELL, z: (cz + dz / 2) * CELL, along: dx === 0 ? "x" : "z", other: o });
       }
     }
   });

@@ -13,7 +13,7 @@ import { ModelLibrary } from "./models/library";
 import { Ambience } from "./ambience";
 import { addOutline, disposeGroup, toonify } from "./toon";
 import { setDecorGlow } from "./decor";
-import { ZONE_MODULES, moduleIndexOf, moduleStates, panClamp, zoneBounds, fitZoom, type Bounds, type ModuleState } from "./modules";
+import { ZONE_MODULES, moduleIndexOf, moduleStates, panClamp, zoneBounds, frameZone, ROOM_CAM_DIR, type Bounds, type ModuleState } from "./modules";
 import { animateModuleAppear, animateModuleBuild, buildModules } from "./roomBuilder";
 import { ZONE_RESIDENT } from "./resident";
 import { CharacterActor, walkPath, walkTargets, zoneGuests } from "./actor";
@@ -21,7 +21,7 @@ import { CharacterLibrary } from "./characters3d";
 
 const DEFAULT_CAM = new THREE.Vector3(10, 10.5, 10);
 // 방은 조금 위에서 내려다보고(바닥이 화면을 더 채우게) 확대한 뒤, 손가락으로 끌어 둘러본다
-const ROOM_CAM_OFFSET = new THREE.Vector3(10, 13.5, 10);
+const ROOM_CAM_OFFSET = new THREE.Vector3(...ROOM_CAM_DIR);
 const ROOM_ZOOM = 1.4;
 
 function wait(ms: number): Promise<void> {
@@ -320,10 +320,13 @@ export class CastleView {
 
   // 지어진 조각 + 폐허 범위로 카메라 기준점·줌·끌기 범위·그림자 범위를 맞춘다
   private updateFraming(): void {
-    this.bounds = zoneBounds(ZONE_MODULES[this.zone], this.states);
-    const b = this.bounds;
-    this.fit = fitZoom(b);
-    this.home.set((b.minX + b.maxX) / 2, 1, (b.minZ + b.maxZ) / 2);
+    const defs = ZONE_MODULES[this.zone];
+    const b = zoneBounds(defs, this.states);
+    // 화면에 보이는 모양의 가운데를 바라보고, 투영 폭에 맞춰 줌 (끌어서 둘러보는 범위는 그 점을 포함하게)
+    const f = frameZone(defs, this.states);
+    this.fit = f.zoom;
+    this.home.set(f.x, f.y, f.z);
+    this.bounds = { minX: Math.min(b.minX, f.x), maxX: Math.max(b.maxX, f.x), minZ: Math.min(b.minZ, f.z), maxZ: Math.max(b.maxZ, f.z) };
     const dl = this.dirLight;
     if (dl) {
       const r = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) * 0.8 + 3;

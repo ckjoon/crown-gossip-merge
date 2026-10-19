@@ -35,13 +35,13 @@
   {:else if tier}
     <div class="insp-icon">{@html getItemSVG(item.chain, item.level, true)}</div>
     <div class="insp-details">
-      <div class="insp-title-row"><strong>{tier.name}</strong><span class="insp-lv-badge">{formatGeneratorStars(item.level)}</span></div>
-      <p>바로 Lv.{range!.min}~{range!.max} · ⚡배속 최대 Lv.{range!.boostMax}</p>
+      <div class="insp-title-row"><strong>{tier.name}</strong></div>
+      <p><span class="insp-lv-badge">{formatGeneratorStars(item.level)}</span> Lv.{range!.min}~{range!.max} · 배속 Lv.{range!.boostMax}</p>
     </div>
     <div class="insp-actions">
-      <button class="insp-btn spawn-btn" onclick={(e) => act(spawnFromGenerator, { cell: cell() }, pointOf(e))}>⚡ 생성 ×{$game.boostMultiplier}</button>
-      <button class="insp-btn store-btn" title="이 생성기로 만드는 것" onclick={() => { app().sfx.tap(); ui.codexFocus = item!.chain; ui.modal = "codex"; }}>📜</button>
-      <button class="insp-btn store-btn" onclick={(e) => { act(storeToBag, { cell: cell() }, pointOf(e)); afterRemove(); }}>🎒보관</button>
+      <button class="insp-btn spawn-btn" onclick={(e) => act(spawnFromGenerator, { cell: cell() }, pointOf(e))}>⚡생성{#if $game.boostMultiplier > 1} ×{$game.boostMultiplier}{/if}</button>
+      <button class="insp-btn store-btn" title="이 생성기로 만드는 것" aria-label="이 생성기로 만드는 것" onclick={() => { app().sfx.tap(); ui.codexFocus = item!.chain; ui.modal = "codex"; }}>📜</button>
+      <button class="insp-btn store-btn" title="보관함에 넣기" aria-label="보관함에 넣기" onclick={(e) => { act(storeToBag, { cell: cell() }, pointOf(e)); afterRemove(); }}>🎒</button>
     </div>
   {:else if meta}
     <div class="insp-icon">{@html getItemSVG(item.chain, item.level, false)}</div>

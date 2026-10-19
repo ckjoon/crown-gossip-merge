@@ -4,7 +4,6 @@ import type { ZoneKey } from "../../src/core/types";
 import {
   CELL,
   ZONE_MODULES,
-  fitZoom,
   moduleCells,
   moduleEdges,
   moduleStates,
@@ -99,19 +98,11 @@ test("벽·문: 홀만 있으면 문 없음, 조각 1이 지어지면 홀과의 
   expect(all.filter((e) => e.kind === "door").length).toBe(5);
 });
 
-test("카메라 범위: 지어진 곳 + 폐허만, 홀만이면 최대 확대, 완성이면 넓게", () => {
+test("카메라 범위: 지어진 곳 + 폐허만 (줌은 v3.7 frameZone)", () => {
   const defs = ZONE_MODULES.alchemy;
   const b0 = zoneBounds(defs, moduleStates("alchemy", doneUpTo("alchemy", 0)));
   // 홀(0,0) + 폐허 조각1(-1,0)
   expect(b0).toEqual({ minX: -1.5 * CELL, maxX: 0.5 * CELL, minZ: -0.5 * CELL, maxZ: 0.5 * CELL });
-  const hallOnly = { minX: -2.5, maxX: 2.5, minZ: -2.5, maxZ: 2.5 };
-  expect(fitZoom(hallOnly)).toBe(1.8);
-  for (const zone of ZONES) {
-    const full = zoneBounds(ZONE_MODULES[zone], moduleStates(zone, doneUpTo(zone, 5)));
-    const z = fitZoom(full);
-    expect(z).toBeGreaterThanOrEqual(0.85);
-    expect(z).toBeLessThanOrEqual(1.1);
-  }
   expect(panClamp(b0, 100, -100)).toEqual([b0.maxX, b0.minZ]);
   expect(panClamp(b0, -1, 0)).toEqual([-1, 0]);
 });
@@ -146,3 +137,41 @@ for (const zone of ZONES) {
     }
   });
 }
+
+// ---- v3.7: 화면에 보이는 모양 기준 카메라 (ㄱ자 구역이 한쪽으로 치우치지 않게) ----
+import { frameZone, screenAxes, ROOM_CAM_DIR } from "../../src/views/castle/modules";
+
+test("frameZone: 바라보는 점에서 지어진·폐허 조각 바닥이 화면 가로 가운데 (치우침 ≤ 10%), 줌은 0.75~1.45", () => {
+  const { r } = screenAxes(ROOM_CAM_DIR);
+  for (const zone of ZONES) {
+    for (let n = 0; n <= 5; n++) {
+      const defs = ZONE_MODULES[zone];
+      const states = moduleStates(zone, doneUpTo(zone, n));
+      const f = frameZone(defs, states);
+      let lo = Infinity;
+      let hi = -Infinity;
+      defs.forEach((d, i) => {
+        if (states[i] === "ghost") return;
+        for (const [x, z] of [
+          [d.gx - 0.5, d.gz - 0.5],
+          [d.gx + d.w - 0.5, d.gz - 0.5],
+          [d.gx - 0.5, d.gz + d.d - 0.5],
+          [d.gx + d.w - 0.5, d.gz + d.d - 0.5],
+        ]) {
+          const sx = (x * CELL - f.x) * r[0] + (z * CELL - f.z) * r[2]; // r은 바닥과 평행 (r[1] = 0)
+          lo = Math.min(lo, sx);
+          hi = Math.max(hi, sx);
+        }
+      });
+      expect(Math.abs(lo + hi) / (hi - lo), `${zone} ${n}`).toBeLessThanOrEqual(0.1);
+      expect(f.zoom).toBeGreaterThanOrEqual(0.75);
+      expect(f.zoom).toBeLessThanOrEqual(1.45);
+    }
+  }
+});
+
+test("frameZone: 홀 + 첫 폐허만 있을 땐 확대 상한(1.45) — 캐릭터 모자가 화면을 덮지 않게", () => {
+  const f = frameZone(ZONE_MODULES.alchemy, moduleStates("alchemy", doneUpTo("alchemy", 0)));
+  expect(f.zoom).toBeLessThanOrEqual(1.45);
+  expect(f.y).toBe(1);
+});

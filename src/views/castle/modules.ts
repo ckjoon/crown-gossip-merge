@@ -186,11 +186,61 @@ export function zoneBounds(defs: ModuleDef[], states: ModuleState[]): Bounds {
   return b;
 }
 
-// 화면 가로는 아이소 대각선(x−z) 방향이라 두 변 길이의 합에 비례해 줄인다 (넓어지면 끌어서 둘러봄)
-export function fitZoom(b: Bounds): number {
-  return Math.max(0.85, Math.min(1.8, 32 / (b.maxX - b.minX + (b.maxZ - b.minZ))));
-}
-
 export function panClamp(b: Bounds, x: number, z: number): [number, number] {
   return [Math.max(b.minX, Math.min(b.maxX, x)), Math.max(b.minZ, Math.min(b.maxZ, z))];
+}
+
+// ---- v3.7: 화면에 보이는 모양 기준 카메라 ----
+// 방 카메라 방향 (바라보는 점 → 카메라). CastleView의 ROOM_CAM_OFFSET과 같다
+export const ROOM_CAM_DIR: [number, number, number] = [10, 13.5, 10];
+// 줌 1일 때 화면 가로에 보이는 월드 폭 (CastleView.resize의 세로 화면 최소 반폭 7.5 × 2)
+const VIEW_W = 15;
+// 투영 폭 대비 화면 폭 (1보다 작으면 양옆 여백) — 아주 큰 방만 최소 줌에 걸려 끌어서 둘러봄
+const FRAME_OVERFLOW = 0.95;
+export const FRAME_ZOOM_MIN = 0.75;
+export const FRAME_ZOOM_MAX = 1.45;
+
+type V3 = [number, number, number];
+
+// 카메라 화면축: r = 화면 오른쪽(바닥과 평행), u = 화면 위
+export function screenAxes(dir: V3): { r: V3; u: V3 } {
+  const len = Math.hypot(...dir);
+  const f: V3 = [-dir[0] / len, -dir[1] / len, -dir[2] / len];
+  // r = f × (0,1,0)
+  const rx = -f[2];
+  const rz = f[0];
+  const rl = Math.hypot(rx, rz);
+  const r: V3 = [rx / rl, 0, rz / rl];
+  // u = r × f
+  const u: V3 = [r[1] * f[2] - r[2] * f[1], r[2] * f[0] - r[0] * f[2], r[0] * f[1] - r[1] * f[0]];
+  return { r, u };
+}
+
+// 지어진·폐허 조각 바닥을 화면 가로축으로 투영해, 보이는 모양의 가운데를 바라보는 점(y=1)으로, 투영 폭으로 줌을 정한다
+// (상자 중심을 쓰면 ㄱ자 구역은 한쪽이 잘리고 반대쪽이 빔)
+export function frameZone(defs: ModuleDef[], states: ModuleState[]): { x: number; y: number; z: number; zoom: number } {
+  const { r } = screenAxes(ROOM_CAM_DIR);
+  const gl = Math.hypot(ROOM_CAM_DIR[0], ROOM_CAM_DIR[2]);
+  const g: [number, number] = [ROOM_CAM_DIR[0] / gl, ROOM_CAM_DIR[2] / gl]; // 바닥에서 카메라 쪽(화면 아래) 방향
+  let sLo = Infinity;
+  let sHi = -Infinity;
+  let tLo = Infinity;
+  let tHi = -Infinity;
+  defs.forEach((d, i) => {
+    if (states[i] === "ghost") return;
+    for (const x of [d.gx - 0.5, d.gx + d.w - 0.5])
+      for (const z of [d.gz - 0.5, d.gz + d.d - 0.5]) {
+        const s = x * CELL * r[0] + z * CELL * r[2];
+        const t = x * CELL * g[0] + z * CELL * g[1];
+        sLo = Math.min(sLo, s);
+        sHi = Math.max(sHi, s);
+        tLo = Math.min(tLo, t);
+        tHi = Math.max(tHi, t);
+      }
+  });
+  if (!isFinite(sLo)) return { x: 0, y: 1, z: 0, zoom: FRAME_ZOOM_MAX };
+  const sc = (sLo + sHi) / 2;
+  const tc = (tLo + tHi) / 2;
+  const zoom = Math.max(FRAME_ZOOM_MIN, Math.min(FRAME_ZOOM_MAX, (VIEW_W * FRAME_OVERFLOW) / (sHi - sLo)));
+  return { x: sc * r[0] + tc * g[0], y: 1, z: sc * r[2] + tc * g[1], zoom };
 }

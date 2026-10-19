@@ -81,3 +81,15 @@ test("캐릭터 메시는 그림자 맵에 그리지 않음 (그림자는 멈춰
   expect(meshes.length).toBeGreaterThan(10);
   for (const m of meshes) expect(m.castShadow).toBe(false);
 });
+
+// ---- v3.7 ----
+test("탭 대사: 퀸·네로가 함께 한 대사(quinn_nero)도 퀸과 네로 각자의 탭 대사 후보", () => {
+  const all = Object.fromEntries((Object.keys(ROOMS) as ZoneKey[]).flatMap((z) => ROOMS[z].spots.map((s) => [s.id, { done: true, styleIdx: 0 }])));
+  const together = (Object.keys(ROOMS) as ZoneKey[]).flatMap((z) => ROOMS[z].spots.flatMap((s) => s.dialogues.filter((d) => d.characterId === "quinn_nero").map((d) => d.line)));
+  expect(together.length).toBeGreaterThan(0);
+  for (const id of ["quinn", "nero"]) {
+    const seen = new Set<string>();
+    for (let i = 0; i < 400; i++) seen.add(tapLine(id, all, () => i / 400));
+    for (const line of together) expect(seen, id).toContain(line);
+  }
+});

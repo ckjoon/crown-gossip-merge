@@ -109,7 +109,8 @@
   }
   function panUp(e: PointerEvent) {
     if (!panFrom || e.pointerId !== panFrom.id) return;
-    const tapped = !panFrom.moved;
+    // 취소된 터치(제스처·알림창)는 탭이 아님
+    const tapped = !panFrom.moved && e.type !== "pointercancel";
     panFrom = null;
     // 끌지 않은 탭이면 캐릭터 인사 (손 흔들기 + 말풍선)
     if (!tapped || !view) return;

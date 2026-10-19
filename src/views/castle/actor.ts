@@ -2,6 +2,7 @@
 // 걷기 목표는 지어진 조각 칸의 빈 자리(가구는 칸 가운데)에서만 고른다
 
 import * as THREE from "three";
+import { gsap } from "gsap";
 import { ROOMS } from "../../core/rules/rooms";
 import type { SpotState, ZoneKey } from "../../core/types";
 import { CELL, ZONE_MODULES, moduleCells, type ModuleState } from "./modules";
@@ -70,11 +71,12 @@ export function zoneGuests(zone: ZoneKey, rooms: Record<string, SpotState>, resi
   return out.slice(0, 2);
 }
 
-// 탭했을 때 말풍선: 이미 본 이야기에서 그 캐릭터가 한 말 중 하나 (없으면 인사)
+// 탭했을 때 말풍선: 이미 본 이야기에서 그 캐릭터가 한 말 중 하나 (없으면 인사). 퀸·네로가 함께 한 말은 둘 다의 대사
 export function tapLine(id: string, rooms: Record<string, SpotState>, rng: () => number = Math.random): string {
   const lines: string[] = [];
+  const speaks = (who: string) => who === id || (who === "quinn_nero" && (id === "quinn" || id === "nero"));
   for (const z of Object.keys(ROOMS) as ZoneKey[])
-    for (const s of ROOMS[z].spots) if (rooms[s.id]?.done) for (const d of s.dialogues) if (d.characterId === id) lines.push(d.line);
+    for (const s of ROOMS[z].spots) if (rooms[s.id]?.done) for (const d of s.dialogues) if (speaks(d.characterId)) lines.push(d.line);
   if (!lines.length) return "안녕하세요! 오늘도 성을 함께 꾸며 봐요.";
   return lines[Math.min(lines.length - 1, Math.floor(rng() * lines.length))];
 }
@@ -152,8 +154,13 @@ export class CharacterActor {
     this.faceCamera();
   }
 
+  // 카메라(+x·+z 쪽) 쪽으로 가까운 방향으로 0.25초 동안 돌아선다
   private faceCamera(): void {
-    this.group.rotation.y = Math.PI / 4; // 카메라는 +x·+z 쪽에서 내려다본다
+    const cur = this.group.rotation.y;
+    let diff = Math.PI / 4 - cur;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+    gsap.killTweensOf(this.group.rotation);
+    gsap.to(this.group.rotation, { y: cur + diff, duration: 0.25, ease: "power2.out" });
   }
 
   // dt: 60fps 기준 프레임 수 (CastleView.step과 같은 단위)
@@ -211,6 +218,7 @@ export class CharacterActor {
   }
 
   dispose(): void {
+    gsap.killTweensOf(this.group.rotation);
     this.built.mixer?.stopAllAction();
     this.group.removeFromParent();
     this.group.traverse((o) => {

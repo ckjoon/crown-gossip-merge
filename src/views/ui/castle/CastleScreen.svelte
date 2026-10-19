@@ -12,11 +12,11 @@
   import type { ZoneKey } from "../../../core/types";
   import { goZone, openStyle, pickStyle, cancelStyle, confirmStyle, storyNext } from "./castleActions";
   import RewardOverlay from "./RewardOverlay.svelte";
-  import { coachStep } from "../coach";
+  import { coachFor } from "../coach";
 
   const game = app().store;
   // 첫 복구 코치: 코인이 모였으면 다음 이야기 버튼이 반짝
-  const coachCastle = $derived(coachStep($game)?.step === "castle");
+  const coachCastle = $derived(coachFor($game)?.step === "castle");
   let host = $state<HTMLDivElement>();
   let view = $state<CastleView | null>(null);
   let shown = { map: false, zone: "" };

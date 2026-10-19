@@ -3,7 +3,6 @@
 // 카메라는 +x·+z 쪽에서 내려다보므로 벽은 먼 쪽(-x·-z) 변에만 세우고, 가까운 쪽은 낮은 턱만 둔다
 
 import type { ZoneKey } from "../../core/types";
-import { ROOMS } from "../../core/rules/rooms";
 
 export const CELL = 5; // 격자 한 칸 = 월드 5단위
 export const WALL_H = 4.2;

@@ -241,7 +241,7 @@ export class CastleView {
   // 있어야 할 캐릭터를 맞춘다: 모델이 준비된 캐릭터는 바로, 아니면 불러온 뒤 (그 사이 구역이 바뀌면 무시)
   private syncActors(): void {
     if (this.mode !== "room") return;
-    const resident = ZONE_RESIDENT[this.zone].id;
+    const { id: resident, pos: home } = ZONE_RESIDENT[this.zone];
     const want = [resident, ...zoneGuests(this.zone, this.rooms, resident)];
     for (const a of this.actors.filter((x) => !want.includes(x.id))) a.dispose();
     this.actors = this.actors.filter((x) => want.includes(x.id));
@@ -253,14 +253,14 @@ export class CastleView {
     const missing = want.filter((id) => !this.actors.some((a) => a.id === id));
     if (!missing.length) return;
     const token = ++this.actorToken;
-    const spawn = () => {
+    const spawn = (ids: string[]) => {
       if (token !== this.actorToken || this.mode !== "room") return;
-      for (const id of missing) {
+      for (const id of ids) {
         if (this.actors.some((a) => a.id === id)) continue;
         const built = CharacterLibrary.build(id);
         if (!built) continue;
         toonify(built.root);
-        const at: [number, number] = id === resident ? [1.3, 1.3] : targets[(this.actors.length * 3 + 1) % Math.max(1, targets.length)] ?? [1.3, 1.3];
+        const at: [number, number] = id === resident ? home : targets[(this.actors.length * 3 + 1) % Math.max(1, targets.length)] ?? home;
         const actor = new CharacterActor(id, built, at);
         actor.setTargets(targets, pathOf);
         this.roomGroup.add(actor.group);
@@ -269,8 +269,10 @@ export class CastleView {
       }
       this.refreshShadowsFor(600);
     };
-    if (missing.every((id) => CharacterLibrary.ready(id))) spawn();
-    else CharacterLibrary.preload(missing).then(spawn);
+    // 준비된 캐릭터부터 바로, 나머지는 각자 모델(과 옷 색)이 준비되는 대로 — 가장 늦은 캐릭터를 다 같이 기다리지 않게
+    const now = missing.filter((id) => CharacterLibrary.ready(id));
+    if (now.length) spawn(now);
+    for (const id of missing.filter((x) => !now.includes(x))) void CharacterLibrary.preload([id]).then(() => spawn([id]));
   }
 
   // 화면 좌표로 캐릭터 고르기 (탭해서 인사)

@@ -62,14 +62,41 @@ function mesh(geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: numb
   return m;
 }
 
+// 지도 재질은 한 번만 만들어 계속 쓴다 (지도를 열 때마다 새로 만들면 해제되지 않고 쌓임). 공유 표시로 해제 대상에서 뺀다
+const shared = <T extends THREE.Material>(m: T): T => ((m.userData.shared = true), m);
+let common: Record<"ruin" | "ghost" | "line" | "gold" | "island" | "stone" | "basin" | "water" | "path", THREE.Material> | null = null;
+function commonMats() {
+  common ??= {
+    ruin: shared(std(0x64748b, { roughness: 0.9 })),
+    ghost: shared(new THREE.MeshBasicMaterial({ color: 0xc4b5fd, transparent: true, opacity: 0.12, depthWrite: false })),
+    line: shared(new THREE.LineDashedMaterial({ color: 0xe9d5ff, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: 0.7 })),
+    gold: shared(std(0xfbbf24, { metalness: 0.5, roughness: 0.3 })),
+    island: shared(std(0x1e1b3a, { roughness: 0.9 })),
+    stone: shared(std(0x94a3b8)),
+    basin: shared(std(0xe2e8f0)),
+    water: shared(std(0x38bdf8, { emissive: 0x38bdf8, emissiveIntensity: 0.5 })),
+    path: shared(std(0x475569)),
+  };
+  return common;
+}
+const wingMats = new Map<ZoneKey, { built: THREE.Material; roof: THREE.Material }>();
+function wingMat(zone: ZoneKey) {
+  let w = wingMats.get(zone);
+  if (!w) {
+    w = { built: shared(std(WING_COLOR[zone])), roof: shared(std(new THREE.Color(WING_COLOR[zone]).multiplyScalar(0.6).getHex())) };
+    wingMats.set(zone, w);
+  }
+  return w;
+}
+
 function buildWing(group: THREE.Group, zone: ZoneKey, rooms: Record<string, SpotState>, unlocked: boolean): void {
   const [ox, oz] = WING_OFFSET[zone];
   const states = moduleStates(zone, (id) => !!rooms[id]?.done, unlocked);
-  const builtMat = std(WING_COLOR[zone]);
-  const roofMat = std(new THREE.Color(WING_COLOR[zone]).multiplyScalar(0.6).getHex());
-  const ruinMat = std(0x64748b, { roughness: 0.9 });
-  const ghostMat = new THREE.MeshBasicMaterial({ color: 0xc4b5fd, transparent: true, opacity: 0.12, depthWrite: false });
-  const lineMat = new THREE.LineDashedMaterial({ color: 0xe9d5ff, dashSize: 0.18, gapSize: 0.12, transparent: true, opacity: 0.7 });
+  const M = commonMats();
+  const { built: builtMat, roof: roofMat } = wingMat(zone);
+  const ruinMat = M.ruin;
+  const ghostMat = M.ghost;
+  const lineMat = M.line;
   ZONE_MODULES[zone].forEach((d, i) => {
     const st = states[i];
     const tag = (o: THREE.Object3D, role: string) => {
@@ -109,7 +136,7 @@ function buildWing(group: THREE.Group, zone: ZoneKey, rooms: Record<string, Spot
   });
   if (!unlocked) {
     const [px, , pz] = wingPinPos(zone);
-    const gold = std(0xfbbf24, { metalness: 0.5, roughness: 0.3 });
+    const gold = commonMats().gold;
     const body = mesh(new THREE.BoxGeometry(0.7, 0.55, 0.3), gold, px, 1.0, pz);
     const shackle = mesh(new THREE.TorusGeometry(0.22, 0.06, 8, 16, Math.PI), gold, px, 1.27, pz);
     for (const o of [body, shackle]) {
@@ -136,19 +163,19 @@ export function buildFloorplan(group: THREE.Group, rooms: Record<string, SpotSta
   const maxX = Math.max(1.5, ...all.map((b) => b.maxX)) + 1;
   const minZ = Math.min(-1.5, ...all.map((b) => b.minZ)) - 1;
   const maxZ = Math.max(1.5, ...all.map((b) => b.maxZ)) + 1;
-  const island = mesh(new THREE.BoxGeometry(maxX - minX, 0.4, maxZ - minZ), std(0x1e1b3a, { roughness: 0.9 }), (minX + maxX) / 2, -0.2, (minZ + maxZ) / 2);
+  const M = commonMats();
+  const island = mesh(new THREE.BoxGeometry(maxX - minX, 0.4, maxZ - minZ), M.island, (minX + maxX) / 2, -0.2, (minZ + maxZ) / 2);
   island.userData.noOutline = true;
   group.add(island);
 
-  const stone = std(0x94a3b8);
-  const plaza = mesh(new THREE.BoxGeometry(3, 0.2, 3), stone, 0, 0.1, 0);
-  const basin = mesh(new THREE.CylinderGeometry(0.8, 0.9, 0.35, 20), std(0xe2e8f0), 0, 0.35, 0);
-  const water = mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.05, 20), std(0x38bdf8, { emissive: 0x38bdf8, emissiveIntensity: 0.5 }), 0, 0.53, 0);
+  const plaza = mesh(new THREE.BoxGeometry(3, 0.2, 3), M.stone, 0, 0.1, 0);
+  const basin = mesh(new THREE.CylinderGeometry(0.8, 0.9, 0.35, 20), M.basin, 0, 0.35, 0);
+  const water = mesh(new THREE.CylinderGeometry(0.65, 0.65, 0.05, 20), M.water, 0, 0.53, 0);
   water.userData.noOutline = true;
   group.add(plaza, basin, water);
 
   // 안뜰에서 각 날개 입구 홀로 가는 길
-  const pathMat = std(0x475569);
+  const pathMat = M.path;
   for (const z of Object.keys(WING_OFFSET) as ZoneKey[]) {
     const [hx, hz] = WING_OFFSET[z];
     const len = Math.hypot(hx, hz);

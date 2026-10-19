@@ -18,6 +18,8 @@
   });
   const others = (Object.keys(CHAINS) as ChainId[]).filter((k) => !CHAINS[k].generator && k !== "combo");
   let listEl: HTMLDivElement | undefined = $state();
+  // 다른 모달로 바뀌어 닫혀도 다음에 📖로 열 때 지난 생성기에 머물지 않게
+  $effect(() => () => (ui.codexFocus = null));
   $effect(() => {
     const f = ui.codexFocus;
     if (!f || !listEl) return;

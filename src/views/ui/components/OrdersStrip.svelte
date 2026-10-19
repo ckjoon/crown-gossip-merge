@@ -2,11 +2,11 @@
   import { app } from "../context";
   import { computeWanted } from "../../../core/actions/orders";
   import OrderCard from "./OrderCard.svelte";
-  import { coachStep } from "../coach";
+  import { coachFor } from "../coach";
 
   const game = app().store;
   const wanted = $derived(computeWanted($game));
-  const coachOrder = $derived(coachStep($game)?.order ?? -1);
+  const coachOrder = $derived(coachFor($game)?.order ?? -1);
 </script>
 
 <div class="gh-orders-strip">

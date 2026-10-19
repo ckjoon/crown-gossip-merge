@@ -75,3 +75,16 @@ test("색 변환은 피부색을 지키고 옷 색만 바꿈", () => {
   expect(out).not.toEqual(purple);
   expect(recolorPixel(...purple, 0, 1)).toEqual(purple);
 });
+
+// v3.7.1: 색 변환을 여러 조각으로 나눠 처리해도(로딩 중 프레임 사이사이) 한 번에 한 것과 같음
+import { recolorPixels } from "../../src/views/castle/characters3d";
+test("recolorPixels: 구간을 나눠 처리해도 결과가 같음", () => {
+  const n = 37;
+  const src = new Uint8ClampedArray(n * 4).map((_, i) => (i * 53) % 256);
+  const whole = src.slice();
+  recolorPixels(whole, 0, n, 120, 1.2);
+  const parts = src.slice();
+  for (let i = 0; i < n; i += 5) recolorPixels(parts, i, Math.min(n, i + 5), 120, 1.2);
+  expect([...parts]).toEqual([...whole]);
+  expect([...whole]).not.toEqual([...src]);
+});

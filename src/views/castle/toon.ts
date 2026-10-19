@@ -80,13 +80,16 @@ export function addOutline(root: THREE.Object3D, thickness = 0.03): void {
   }
 }
 
-// 그룹이 쓰던 기하를 해제한다 (외곽선은 기하를 공유하므로 한 번만)
+// 그룹이 쓰던 기하(메시·점선)와 그림자 맵을 해제한다 (외곽선은 기하를 공유하므로 한 번만)
 export function disposeGroup(root: THREE.Object3D): void {
   const seen = new Set<THREE.BufferGeometry>();
   root.traverse((o) => {
     const mesh = o as THREE.Mesh;
+    // 그림자를 그리는 조명은 그림자 맵(렌더 타깃)을 따로 갖는다
+    const light = o as THREE.DirectionalLight;
+    if (light.isLight && light.shadow?.map) light.shadow.dispose();
     // 공유 모델(ModelLibrary)의 기하는 다른 장소도 쓰므로 해제하지 않는다
-    if (mesh.isMesh && mesh.geometry && !mesh.userData.shared && !seen.has(mesh.geometry)) {
+    if ((mesh.isMesh || (o as THREE.Line).isLine) && mesh.geometry && !mesh.userData.shared && !seen.has(mesh.geometry)) {
       seen.add(mesh.geometry);
       mesh.geometry.dispose();
     }

@@ -76,3 +76,23 @@ test("v3.7 리뷰: 코치는 주문에 쓰일 재료를 합치라고 하지 않�
   expect(c.step).toBe("spawn");
   expect(c.cells).toEqual([3]);
 });
+
+test("v3.7.1: 보드에 생성기가 없고 보관함에 있으면 보관함에서 꺼내라고 안내 (꽉 찼다고 하지 않음)", () => {
+  const s = createInitialState(fixedCtx());
+  emptyBoard(s);
+  s.orders = [];
+  s.board[0] = item("tea", 1);
+  s.bag = [gen("potion")];
+  const c = coachStep(s)!;
+  expect(c.step).toBe("stuck");
+  expect(c.text).toContain("보관함에서");
+  expect(c.text).not.toContain("꽉");
+});
+
+import { coachFor } from "../../src/views/ui/coach";
+test("v3.7.1: coachFor는 같은 상태면 한 번만 계산 (여러 화면이 공유)", () => {
+  const s = createInitialState(fixedCtx());
+  expect(coachFor(s)).toBe(coachFor(s));
+  const t = { ...s };
+  expect(coachFor(t)).toEqual(coachFor(s));
+});

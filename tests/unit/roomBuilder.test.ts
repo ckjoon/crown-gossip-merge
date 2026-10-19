@@ -94,3 +94,13 @@ test("복구 직후 다음 폐허는 숨겨진 채 청사진으로 보이다가,
   for (const o of ruinParts) expect(o.scale.x).toBeCloseTo(1);
   expect(g.children.filter((o) => o.userData.module === 2 && o.userData.role === "ghost").length).toBe(0);
 });
+
+// v3.7.1: 방을 다시 지을 때마다 새 재질을 만들지 않음 (촛대·깃발 포함 — 해제하지 않는 공유 재질이라 쌓이면 새는 것)
+test("조각을 다시 그려도 모든 재질이 구역 공유 재질 (새로 만든 재질 없음)", () => {
+  for (const zone of Object.keys(ROOMS) as ZoneKey[]) {
+    const st = moduleStates(zone, doneUpTo(zone, 5));
+    const seen = new Set<THREE.Material>();
+    meshes(buildModules(zone, st), () => true).forEach((m) => seen.add(m.material as THREE.Material));
+    meshes(buildModules(zone, st), () => true).forEach((m) => expect(seen.has(m.material as THREE.Material), zone).toBe(true));
+  }
+});

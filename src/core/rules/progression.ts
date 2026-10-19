@@ -1,6 +1,6 @@
 // progression.ts — 구역 진행·주문 상한·생성기 배출·배속 부스트·재화 환산 같은 순수 게임 규칙 모음 (v2.5 progression.js 이전)
 
-import { ZONE_REQUIRED_LEVEL } from "./levels";
+import { ZONE_REQUIRED_LEVEL, LEVEL_UP_GEMS } from "./levels";
 
 export type ZoneKey = "alchemy" | "harbor" | "garden" | "banquet" | "cellar" | "tower";
 export type Boost = 1 | 2 | 4;
@@ -18,7 +18,7 @@ export const BOOST_STEPS: Record<Boost, number> = { 1: 0, 2: 1, 4: 2 };
 export const BOOST_CYCLE: Boost[] = [1, 2, 4];
 export const LEGACY_STAR_TO_COINS = 100;
 
-export const GEM_REWARDS = { holidayMission: 5, zoneComplete: 50, levelUp: 3 } as const;
+export const GEM_REWARDS = { holidayMission: 5, zoneComplete: 50, levelUp: LEVEL_UP_GEMS } as const;
 export const GEM_SHOP_ENERGY: ReadonlyArray<{ gems: number; energy: number }> = [
   { gems: 10, energy: 50 },
   { gems: 25, energy: 150 },

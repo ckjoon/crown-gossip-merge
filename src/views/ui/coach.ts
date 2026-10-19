@@ -42,6 +42,15 @@ export function coachStep(s: GameState): CoachStep | null {
   const any = findMergePair(s);
   if (any) return merge(any);
 
+  const genOnBoard = s.board.some((c) => c?.isGenerator && c.state === "active");
+  if (!genOnBoard && hasEmpty && s.bag.some((b) => b.isGenerator)) return { step: "stuck", text: "🎒 생성기가 보관함에 있어요 — 보관함에서 꺼내 보드에 놓아요", cells: [] };
   if (s.energy <= 0) return { step: "stuck", text: "⚡ 번개가 다 떨어졌어요 — 5분마다 1개씩 차요", cells: [] };
   return { step: "stuck", text: "🎒 보드가 꽉 찼어요 — 재료를 눌러 보관하거나 팔아 자리를 만들어요", cells: [] };
+}
+
+// 여러 화면(띠·주문 카드·성 버튼·보드 넛지)이 같은 상태로 묻는 경우가 많아 마지막 결과를 재사용 (상태는 바꿀 때마다 새 객체)
+let last: { s: GameState; c: CoachStep | null } | null = null;
+export function coachFor(s: GameState): CoachStep | null {
+  if (last?.s !== s) last = { s, c: coachStep(s) };
+  return last.c;
 }

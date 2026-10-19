@@ -58,3 +58,22 @@ test("구역 핀은 날개 가운데 위", () => {
     expect(y).toBeGreaterThan(0.5);
   }
 });
+
+// v3.7.1: 지도를 다시 열 때마다 새 재질을 만들지 않음
+test("지도를 다시 그려도 재질을 재사용", () => {
+  const r = rooms([ROOMS.alchemy.spots[0].id]);
+  const mats = (g: THREE.Group) => {
+    const s = new Set<THREE.Material>();
+    g.traverse((o) => {
+      const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+      if (m && !o.userData.outline) s.add(m);
+    });
+    return s;
+  };
+  const a = new THREE.Group();
+  buildFloorplan(a, r, ["alchemy"]);
+  const b = new THREE.Group();
+  buildFloorplan(b, r, ["alchemy"]);
+  const first = mats(a);
+  for (const m of mats(b)) expect(first.has(m)).toBe(true);
+});

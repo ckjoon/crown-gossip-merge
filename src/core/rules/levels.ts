@@ -42,8 +42,11 @@ export interface LevelUpReward {
 }
 
 // 💎3은 규칙상 고정. 번개는 5로 줄여 생성 → 경험치 → 번개 눈덩이를 끊는다. 생성기 파츠는 짝수 레벨만
+// 레벨업 💎 (규칙상 고정 — progression의 GEM_REWARDS.levelUp도 이 값)
+export const LEVEL_UP_GEMS = 3;
+
 export function levelUpReward(newLv: number): LevelUpReward {
-  return { coins: 25 * newLv, energy: 5, gems: 3, genPart: newLv % 2 === 0 };
+  return { coins: 25 * newLv, energy: 5, gems: LEVEL_UP_GEMS, genPart: newLv % 2 === 0 };
 }
 
 // 구역 입장 레벨 (이미 장소를 하나라도 복구한 구역은 레벨과 상관없이 입장 가능 — 세이브 호환)

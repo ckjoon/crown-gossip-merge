@@ -53,3 +53,13 @@ test("17명 모두 표정 4종 초상화 그림이 구워져 있고 합계 1MB �
     }
   expect(total).toBeLessThan(1_000_000);
 });
+
+// v3.7.1: 구운 초상화 하나를 못 불러와도 그 그림만 벡터로 — 다른 표정·캐릭터는 계속 구운 그림
+import { portraitSrc } from "../../src/views/art/portraits";
+test("portraitSrc: 실패한 주소만 벡터로 대신", () => {
+  const happy = bakedPortraitUrl("selene", "happy");
+  const failed = new Set([happy]);
+  expect(portraitSrc("selene", "selene", "happy", failed)).toMatch(/^data:image\/svg/);
+  expect(portraitSrc("selene", "selene", "neutral", failed)).toBe(bakedPortraitUrl("selene", "neutral"));
+  expect(portraitSrc("quinn", "quinn", "happy", failed)).toBe(bakedPortraitUrl("quinn", "happy"));
+});

@@ -93,3 +93,43 @@ test("탭 대사: 퀸·네로가 함께 한 대사(quinn_nero)도 퀸과 네로 
     for (const line of together) expect(seen, id).toContain(line);
   }
 });
+
+// ---- v3.7.1 ----
+import { CharacterActor } from "../../src/views/castle/actor";
+import { CharacterLibrary } from "../../src/views/castle/characters3d";
+test("actor.dispose: 직접 만든 재질·기하(소품·색 바꾼 옷·동물·발밑 그림자)는 해제, 원본과 공유하는 것은 그대로", () => {
+  const sharedGeo = new THREE.BoxGeometry();
+  const sharedMat = new THREE.MeshStandardMaterial();
+  sharedMat.userData.shared = true;
+  const ownGeo = new THREE.BoxGeometry();
+  const ownMat = new THREE.MeshStandardMaterial();
+  const body = new THREE.Mesh(sharedGeo, sharedMat);
+  body.userData.shared = true;
+  const hat = new THREE.Mesh(ownGeo, ownMat);
+  const root = new THREE.Group();
+  root.add(body, hat);
+  const spy = (o: { dispose(): void }) => {
+    let n = 0;
+    const d = o.dispose.bind(o);
+    o.dispose = () => {
+      n++;
+      d();
+    };
+    return () => n;
+  };
+  const sg = spy(sharedGeo), sm = spy(sharedMat), og = spy(ownGeo), om = spy(ownMat);
+  const a = new CharacterActor("selene", { root, mixer: null, clips: new Map(), animal: null }, [0, 0]);
+  a.dispose();
+  expect([sg(), sm()]).toEqual([0, 0]);
+  expect([og(), om()]).toEqual([1, 1]);
+
+  // 동물(네로)은 전부 직접 만든 것 — 재질도 해제
+  const nero = CharacterLibrary.build("nero")!;
+  const mats: Array<() => number> = [];
+  nero.root.traverse((o) => {
+    const m = (o as THREE.Mesh).material as THREE.Material | undefined;
+    if ((o as THREE.Mesh).isMesh && m) mats.push(spy(m));
+  });
+  new CharacterActor("nero", nero, [0, 0]).dispose();
+  expect(mats.every((n) => n() >= 1)).toBe(true);
+});

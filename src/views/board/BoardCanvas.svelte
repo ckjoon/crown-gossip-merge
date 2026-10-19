@@ -10,7 +10,7 @@
   import { holidaySpawn, holidayMoveOrMerge } from "../../core/actions/holiday";
   import { getItemMeta } from "../../core/rules/chains";
   import { getHolidayConfig } from "../../core/rules/holidays";
-  import { coachStep } from "../ui/coach";
+  import { coachFor } from "../ui/coach";
 
   let { mode = "main", onReady }: { mode?: "main" | "holiday"; onReady?: (bv: BoardView) => void } = $props();
   const game = app().store;
@@ -52,7 +52,7 @@
   let hintKey = "";
   $effect(() => {
     if (mode !== "main") return;
-    const key = String(coachStep($game)?.cells ?? "");
+    const key = String(coachFor($game)?.cells ?? "");
     if (key !== hintKey) {
       hintKey = key;
       bv?.stopNudge();
@@ -71,7 +71,7 @@
 
   function hintCells(): number[] {
     const s = app().store.get();
-    const coach = coachStep(s);
+    const coach = coachFor(s);
     if (coach) return coach.cells;
     // 주문에 쓰일 재료는 되도록 빼고 (그것밖에 없으면 그 쌍이라도)
     return findMergePair(s, computeWanted(s).wantedUids) ?? findMergePair(s) ?? [];
@@ -83,7 +83,7 @@
       if (view.isNudging()) view.stopNudge();
       return;
     }
-    const wait = coachStep(app().store.get()) ? COACH_IDLE_MS : IDLE_MS;
+    const wait = coachFor(app().store.get()) ? COACH_IDLE_MS : IDLE_MS;
     if (view.isNudging() || view.isPressing() || performance.now() - lastInput < wait) return;
     view.reduceMotion = app().store.get().settings.reduceMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cells = hintCells();

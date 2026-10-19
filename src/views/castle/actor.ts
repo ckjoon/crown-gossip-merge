@@ -226,6 +226,10 @@ export class CharacterActor {
       if (!m.isMesh) return;
       // 체형 기하는 원본과 공유(SkeletonUtils.clone, userData.shared) — 직접 만든 소품·동물·그림자만 해제
       if (!m.userData.shared) m.geometry.dispose();
+      // 재질도 원본과 공유(userData.shared)하는 것·외곽선 공용 재질은 두고, 캐릭터마다 만든 것(색 바꾼 옷·소품·동물·그림자)만 해제
+      // (텍스처는 색 변환 캐시와 공유하므로 material.dispose가 건드리지 않음)
+      if (m.userData.outline) return;
+      for (const mat of Array.isArray(m.material) ? m.material : [m.material]) if (!mat.userData.shared) mat.dispose();
     });
   }
 }

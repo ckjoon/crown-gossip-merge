@@ -1,6 +1,7 @@
 // portraits.ts — 치비 캐릭터 초상화 생성기 (코드로 그린 벡터, 표정 4종). 외부 이미지 없이 캐릭터별 머리·눈·소품 파라미터로 그린다
 
 import type { Expression } from "../../core/rules/expressions";
+import { BAKED_PORTRAITS, bakedPortraitUrl } from "./portraitManifest";
 
 export const EXPRESSIONS: Expression[] = ["neutral", "happy", "surprised", "worried"];
 
@@ -172,4 +173,13 @@ export function getPortraitSVG(id: string, expr: Expression = "neutral"): string
 
 export function portraitDataUrl(id: string, expr: Expression = "neutral"): string {
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(getPortraitSVG(id, expr));
+}
+
+// 초상화 주소: 구운 3D 그림 → 그 주소를 못 불러왔으면(failed) 그 그림만 벡터 초상화로 (v3.7.1: 하나 실패해도 나머지는 구운 그림)
+export function portraitSrc(characterId: string, portraitKey: string, expr: Expression, failed: ReadonlySet<string>): string {
+  if (BAKED_PORTRAITS.has(characterId)) {
+    const url = bakedPortraitUrl(characterId, expr);
+    if (!failed.has(url)) return url;
+  }
+  return portraitDataUrl(portraitKey, expr);
 }

@@ -50,6 +50,8 @@ interface Mats {
   glow: THREE.MeshStandardMaterial[];
   ghost: THREE.MeshBasicMaterial;
   ghostLine: THREE.LineDashedMaterial;
+  candle: THREE.MeshStandardMaterial; // 저장고 벽 촛대
+  banner: THREE.MeshStandardMaterial; // 연회장·마탑 벽 깃발
 }
 
 const matCache = new Map<ZoneKey, Mats>();
@@ -102,6 +104,8 @@ function mats(zone: ZoneKey): Mats {
     glow: st.glow.map((c) => glowMat(c, 0.8)),
     ghost,
     ghostLine,
+    candle: std(0xfffbeb),
+    banner: std(zone === "tower" ? 0x312e81 : 0x7f1d1d),
   };
   for (const mat of Object.values(m).flat()) (mat as THREE.Material).userData.shared = true;
   matCache.set(zone, m);
@@ -246,7 +250,7 @@ function buildOrnament(g: THREE.Group, zone: ZoneKey, e: EdgeSpec): void {
     // 벽 촛대: 쇠 받침 + 촛불
     at(box(0.5, 0.12, 0.4, M.trim), 2.2, T / 2 + 0.2);
     for (const k of [0, 1]) {
-      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.36, 8), std(0xfffbeb));
+      const c = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.36, 8), M.candle);
       const [bx, bz] = alongEdge(e, 0.15 + (k - 0.5) * 0.06);
       c.position.set(bx + ix * (T / 2 + 0.2), 2.44, bz + iz * (T / 2 + 0.2));
       g.add(tag(c, e.mod, "ornament"));
@@ -255,7 +259,7 @@ function buildOrnament(g: THREE.Group, zone: ZoneKey, e: EdgeSpec): void {
       g.add(tag(f, e.mod, "ornament"));
     }
   } else if (zone === "banquet" || zone === "tower") {
-    at(box(1.1, 2.0, 0.06, std(zone === "tower" ? 0x312e81 : 0x7f1d1d)), 2.6, T / 2 + 0.04);
+    at(box(1.1, 2.0, 0.06, M.banner), 2.6, T / 2 + 0.04);
     const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.28), M.glow[0]);
     at(star, 2.9, T / 2 + 0.12);
   } else if (zone === "harbor") {

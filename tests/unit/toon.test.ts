@@ -77,3 +77,13 @@ test("addOutline: 알파 컷 재질(나뭇잎)에는 외곽선을 붙이지 않�
   disposeGroup(h);
   expect(disposed).toBe(false);
 });
+
+test("v3.7.1 disposeGroup: 선(점선 청사진)의 기하도 해제", () => {
+  const g = new THREE.Group();
+  const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(1, 0, 0)]);
+  let n = 0;
+  geo.dispose = () => void n++;
+  g.add(new THREE.Line(geo, new THREE.LineBasicMaterial()));
+  disposeGroup(g);
+  expect(n).toBe(1);
+});

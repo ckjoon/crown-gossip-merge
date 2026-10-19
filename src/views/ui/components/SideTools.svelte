@@ -7,7 +7,7 @@
   import { getZoneProgress } from "../../../core/actions/orders";
   import { findSpot } from "../../../core/rules/rooms";
   import { getSpotCoinCost } from "../../../core/rules/progression";
-  import { coachStep } from "../coach";
+  import { coachFor } from "../coach";
 
   const game = app().store;
   // 다음 화를 바로 진행할 코인이 있으면 성 버튼에 ! 표시
@@ -17,7 +17,7 @@
     return !!f && $game.coins >= getSpotCoinCost(f.zoneKey, f.spot.cost);
   });
 
-  const coachCastle = $derived(coachStep($game)?.step === "castle");
+  const coachCastle = $derived(coachFor($game)?.step === "castle");
 
   const holiday = $derived(getHolidayConfig($game.holiday.activeHolidayId));
 

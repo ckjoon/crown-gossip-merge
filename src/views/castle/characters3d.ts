@@ -87,24 +87,18 @@ export function recolorPixel(r: number, g: number, b: number, hue: number, sat: 
 
 const recolorCache = new Map<string, THREE.Texture>();
 
-function recolorTexture(src: THREE.Texture, key: string, hue: number, sat: number): THREE.Texture {
-  const hit = recolorCache.get(key);
-  if (hit) return hit;
-  const img = src.image as HTMLImageElement | ImageBitmap;
-  const cv = document.createElement("canvas");
-  cv.width = img.width;
-  cv.height = img.height;
-  const ctx = cv.getContext("2d")!;
-  ctx.drawImage(img, 0, 0);
-  const data = ctx.getImageData(0, 0, cv.width, cv.height);
-  const px = data.data;
-  for (let i = 0; i < px.length; i += 4) {
+// 픽셀 [from, to) 구간만 색 변환 (나눠서 처리할 수 있게)
+export function recolorPixels(px: Uint8ClampedArray, from: number, to: number, hue: number, sat: number): void {
+  for (let p = from; p < to; p++) {
+    const i = p * 4;
     const [r, g, b] = recolorPixel(px[i], px[i + 1], px[i + 2], hue, sat);
     px[i] = r;
     px[i + 1] = g;
     px[i + 2] = b;
   }
-  ctx.putImageData(data, 0, 0);
+}
+
+function makeRecolored(src: THREE.Texture, cv: HTMLCanvasElement, key: string): THREE.Texture {
   const tex = new THREE.CanvasTexture(cv);
   tex.flipY = src.flipY;
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -113,6 +107,49 @@ function recolorTexture(src: THREE.Texture, key: string, hue: number, sat: numbe
   tex.userData.shared = true;
   recolorCache.set(key, tex);
   return tex;
+}
+
+function readPixels(src: THREE.Texture): { cv: HTMLCanvasElement; ctx: CanvasRenderingContext2D; data: ImageData } {
+  const img = src.image as HTMLImageElement | ImageBitmap;
+  const cv = document.createElement("canvas");
+  cv.width = img.width;
+  cv.height = img.height;
+  const ctx = cv.getContext("2d")!;
+  ctx.drawImage(img, 0, 0);
+  return { cv, ctx, data: ctx.getImageData(0, 0, cv.width, cv.height) };
+}
+
+// 캐시는 (체형·색) 조합당 하나라 캐릭터 수(17명)로 크기가 정해져 있다
+function recolorTexture(src: THREE.Texture, key: string, hue: number, sat: number): THREE.Texture {
+  const hit = recolorCache.get(key);
+  if (hit) return hit;
+  const { cv, ctx, data } = readPixels(src);
+  recolorPixels(data.data, 0, data.width * data.height, hue, sat);
+  ctx.putImageData(data, 0, 0);
+  return makeRecolored(src, cv, key);
+}
+
+// 모델을 불러오는 동안 미리 색을 바꿔 둔다 — 여러 프레임에 나눠 처리해 캐릭터가 처음 나타날 때 화면이 멈칫하지 않게
+const RECOLOR_CHUNK = 16384; // 픽셀 (한 조각 수 ms)
+const warming = new Map<string, Promise<void>>();
+function warmRecolor(src: THREE.Texture, key: string, hue: number, sat: number): Promise<void> {
+  if (recolorCache.has(key)) return Promise.resolve();
+  let job = warming.get(key);
+  if (!job) {
+    job = (async () => {
+      const { cv, ctx, data } = readPixels(src);
+      const n = data.width * data.height;
+      for (let p = 0; p < n; p += RECOLOR_CHUNK) {
+        recolorPixels(data.data, p, Math.min(n, p + RECOLOR_CHUNK), hue, sat);
+        await new Promise((r) => setTimeout(r, 0));
+      }
+      if (recolorCache.has(key)) return;
+      ctx.putImageData(data, 0, 0);
+      makeRecolored(src, cv, key);
+    })().finally(() => warming.delete(key));
+    warming.set(key, job);
+  }
+  return job;
 }
 
 // ---------- 절차적 소품 (머리 크기 1 기준, 머리 꼭대기·얼굴 앞 등에 붙는다) ----------
@@ -363,12 +400,26 @@ export interface BuiltCharacter {
   animal: AnimalParts | null;
 }
 
+// 이 외형이 쓸 옷 텍스처의 색 변환을 미리 (바꿀 색이 없으면 할 일 없음)
+function warmLook(look: Extract<Look3D, { kind: "human" }>): Promise<void> {
+  if (look.hue === 0 && look.sat === 1) return Promise.resolve();
+  const tpl = bodies.get(look.body);
+  if (!tpl || typeof document === "undefined") return Promise.resolve();
+  const jobs: Promise<void>[] = [];
+  tpl.scene.traverse((o) => {
+    const map = ((o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined)?.map;
+    if ((o as THREE.Mesh).isMesh && map) jobs.push(warmRecolor(map, `${look.body}|${look.hue}|${look.sat}`, look.hue, look.sat));
+  });
+  return Promise.all(jobs).then(() => undefined);
+}
+
 export const CharacterLibrary = {
   preload(ids: Iterable<string>): Promise<void> {
     const jobs: Promise<void>[] = [];
     for (const id of ids) {
       const look = CHARACTER_LOOKS[id];
-      if (look?.kind === "human") jobs.push(loadBody(look.body), loadClips());
+      if (look?.kind !== "human") continue;
+      jobs.push(loadClips(), loadBody(look.body).then(() => warmLook(look)));
     }
     return Promise.all(jobs).then(() => undefined);
   },
@@ -400,8 +451,10 @@ export const CharacterLibrary = {
       mesh.castShadow = false;
       mesh.userData.noOutline = true; // 스킨 메시는 뒤집힌 껍데기 외곽선이 따라오지 않는다
       const mat = mesh.material as THREE.MeshStandardMaterial;
+      mat.userData.shared = true; // 원본 체형 재질 — 캐릭터를 치워도 해제하지 않는다
       if (mat.map && (look.hue !== 0 || look.sat !== 1)) {
         const nm = mat.clone();
+        nm.userData = { ...mat.userData, shared: false }; // 이 캐릭터 전용 (치울 때 해제)
         nm.map = recolorTexture(mat.map, `${look.body}|${look.hue}|${look.sat}`, look.hue, look.sat);
         mesh.material = nm;
       }

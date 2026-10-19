@@ -185,10 +185,10 @@ export function buildCastleOverview(group: THREE.Group): THREE.Color {
 }
 
 // 구역 방 껍데기: 조명, 10×10 체크무늬 바닥, 두 벽, 황금 몰딩 (가구는 furniture.ts)
-export function buildRoomShell(group: THREE.Group, theme: ZoneLook): { background: THREE.Color; ambient: THREE.AmbientLight; dirLight: THREE.DirectionalLight } {
+// 구역 방 조명 (바닥·벽은 roomBuilder가 방 조각마다 그린다). 그림자 범위는 CastleView가 지어진 범위에 맞춘다
+export function buildRoomLights(group: THREE.Group, theme: ZoneLook): { background: THREE.Color; ambient: THREE.AmbientLight; dirLight: THREE.DirectionalLight } {
   const background = new THREE.Color(theme.wallColor).multiplyScalar(0.45);
 
-  // 조명 설정
   const ambient = new THREE.AmbientLight(theme.ambientColor, 0.75);
   ambient.name = "ambient";
   group.add(ambient);
@@ -196,46 +196,8 @@ export function buildRoomShell(group: THREE.Group, theme: ZoneLook): { backgroun
   const dirLight = new THREE.DirectionalLight(0xfffbeb, 0.95);
   dirLight.position.set(8, 16, 10);
   dirLight.castShadow = true;
-  dirLight.shadow.mapSize.width = 1024;
-  dirLight.shadow.mapSize.height = 1024;
-  group.add(dirLight);
-
-  // 1. 체크무늬 아이소메트릭 바닥 타일 (10x10)
-  const tileGeo = new THREE.BoxGeometry(1, 0.25, 1);
-  const mat1 = new THREE.MeshStandardMaterial({ color: theme.floorColor1, roughness: 0.6 });
-  const mat2 = new THREE.MeshStandardMaterial({ color: theme.floorColor2, roughness: 0.65 });
-
-  for (let x = -4.5; x <= 4.5; x += 1) {
-    for (let z = -4.5; z <= 4.5; z += 1) {
-      const isEven = (Math.round(x + 4.5) + Math.round(z + 4.5)) % 2 === 0;
-      const tile = new THREE.Mesh(tileGeo, isEven ? mat1 : mat2);
-      tile.position.set(x, -0.125, z);
-      tile.receiveShadow = true;
-      group.add(tile);
-    }
-  }
-
-  // 2. 좌측 벽 & 우측 뒷벽 (아이소메트릭 디오라마 룸)
-  const wallMat = new THREE.MeshStandardMaterial({ color: theme.wallColor, roughness: 0.7 });
-  const trimMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.5, roughness: 0.3 });
-
-  const backWall = new THREE.Mesh(new THREE.BoxGeometry(10.3, 4.6, 0.3), wallMat);
-  backWall.position.set(0, 2.15, -5.0);
-  backWall.receiveShadow = true;
-  group.add(backWall);
-
-  const leftWall = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4.6, 10.3), wallMat);
-  leftWall.position.set(-5.0, 2.15, 0);
-  leftWall.receiveShadow = true;
-  group.add(leftWall);
-
-  // 황금 몰딩 테두리
-  const topTrimBack = new THREE.Mesh(new THREE.BoxGeometry(10.4, 0.2, 0.36), trimMat);
-  topTrimBack.position.set(0, 4.45, -5.0);
-  group.add(topTrimBack);
-
-  const topTrimLeft = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.2, 10.4), trimMat);
-  topTrimLeft.position.set(-5.0, 4.45, 0);
-  group.add(topTrimLeft);
+  dirLight.shadow.mapSize.width = 2048;
+  dirLight.shadow.mapSize.height = 2048;
+  group.add(dirLight, dirLight.target);
   return { background, ambient, dirLight };
 }

@@ -170,9 +170,9 @@ export function zoneBounds(defs: ModuleDef[], states: ModuleState[]): Bounds {
   return b;
 }
 
-// 화면 가로는 아이소 대각선(x−z) 방향이라 두 변 길이의 합에 비례해 줄인다 (예전 10×10 방 = 1.4)
+// 화면 가로는 아이소 대각선(x−z) 방향이라 두 변 길이의 합에 비례해 줄인다 (넓어지면 끌어서 둘러봄)
 export function fitZoom(b: Bounds): number {
-  return Math.max(0.75, Math.min(1.8, 28 / (b.maxX - b.minX + (b.maxZ - b.minZ))));
+  return Math.max(0.85, Math.min(1.8, 32 / (b.maxX - b.minX + (b.maxZ - b.minZ))));
 }
 
 export function panClamp(b: Bounds, x: number, z: number): [number, number] {

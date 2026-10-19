@@ -39,12 +39,17 @@ test("새 게임: 생성 → 합성 → 주문 완료 → 제1화 복구 → �
   await page.locator(".gh-castle-btn").click();
   await page.waitForTimeout(600);
   await expect(page.locator(".story-next-btn")).toContainText("제1화");
+  // 레고식 방: 처음엔 입구 홀만 지어져 있고 제1화 장소는 폐허
+  const modules = () => page.evaluate(() => (window as unknown as { __castle(): { moduleStateList(): string[] } }).__castle().moduleStateList());
+  expect(await modules()).toEqual(["built", "ruin", "ghost", "ghost", "ghost", "ghost"]);
   await page.locator(".story-next-btn").click();
   await page.locator(".style-confirm-btn").click();
   await expect(page.locator(".story-cutscene-modal")).toBeVisible({ timeout: 10_000 });
   await expect(page.locator(".cutscene-stage-banner strong")).toContainText("제1화");
   await page.locator(".story-cutscene-modal .gh-close-btn").click();
   await expect(page.locator(".story-next-btn")).toContainText("제2화", { timeout: 5_000 });
+  // 복구한 조각이 지어지고 다음 장소가 폐허로
+  expect(await modules()).toEqual(["built", "built", "ruin", "ghost", "ghost", "ghost"]);
 
   // 5. 💎 상점에서 번개 구매
   const e0 = (await state<S>(page)).energy;

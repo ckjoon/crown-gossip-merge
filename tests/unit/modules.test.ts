@@ -109,8 +109,8 @@ test("카메라 범위: 지어진 곳 + 폐허만, 홀만이면 최대 확대, �
   for (const zone of ZONES) {
     const full = zoneBounds(ZONE_MODULES[zone], moduleStates(zone, doneUpTo(zone, 5)));
     const z = fitZoom(full);
-    expect(z).toBeGreaterThanOrEqual(0.75);
-    expect(z).toBeLessThanOrEqual(1.0);
+    expect(z).toBeGreaterThanOrEqual(0.85);
+    expect(z).toBeLessThanOrEqual(1.1);
   }
   expect(panClamp(b0, 100, -100)).toEqual([b0.maxX, b0.minZ]);
   expect(panClamp(b0, -1, 0)).toEqual([-1, 0]);

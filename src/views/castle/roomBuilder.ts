@@ -254,7 +254,8 @@ function buildOrnament(g: THREE.Group, zone: ZoneKey, e: EdgeSpec): void {
 }
 
 function buildCurb(g: THREE.Group, zone: ZoneKey, e: EdgeSpec): void {
-  g.add(tag(edgeBox(e, CELL, 0.3, 0.3, mats(zone).trim, 0.15), e.mod, "curb"));
+  // 가까운 쪽은 바닥 테두리만 낮고 얇게 (화면을 가리지 않게)
+  g.add(tag(edgeBox(e, CELL, 0.2, 0.2, mats(zone).ruinWall, 0.1), e.mod, "curb", { noOutline: true }));
 }
 
 // 문: 부모·자식 조각 사이 변 전체를 트고 양쪽 기둥 + 위 장식으로 표시
@@ -263,13 +264,18 @@ function buildDoor(g: THREE.Group, zone: ZoneKey, e: EdgeSpec): void {
   const M = mats(zone);
   const link = { link: [e.mod, e.other] };
   if (st.wall === "stone") {
+    const far = e.side === "-x" || e.side === "-z";
     for (const t of [-0.47, 0.47]) {
       const [px, pz] = alongEdge(e, t);
-      const p = box(0.5, 3.4, 0.5, M.wall);
-      p.position.set(px, 1.7, pz);
-      g.add(tag(p, e.mod, "door", link));
+      const h = far ? 3.4 : 1.6;
+      const p = box(0.5, h, 0.5, M.wall);
+      p.position.set(px, h / 2, pz);
+      const cap = box(0.62, 0.16, 0.62, M.trim);
+      cap.position.set(px, h + 0.08, pz);
+      g.add(tag(p, e.mod, "door", link), tag(cap, e.mod, "door", link));
     }
-    g.add(tag(edgeBox(e, CELL + 0.1, 0.4, 0.55, M.trim, 3.6), e.mod, "door", link));
+    // 먼 쪽 문만 위에 얇은 들보 (가까운 쪽은 시야를 가리므로 기둥만)
+    if (far) g.add(tag(edgeBox(e, CELL + 0.1, 0.22, 0.4, M.wall, 3.5), e.mod, "door", link));
   } else if (st.wall === "rail") {
     for (const t of [-0.47, 0.47]) {
       const [px, pz] = alongEdge(e, t);

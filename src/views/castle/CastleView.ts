@@ -6,19 +6,20 @@ import { gsap } from "gsap";
 import type { SpotState, ZoneKey } from "../../core/types";
 import { ROOMS, STYLE_PALETTES } from "../../core/rules/rooms";
 import { SPOT_LAYOUT, ZONE_LOOK } from "./layout";
-import { buildCastleOverview, buildRoomShell } from "./scenes";
+import { buildCastleOverview, buildRoomLights } from "./scenes";
 import { buildSpotClutter, buildSpotFurniture, buildZoneProps, zonePropModels, spotModelNames, CLUTTER_MODELS } from "./furniture";
 import { ModelLibrary } from "./models/library";
 import { Ambience } from "./ambience";
 import { addOutline, disposeGroup, toonify } from "./toon";
-import { buildZoneDecor, setDecorGlow } from "./decor";
+import { setDecorGlow } from "./decor";
+import { ZONE_MODULES, moduleIndexOf, moduleStates, panClamp, zoneBounds, fitZoom, type Bounds, type ModuleState } from "./modules";
+import { animateModuleAppear, animateModuleBuild, buildModules } from "./roomBuilder";
 import { Resident } from "./resident";
 
 const DEFAULT_CAM = new THREE.Vector3(10, 10.5, 10);
 // 방은 조금 위에서 내려다보고(바닥이 화면을 더 채우게) 확대한 뒤, 손가락으로 끌어 둘러본다
 const ROOM_CAM_OFFSET = new THREE.Vector3(10, 13.5, 10);
 const ROOM_ZOOM = 1.4;
-const PAN_LIMIT = 3.2;
 
 function wait(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
@@ -133,7 +134,14 @@ export class CastleView {
     this.renderer.setSize(w, h);
   }
 
-  private decor: THREE.Group | null = null;
+  // 레고식 방: 조각 상태(지어짐·폐허·청사진)와 그 범위에 맞춘 카메라 기준점·줌
+  private modules: THREE.Group | null = null;
+  private states: ModuleState[] = [];
+  private bounds: Bounds = { minX: -2.5, maxX: 2.5, minZ: -2.5, maxZ: 2.5 };
+  private home = new THREE.Vector3(0, 1, 0);
+  private fit = ROOM_ZOOM;
+  private glowStep = 0;
+  private dirLight: THREE.DirectionalLight | null = null;
   private zoneProps: THREE.Group | null = null;
   private zonePropsCount = -1;
   resident: Resident | null = null;
@@ -170,7 +178,8 @@ export class CastleView {
       this.roomGroup.remove(child);
       disposeGroup(child);
     }
-    this.decor = null;
+    this.modules = null;
+    this.dirLight = null;
     this.zoneProps = null;
     this.zonePropsCount = -1;
     this.furniture.clear();
@@ -198,27 +207,70 @@ export class CastleView {
     this.rooms = rooms;
     this.preview = null;
     this.clearGroup();
-    const shell = buildRoomShell(this.roomGroup, ZONE_LOOK[zone]);
+    const shell = buildRoomLights(this.roomGroup, ZONE_LOOK[zone]);
     this.scene.background = shell.background;
     this.ambientLight = shell.ambient;
+    this.dirLight = shell.dirLight;
     // 반구광: 그림자 쪽도 보랏빛으로 채워 툰 명암이 탁해지지 않게
     this.roomGroup.add(new THREE.HemisphereLight(0xe9dcff, 0x3b2160, 0.95));
-    this.decor = buildZoneDecor(zone);
-    toonify(this.decor);
-    addOutline(this.decor, 0.02);
-    this.roomGroup.add(this.decor);
+    this.states = this.computeStates();
+    this.renderModules();
     for (const spot of ROOMS[zone].spots) this.renderSpot(spot.id);
     legacyLightCompensate(this.roomGroup);
-    this.ambience = new Ambience(this.ambientLight, (step) => this.decor && setDecorGlow(this.decor, step));
+    this.ambience = new Ambience(this.ambientLight, (step) => {
+      this.glowStep = step;
+      if (this.modules) setDecorGlow(this.modules, step);
+    });
     this.resident = new Resident(zone);
     this.roomGroup.add(this.resident.group);
     this.roomGroup.add(this.ambience.group);
     this.ambience.apply(this.doneCount(), false);
     this.renderZoneProps(false);
+    this.updateFraming();
     this.resetCamera(false);
     this.resize();
     this.loadZoneModels(zone);
     this.refreshShadows();
+  }
+
+  moduleStateList(): ModuleState[] {
+    return [...this.states];
+  }
+
+  private computeStates(): ModuleState[] {
+    return moduleStates(this.zone, (id) => !!this.rooms[id]?.done);
+  }
+
+  // 방 조각을 상태에 맞춰 다시 만든다 (재질은 구역별로 공유되어 툰 변환도 재사용)
+  private renderModules(): THREE.Group {
+    if (this.modules) {
+      this.roomGroup.remove(this.modules);
+      disposeGroup(this.modules);
+    }
+    const g = buildModules(this.zone, this.states);
+    toonify(g);
+    addOutline(g, 0.02);
+    setDecorGlow(g, this.glowStep);
+    this.roomGroup.add(g);
+    this.modules = g;
+    this.refreshShadows();
+    return g;
+  }
+
+  // 지어진 조각 + 폐허 범위로 카메라 기준점·줌·끌기 범위·그림자 범위를 맞춘다
+  private updateFraming(): void {
+    this.bounds = zoneBounds(ZONE_MODULES[this.zone], this.states);
+    const b = this.bounds;
+    this.fit = fitZoom(b);
+    this.home.set((b.minX + b.maxX) / 2, 1, (b.minZ + b.maxZ) / 2);
+    const dl = this.dirLight;
+    if (dl) {
+      const r = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) * 0.8 + 3;
+      dl.target.position.set(this.home.x, 0, this.home.z);
+      dl.position.set(this.home.x + 8, 16, this.home.z + 10);
+      Object.assign(dl.shadow.camera, { left: -r, right: r, top: r, bottom: -r, near: 0.5, far: 60 });
+      dl.shadow.camera.updateProjectionMatrix();
+    }
   }
 
   private restoring = false;
@@ -263,19 +315,31 @@ export class CastleView {
       if (spot.id === this.holdSpot) continue;
       if (!a || a.done !== b.done || a.styleIdx !== b.styleIdx) this.renderSpot(spot.id);
     }
-    if (!this.holdSpot) this.renderZoneProps(true);
+    if (this.holdSpot) return;
+    const next = this.computeStates();
+    if (next.join() !== this.states.join()) {
+      this.states = next;
+      this.renderModules();
+      for (const spot of ROOMS[this.zone].spots) this.renderSpot(spot.id);
+      this.updateFraming();
+      this.resetCamera(false);
+    }
+    this.renderZoneProps(true);
   }
 
   doneCount(): number {
     return ROOMS[this.zone].spots.filter((sp) => this.rooms[sp.id]?.done).length;
   }
 
-  // 🔨 복구 순간: 방을 어둡게 → 스포트라이트 → 카메라 다가감 → 가구가 떨어지며 쿵 + 반짝임 → 조명 복귀와 함께 분위기 한 단계 상승
+  // 🔨 복구 순간: 방을 어둡게 → 스포트라이트 → 카메라 다가감 → 잔해가 가라앉고 → 방 조각이 지어짐(바닥·벽·문)
+  // → 가구가 떨어지며 쿵 + 반짝임 → 다음 장소 폐허가 나타남 → 조명 복귀, 카메라가 넓어진 방을 다시 잡음
   async playRestore(spotId: string, rooms: Record<string, SpotState>): Promise<void> {
     if (this.mode !== "room") {
       this.holdSpot = null;
       return;
     }
+    const zone = this.zone;
+    const left = () => this.mode !== "room" || this.zone !== zone;
     this.rooms = rooms;
     this.restoring = true;
     const layout = SPOT_LAYOUT[spotId];
@@ -288,8 +352,31 @@ export class CastleView {
     this.roomGroup.add(spot, spot.target);
     this.spot = spot;
     gsap.to(spot, { intensity: 9 * Math.PI, duration: 0.6 });
+    const endEarly = () => {
+      this.restoring = false;
+      this.holdSpot = null;
+      if (this.spot === spot) this.spot = null;
+    };
     // 모델이 오는 중이면 어두워지는 동안 조금 기다려, 떨어지는 가구가 최종 모습이 되게 한다
     await Promise.all([this.focusSpot(spotId, 1.5, 0.6), Promise.race([this.modelsReady, wait(1200)])]);
+    if (left()) return endEarly();
+
+    // 잔해가 가라앉음
+    const clutter = this.furniture.get(spotId);
+    if (clutter) gsap.to(clutter.position, { y: clutter.position.y - 1.2, duration: 0.3, ease: "power2.in" });
+    if (clutter) gsap.to(clutter.scale, { x: 0.3, y: 0.3, z: 0.3, duration: 0.3, ease: "power2.in" });
+    await wait(320);
+    if (left()) return endEarly();
+
+    // 방 조각 짓기
+    this.states = this.computeStates();
+    const modules = this.renderModules();
+    const idx = moduleIndexOf(zone, spotId);
+    const buildSec = animateModuleBuild(modules, idx);
+    this.refreshShadowsFor(buildSec * 1000 + 1500);
+    await wait(buildSec * 1000 * 0.8);
+    if (left()) return endEarly();
+
     const g = this.renderSpot(spotId);
     this.holdSpot = null;
     if (g) {
@@ -301,11 +388,21 @@ export class CastleView {
     this.constructionBurst(spotId, 22);
     await wait(250);
     this.constructionBurst(spotId, 14);
+
+    // 다음 장소 폐허가 청사진 자리에 나타남
+    const nextIdx = this.states.indexOf("ruin");
+    const nextSpot = nextIdx > 0 ? ZONE_MODULES[zone][nextIdx].spotId : null;
+    if (nextSpot) {
+      animateModuleAppear(modules, nextIdx);
+      const ng = this.renderSpot(nextSpot);
+      if (ng) gsap.from(ng.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.4, ease: "back.out(1.8)" });
+    }
     await wait(500);
-    gsap.to(spot, { intensity: 0, duration: 0.6, onComplete: () => { this.roomGroup.remove(spot, spot.target); this.spot = null; } });
+    gsap.to(spot, { intensity: 0, duration: 0.6, onComplete: () => { this.roomGroup.remove(spot, spot.target); if (this.spot === spot) this.spot = null; } });
     if (amb) gsap.to(amb, { intensity: prevIntensity, duration: 0.4 });
     this.ambience?.apply(this.doneCount(), true);
     this.renderZoneProps(true);
+    this.updateFraming();
     this.resetCamera(true);
     await wait(700);
     this.restoring = false;
@@ -372,7 +469,8 @@ export class CastleView {
       const pt = new THREE.PointLight(pal.accent, 0.85, 5.5);
       pt.position.set(0, 2, 0);
       group.add(pt);
-    } else {
+    } else if (this.states[moduleIndexOf(this.zone, spotId)] === "ruin") {
+      // 다음 복구 장소(폐허 조각)에만 잔해. 그 뒤 장소는 청사진이라 비워 둔다
       const idx = ROOMS[this.zone].spots.findIndex((sp) => sp.id === spotId);
       buildSpotClutter(Math.max(0, idx), group, -layout.pos[1]);
     }
@@ -406,7 +504,7 @@ export class CastleView {
   }
 
   private baseZoom(): number {
-    return this.mode === "room" ? ROOM_ZOOM : 1;
+    return this.mode === "room" ? this.fit : 1;
   }
 
   // 카메라는 바라보는 점에서 항상 같은 방향·거리에 둔다 (구도 유지)
@@ -424,8 +522,9 @@ export class CastleView {
     const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 0).setY(0).normalize();
     const fwd = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 1).setY(0).normalize();
     this.lookTarget.addScaledVector(right, -dx * perPx).addScaledVector(fwd, dy * perPx * 1.6);
-    this.lookTarget.x = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, this.lookTarget.x));
-    this.lookTarget.z = Math.max(-PAN_LIMIT, Math.min(PAN_LIMIT, this.lookTarget.z));
+    const [x, z] = panClamp(this.bounds, this.lookTarget.x, this.lookTarget.z);
+    this.lookTarget.x = x;
+    this.lookTarget.z = z;
     this.aim();
   }
 
@@ -450,15 +549,16 @@ export class CastleView {
     gsap.killTweensOf(this.camera);
     gsap.killTweensOf(this.lookTarget);
     const z0 = this.baseZoom();
+    const home = this.mode === "room" ? this.home : new THREE.Vector3(0, 1, 0);
     if (!animate) {
       this.camera.zoom = z0;
-      this.lookTarget.set(0, 1, 0);
+      this.lookTarget.copy(home);
       this.camera.updateProjectionMatrix();
       this.aim();
       return;
     }
     gsap.to(this.camera, { zoom: z0, duration: 0.55, ease: "power2.inOut", onUpdate: () => this.camera.updateProjectionMatrix() });
-    gsap.to(this.lookTarget, { x: 0, y: 1, z: 0, duration: 0.55, ease: "power2.inOut", onUpdate: () => this.aim() });
+    gsap.to(this.lookTarget, { x: home.x, y: home.y, z: home.z, duration: 0.55, ease: "power2.inOut", onUpdate: () => this.aim() });
   }
 
   // 3D 좌표 → 캔버스 안 픽셀 좌표 (핀 배치용)

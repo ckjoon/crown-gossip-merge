@@ -12,8 +12,11 @@
   import type { ZoneKey } from "../../../core/types";
   import { goZone, openStyle, pickStyle, cancelStyle, confirmStyle, storyNext } from "./castleActions";
   import RewardOverlay from "./RewardOverlay.svelte";
+  import { coachStep } from "../coach";
 
   const game = app().store;
+  // 첫 복구 코치: 코인이 모였으면 다음 이야기 버튼이 반짝
+  const coachCastle = $derived(coachStep($game)?.step === "castle");
   let host = $state<HTMLDivElement>();
   let view = $state<CastleView | null>(null);
   let shown = { map: false, zone: "" };
@@ -214,7 +217,7 @@
 
   <div class="castle-quest-panel" class:input-locked={ui.inputLocked}>
     <div class="story-action-row">
-      <button class="story-next-btn" class:story-locked={zp.nextSpotLockedLv !== null} disabled={!next} onclick={storyNext}>
+      <button class="story-next-btn" class:story-locked={zp.nextSpotLockedLv !== null} class:coach-pulse={coachCastle && ui.screen === "castle"} disabled={!next} onclick={storyNext}>
         {#if next && zp.nextSpotLockedLv !== null}🔒 제{next.chapter}화 · <b>Lv.{zp.nextSpotLockedLv} 필요</b>{:else}📖 {next ? `제${next.chapter}화 · ${next.spot.name}` : "🎉 완결"} {#if next}<b>🪙{nextCost}</b>{/if}{/if}
       </button>
       <button class="story-log-btn" onclick={() => { app().sfx.tap(); ui.modal = "storyLog"; }} title="지난 이야기 다시 보기">📜</button>

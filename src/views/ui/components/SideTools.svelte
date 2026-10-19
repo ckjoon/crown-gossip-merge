@@ -7,6 +7,7 @@
   import { getZoneProgress } from "../../../core/actions/orders";
   import { findSpot } from "../../../core/rules/rooms";
   import { getSpotCoinCost } from "../../../core/rules/progression";
+  import { coachStep } from "../coach";
 
   const game = app().store;
   // 다음 화를 바로 진행할 코인이 있으면 성 버튼에 ! 표시
@@ -15,6 +16,8 @@
     const f = next ? findSpot(next) : null;
     return !!f && $game.coins >= getSpotCoinCost(f.zoneKey, f.spot.cost);
   });
+
+  const coachCastle = $derived(coachStep($game)?.step === "castle");
 
   const holiday = $derived(getHolidayConfig($game.holiday.activeHolidayId));
 
@@ -25,7 +28,7 @@
 </script>
 
 <div class="gh-side-tools">
-  <button class="gh-castle-btn" onclick={goCastle} title="마녀의 성 꾸미기 화면으로 가기">
+  <button class="gh-castle-btn" class:coach-pulse={coachCastle} onclick={goCastle} title="마녀의 성 꾸미기 화면으로 가기">
     {#if canRenovate}<span class="castle-ready-dot">!</span>{/if}
     <span class="castle-ico">🏰</span>
     <span class="castle-label">성</span>

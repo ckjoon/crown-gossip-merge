@@ -66,3 +66,37 @@ test("보드를 5초 안 만지면 합칠 쌍이 톡톡 넛지되고, 그 쌍을
   expect(off).toBeLessThan(0.5);
   expect(errors).toEqual([]);
 });
+
+test("첫 복구 코치: 합성 → 주문 완성 → 성으로 단계가 바뀌고, 제1화를 복구하면 사라진다 (클릭을 막지 않음)", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/?e2e");
+  await page.locator(".gh-board-container .board-host canvas").waitFor();
+  await page.waitForFunction(() => !!(window as unknown as { __game?: unknown }).__game);
+  const bar = page.locator(".coach-bar");
+  await expect(bar).toHaveAttribute("data-step", "merge");
+  // 띠 아래(보드 마지막 줄 근처)를 눌러도 보드가 입력을 받는다 — 띠는 pointer-events: none
+  expect(await bar.evaluate((el) => getComputedStyle(el).pointerEvents)).toBe("none");
+
+  // 첫 주문 재료를 놓으면 serve, 그 주문 카드가 반짝
+  await seed(page, `d.orders[0].reqs.forEach((r, i) => { d.board[47 + i] = { uid: 'o' + i, state: 'active', isGenerator: false, chain: r.chain, level: r.level }; })`);
+  await expect(bar).toHaveAttribute("data-step", "serve");
+  await expect(page.locator(".gh-order-card").first()).toHaveClass(/coach-pulse/);
+
+  // 코인을 채우고 주문 완성 → castle, 성 버튼 반짝
+  await seed(page, "d.coins = 2000");
+  await page.locator(".gh-order-card").first().locator(".gh-serve-btn").click({ force: true });
+  await expect(bar).toHaveAttribute("data-step", "castle");
+  await expect(page.locator(".gh-castle-btn")).toHaveClass(/coach-pulse/);
+  await page.locator(".gh-castle-btn").click();
+  await expect(page.locator(".story-next-btn")).toHaveClass(/coach-pulse/);
+
+  // 제1화 복구 → 코치 없음
+  await page.locator(".story-next-btn").click();
+  await page.locator(".style-confirm-btn").click();
+  await expect(page.locator(".story-cutscene-modal")).toBeVisible({ timeout: 20_000 });
+  await page.locator(".story-cutscene-modal .gh-close-btn").click();
+  await expect(page.locator(".coach-bar")).toHaveCount(0);
+  await expect(page.locator(".story-next-btn")).not.toHaveClass(/coach-pulse/);
+  expect(errors).toEqual([]);
+});

@@ -8,7 +8,7 @@
   import type { Order } from "../../../core/types";
   import Portrait from "./Portrait.svelte";
 
-  let { order, idx, status }: { order: Order; idx: number; status: OrderStatus } = $props();
+  let { order, idx, status, coached = false }: { order: Order; idx: number; status: OrderStatus; coached?: boolean } = $props();
   const game = app().store;
   const selected = $derived(ui.selectedOrderIdx === idx);
 
@@ -38,7 +38,7 @@
   }
 </script>
 
-<div class="gh-order-card" class:order-complete={status.allReady} data-order-idx={idx} role="button" tabindex="0" onclick={explain} onkeydown={(e) => e.key === "Enter" && explain()}>
+<div class="gh-order-card" class:order-complete={status.allReady} class:coach-pulse={coached} data-order-idx={idx} role="button" tabindex="0" onclick={explain} onkeydown={(e) => e.key === "Enter" && explain()}>
   <!-- v3.2: 얼굴 + 요청 그림 + 체크만 (설명은 카드를 누르면 말풍선으로) -->
   <div class="order-items-row">
     <div class="cust-avatar"><Portrait name={order.customer.name} face={order.customer.face} size={34} /></div>

@@ -10,6 +10,7 @@
   import { holidaySpawn, holidayMoveOrMerge } from "../../core/actions/holiday";
   import { getItemMeta } from "../../core/rules/chains";
   import { getHolidayConfig } from "../../core/rules/holidays";
+  import { coachStep } from "../ui/coach";
 
   let { mode = "main", onReady }: { mode?: "main" | "holiday"; onReady?: (bv: BoardView) => void } = $props();
   const game = app().store;
@@ -47,16 +48,32 @@
     else bv.render(holidayBoardVisuals(s), { selected: ui.selectedEventCell });
   });
 
+  // 가리킬 칸이 바뀌면(합성·주문 완료 등으로 코치 단계가 넘어감) 지금 넛지를 멈추고 대기 후 새 칸으로
+  let hintKey = "";
+  $effect(() => {
+    if (mode !== "main") return;
+    const key = String(coachStep($game)?.cells ?? "");
+    if (key !== hintKey) {
+      hintKey = key;
+      bv?.stopNudge();
+    }
+  });
+
   $effect(() => {
     bv?.setInputEnabled(!ui.inputLocked && (mode === "holiday" ? ui.modal === "holiday" : ui.modal === null && ui.screen === "merge"));
   });
 
   // 막혔을 때 힌트 (v3.7): 보드를 IDLE_MS 동안 안 만지면 합칠 쌍을 톡톡 넛지, 보드가 가득 차 거절되면 바로
+  // 첫 복구 코치가 있으면 코치가 가리키는 칸(합칠 쌍·생성기)을 더 빨리 넛지
   const IDLE_MS = 5000;
+  const COACH_IDLE_MS = 1500;
   let lastInput = performance.now();
 
   function hintCells(): number[] {
-    return findMergePair(app().store.get()) ?? [];
+    const s = app().store.get();
+    const coach = coachStep(s);
+    if (coach) return coach.cells;
+    return findMergePair(s) ?? [];
   }
 
   function idleHint(view: BoardView) {
@@ -65,7 +82,8 @@
       if (view.isNudging()) view.stopNudge();
       return;
     }
-    if (view.isNudging() || performance.now() - lastInput < IDLE_MS) return;
+    const wait = coachStep(app().store.get()) ? COACH_IDLE_MS : IDLE_MS;
+    if (view.isNudging() || performance.now() - lastInput < wait) return;
     const cells = hintCells();
     if (cells.length) view.nudge(cells);
   }

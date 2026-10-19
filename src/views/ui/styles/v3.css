@@ -293,3 +293,50 @@ button.gh-res-pill {
 .story-next-btn.story-locked { background: linear-gradient(135deg, #64748b, #334155); }
 .room-pin.pin-locked { background: rgba(30, 27, 75, 0.85); color: #e2e8f0; border-color: #94a3b8; pointer-events: none; }
 .lv-banner-unlock { display: block; margin-top: 3px; font-weight: 900; color: #fde047; }
+
+/* v3.7 첫 복구 코치: 보드 아래 빈 곳에 떠 있는 한 줄 안내 (위쪽은 대사 말풍선 자리) — 배치에 끼지 않아 보드 위치가 그대로, 클릭도 통과 + 가리키는 버튼 반짝임 (클릭은 막지 않음) */
+.coach-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: calc(100% + 10px);
+  z-index: 5;
+  pointer-events: none;
+  padding: 7px 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(76, 29, 149, 0.92), rgba(30, 27, 75, 0.92));
+  border: 2px solid #fbbf24;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), 0 0 12px rgba(251, 191, 36, 0.35);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.3;
+  animation: coachIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+#view-merge .gh-bottom-panel { position: relative; }
+.coach-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 900;
+  color: #3b0764;
+  background: #fde047;
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+.coach-text { min-width: 0; }
+@keyframes coachIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.coach-pulse { position: relative; animation: coachPulse 1.2s ease-in-out infinite; }
+@keyframes coachPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.85); }
+  50% { box-shadow: 0 0 0 7px rgba(251, 191, 36, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach-bar { animation: none; }
+  .coach-pulse { animation: none; outline: 3px solid #fbbf24; outline-offset: 2px; }
+}

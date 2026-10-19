@@ -3,6 +3,7 @@
   import OrdersStrip from "./OrdersStrip.svelte";
   import SideTools from "./SideTools.svelte";
   import Inspector from "./Inspector.svelte";
+  import Coach from "./Coach.svelte";
   import BoardCanvas from "../../board/BoardCanvas.svelte";
 </script>
 
@@ -16,6 +17,7 @@
   </main>
 
   <footer class="gh-bottom-panel">
+    <Coach />
     <SideTools />
     <Inspector />
   </footer>

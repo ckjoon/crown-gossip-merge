@@ -34,7 +34,7 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
   - `economy.ts`: `grant`/`spend` is the single gateway for coins, gems, and energy. Replace it with a server adapter later for payments.
 - **`src/services`**: side effects.
   - `save/repository.ts`: IndexedDB `CrownGossipMergeDB`/`player_progress`/`main_save_v1` plus localStorage `crown_gossip_save_backup_v1`. It loads whichever copy is newer. Records are `schemaVersion: 4`.
-  - `save/restore.ts`: `restoreState(record, now, ctx)` validates every field and restores offline energy.
+  - `save/restore.ts`: `restoreState(record, now, ctx)` validates every field and restores offline energy. It also returns `granted` (level-unlocked generator chains handed out on load) so `main.ts` can announce them.
   - `save/migrations.ts`: v2 records (schema ≤3) get a one-time cleanup and return a `MigrationReport`.
   - `save/autosave.ts`: batches saves over 300ms, saves immediately for gems, restores, zone completion, and purchases, and skips transient commits.
   - Also: `save/backup.ts` (v2-compatible backup codes), `audio.ts`, `haptics.ts`.
@@ -46,7 +46,7 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
   - `board/`: Pixi board. `BoardView.ts` handles cells, tiles, input, slide tweens, and particles. `nudge(cells)` wiggles tiles via `pivot` only (never position) and stops on any board input. `BoardCanvas` nudges `findMergePair` (core/actions/board.ts) after 5s idle or a `boardFull` reject, and the coach's cells after 1.5s. `visuals.ts` maps state to `CellVisual`. `BoardCanvas.svelte` wires the main 7×8 or holiday 5×5 board.
   - `fx/`: `FxLayer` is a full-screen click-through Pixi canvas for flights between the board and the HTML UI. `juice.ts` maps events to effects.
   - `castle/`: `CastleView.ts` (Three.js), `furniture.ts` (procedural structures, recipe → meshes), `ambience.ts` (room mood 0–5), `layout.ts` (spot furniture types; positions come from modules), `toon.ts` (toon materials + outlines), `scenes.ts` (room lights).
-    - Lego rooms: `modules.ts` is pure data and math (no three). Each zone has an entrance hall plus one module per spot (`ZONE_MODULES`, 1 cell = 5 units). `moduleStates` returns built/ruin/ghost from `rooms[].done`. `moduleEdges` gives walls, doors, and curbs: walls go only on the far sides (-x/-z), facing the camera. `frameZone` (projected footprint center + width-fit zoom, 0.75–1.45) sets the camera home and zoom; `zoneBounds`/`panClamp` limit panning.
+    - Lego rooms: `modules.ts` is pure data and math (no three). Each zone has an entrance hall plus one module per spot (`ZONE_MODULES`, 1 cell = 5 units). `moduleStates` returns built/ruin/ghost from `rooms[].done`. `moduleEdges` gives walls, doors, and curbs: walls go only on the far sides (-x/-z), facing the camera. `frameZone` (projected footprint center + width-fit zoom, 0.75–1.45) sets the camera home and zoom; `panClampModules` keeps panning on built/ruin modules (or near home); wall-hung spot previews temporarily render their ruin module as built (`shownModuleStates`).
     - `roomBuilder.ts` draws modules (per-zone wall style, ornaments with `glowBase`) and plays the build animation inside `playRestore`.
     - `floorplan.ts` draws the castle map: a courtyard plus 4 zone wings made of module blocks.
     - `ZONE_PROPS` coordinates are local to module `step`.

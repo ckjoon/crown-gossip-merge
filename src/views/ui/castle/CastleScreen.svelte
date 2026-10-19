@@ -50,9 +50,11 @@
     if (!view) return;
     const s = $game;
     if (ui.castleMap) {
-      if (!shown.map) {
+      // 지도는 열린 구역·복구 수가 바뀌었을 때만 다시 그린다 (지도를 보던 중 레벨업으로 구역이 열려도 자물쇠가 남지 않게)
+      const key = `${zp.accessibleKeys.join()}|${Object.values(s.rooms).filter((r) => r.done).length}`;
+      if (!shown.map || shown.zone !== key) {
         view.showMap(s.rooms, zp.accessibleKeys);
-        shown = { map: true, zone: "" };
+        shown = { map: true, zone: key };
       }
     } else if (shown.map || shown.zone !== s.currentThemeKey) {
       view.showZone(s.currentThemeKey, s.rooms);

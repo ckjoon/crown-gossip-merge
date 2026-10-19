@@ -123,7 +123,9 @@ test("리뷰: 넛지 쌍 중 하나가 보드 밖 행동으로 사라지면 남�
   const { cells } = await nb(page);
   await seed(page, `d.board[${cells[0]}] = null`);
   await page.waitForTimeout(300);
-  expect((await nb(page)).on).toBe(false);
+  // 남은 짝 혼자 흔들리면 안 됨 — 꺼졌거나, 대기 힌트가 곧바로 새 온전한 쌍을 가리키는 것은 정상
+  const after = await nb(page);
+  expect(!after.on || (after.cells.length === 2 && !after.cells.includes(cells[0]))).toBe(true);
 });
 
 test("리뷰: 타일을 누르고 있는 동안에는 넛지가 시작되지 않음", async ({ page }) => {
@@ -139,6 +141,9 @@ test("리뷰: 타일을 누르고 있는 동안에는 넛지가 시작되지 않
 test("리뷰: 연출 줄이기를 켜면 넛지는 한 번만, 반짝임은 테두리만", async ({ page }) => {
   await fresh(page);
   await seed(page, "d.settings.reduceMotion = true");
+  // 설정 전에 이미 시작된 넛지가 있을 수 있으니 보드를 한 번 눌러 멈추고 새로 시작되게
+  const c0 = await cellCenter(page, 0);
+  await page.mouse.click(c0.x, c0.y);
   await expect.poll(async () => (await nb(page)).on, { timeout: 9_000 }).toBe(true);
   expect((await nb(page)).repeats.every((r) => r === 0)).toBe(true);
   await expect(page.locator("body")).toHaveClass(/reduce-motion/);

@@ -13,7 +13,7 @@ import { ModelLibrary } from "./models/library";
 import { Ambience } from "./ambience";
 import { addOutline, disposeGroup, toonify } from "./toon";
 import { setDecorGlow } from "./decor";
-import { ZONE_MODULES, moduleIndexOf, moduleStates, panClamp, zoneBounds, frameZone, ROOM_CAM_DIR, type Bounds, type ModuleState } from "./modules";
+import { ZONE_MODULES, moduleIndexOf, moduleStates, panClampModules, zoneBounds, frameZone, ROOM_CAM_DIR, type ModuleState } from "./modules";
 import { animateModuleAppear, animateModuleBuild, buildModules } from "./roomBuilder";
 import { ZONE_RESIDENT } from "./resident";
 import { CharacterActor, walkPath, walkTargets, zoneGuests } from "./actor";
@@ -140,7 +140,6 @@ export class CastleView {
   // 레고식 방: 조각 상태(지어짐·폐허·청사진)와 그 범위에 맞춘 카메라 기준점·줌
   private modules: THREE.Group | null = null;
   private states: ModuleState[] = [];
-  private bounds: Bounds = { minX: -2.5, maxX: 2.5, minZ: -2.5, maxZ: 2.5 };
   private home = new THREE.Vector3(0, 1, 0);
   private fit = ROOM_ZOOM;
   private glowStep = 0;
@@ -195,6 +194,7 @@ export class CastleView {
   showMap(rooms: Record<string, SpotState>, accessible: ZoneKey[]): void {
     this.mode = "map";
     this.preview = null;
+    this.previewModule = null;
     this.clearGroup();
     this.scene.background = buildFloorplan(this.roomGroup, rooms, accessible);
     this.ambientLight = null;
@@ -212,6 +212,7 @@ export class CastleView {
     this.zone = zone;
     this.rooms = rooms;
     this.preview = null;
+    this.previewModule = null;
     this.clearGroup();
     const shell = buildRoomLights(this.roomGroup, ZONE_LOOK[zone]);
     this.scene.background = shell.background;
@@ -300,17 +301,25 @@ export class CastleView {
     return [...this.states];
   }
 
+  // 지금 화면에 그려진 조각 상태 (벽걸이 장소 미리보기 중엔 그 조각을 지어진 모습으로)
+  shownModuleStates(): ModuleState[] {
+    return [...this.shownStates];
+  }
+  private shownStates: ModuleState[] = [];
+  private previewModule: number | null = null;
+
   private computeStates(): ModuleState[] {
     return moduleStates(this.zone, (id) => !!this.rooms[id]?.done);
   }
 
   // 방 조각을 상태에 맞춰 다시 만든다 (재질은 구역별로 공유되어 툰 변환도 재사용)
-  private renderModules(appearing?: number): THREE.Group {
+  private renderModules(appearing?: number, states: ModuleState[] = this.states): THREE.Group {
     if (this.modules) {
       this.roomGroup.remove(this.modules);
       disposeGroup(this.modules);
     }
-    const g = buildModules(this.zone, this.states, { appearing });
+    this.shownStates = [...states];
+    const g = buildModules(this.zone, states, { appearing });
     toonify(g);
     addOutline(g, 0.02);
     setDecorGlow(g, this.glowStep);
@@ -324,11 +333,10 @@ export class CastleView {
   private updateFraming(): void {
     const defs = ZONE_MODULES[this.zone];
     const b = zoneBounds(defs, this.states);
-    // 화면에 보이는 모양의 가운데를 바라보고, 투영 폭에 맞춰 줌 (끌어서 둘러보는 범위는 그 점을 포함하게)
+    // 화면에 보이는 모양의 가운데를 바라보고, 투영 폭에 맞춰 줌 (끌어서 둘러보는 범위는 panClampModules)
     const f = frameZone(defs, this.states);
     this.fit = f.zoom;
     this.home.set(f.x, f.y, f.z);
-    this.bounds = { minX: Math.min(b.minX, f.x), maxX: Math.max(b.maxX, f.x), minZ: Math.min(b.minZ, f.z), maxZ: Math.max(b.maxZ, f.z) };
     const dl = this.dirLight;
     if (dl) {
       const r = Math.max(b.maxX - b.minX, b.maxZ - b.minZ) * 0.8 + 3;
@@ -559,6 +567,12 @@ export class CastleView {
   previewSpot(spotId: string, styleIdx: number): void {
     const first = this.preview?.spotId !== spotId;
     this.preview = { spotId, styleIdx };
+    // 벽에 거는 장소(창문·태피스트리 등)를 폐허 조각에서 미리 보면 벽이 없어 공중에 뜬다 — 미리보기 동안 그 조각을 지어진 모습으로
+    const idx = moduleIndexOf(this.zone, spotId);
+    if (first && this.mode === "room" && SPOT_LAYOUT[spotId]?.pos[1] > 0.5 && this.states[idx] === "ruin") {
+      this.previewModule = idx;
+      this.renderModules(undefined, this.states.map((s, i) => (i === idx ? "built" : s)));
+    }
     const g = this.renderSpot(spotId);
     if (g) gsap.fromTo(g.scale, { x: 0.7, y: 0.7, z: 0.7 }, { x: 1, y: 1, z: 1, duration: 0.38, ease: "back.out(2)" });
     this.refreshShadowsFor(600);
@@ -568,6 +582,10 @@ export class CastleView {
   clearPreview(): void {
     const id = this.preview?.spotId;
     this.preview = null;
+    if (this.previewModule !== null) {
+      this.previewModule = null;
+      if (this.mode === "room") this.renderModules();
+    }
     if (id) this.renderSpot(id);
     this.resetCamera(true);
   }
@@ -591,7 +609,7 @@ export class CastleView {
     const right = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 0).setY(0).normalize();
     const fwd = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 1).setY(0).normalize();
     this.lookTarget.addScaledVector(right, -dx * perPx).addScaledVector(fwd, dy * perPx * 1.6);
-    const [x, z] = panClamp(this.bounds, this.lookTarget.x, this.lookTarget.z);
+    const [x, z] = panClampModules(ZONE_MODULES[this.zone], this.states, this.lookTarget.x, this.lookTarget.z, this.home);
     this.lookTarget.x = x;
     this.lookTarget.z = z;
     this.aim();

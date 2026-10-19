@@ -185,9 +185,6 @@ export function zoneBounds(defs: ModuleDef[], states: ModuleState[]): Bounds {
   return b;
 }
 
-export function panClamp(b: Bounds, x: number, z: number): [number, number] {
-  return [Math.max(b.minX, Math.min(b.maxX, x)), Math.max(b.minZ, Math.min(b.maxZ, z))];
-}
 
 // ---- v3.7: 화면에 보이는 모양 기준 카메라 ----
 // 방 카메라 방향 (바라보는 점 → 카메라). CastleView의 ROOM_CAM_OFFSET과 같다
@@ -242,4 +239,31 @@ export function frameZone(defs: ModuleDef[], states: ModuleState[]): { x: number
   const tc = (tLo + tHi) / 2;
   const zoom = Math.max(FRAME_ZOOM_MIN, Math.min(FRAME_ZOOM_MAX, (VIEW_W * FRAME_OVERFLOW) / (sHi - sLo)));
   return { x: sc * r[0] + tc * g[0], y: 1, z: sc * r[2] + tc * g[1], zoom };
+}
+
+// 끌어 둘러보기 범위 (v3.7.1): 지어진·폐허 조각 위, 또는 바라보는 기준점 반경 HOME_R 안. 밖이면 가장 가까운 허용 지점으로
+// (상자 하나로 막으면 ㄱ자 구역의 빈 모서리로 끌려 감)
+const HOME_R = 1.5;
+export function panClampModules(defs: ModuleDef[], states: ModuleState[], x: number, z: number, home: { x: number; z: number }): [number, number] {
+  let best: [number, number] | null = null;
+  let bestD = Infinity;
+  const offer = (px: number, pz: number) => {
+    const d = Math.hypot(px - x, pz - z);
+    if (d < bestD) {
+      bestD = d;
+      best = [px, pz];
+    }
+  };
+  defs.forEach((d, i) => {
+    if (states[i] === "ghost") return;
+    const x0 = (d.gx - 0.5) * CELL;
+    const x1 = (d.gx + d.w - 0.5) * CELL;
+    const z0 = (d.gz - 0.5) * CELL;
+    const z1 = (d.gz + d.d - 0.5) * CELL;
+    offer(Math.max(x0, Math.min(x1, x)), Math.max(z0, Math.min(z1, z)));
+  });
+  const hd = Math.hypot(x - home.x, z - home.z);
+  if (hd <= HOME_R) offer(x, z);
+  else offer(home.x + ((x - home.x) / hd) * HOME_R, home.z + ((z - home.z) / hd) * HOME_R);
+  return best ?? [home.x, home.z];
 }

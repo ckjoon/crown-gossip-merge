@@ -7,7 +7,6 @@ import {
   moduleCells,
   moduleEdges,
   moduleStates,
-  panClamp,
   spotAnchor,
   zoneBounds,
   type ModuleState,
@@ -103,8 +102,6 @@ test("카메라 범위: 지어진 곳 + 폐허만 (줌은 v3.7 frameZone)", () =
   const b0 = zoneBounds(defs, moduleStates("alchemy", doneUpTo("alchemy", 0)));
   // 홀(0,0) + 폐허 조각1(-1,0)
   expect(b0).toEqual({ minX: -1.5 * CELL, maxX: 0.5 * CELL, minZ: -0.5 * CELL, maxZ: 0.5 * CELL });
-  expect(panClamp(b0, 100, -100)).toEqual([b0.maxX, b0.minZ]);
-  expect(panClamp(b0, -1, 0)).toEqual([-1, 0]);
 });
 
 // ---- Task 2: 장소·소품 좌표가 조각 기준 ----
@@ -174,4 +171,25 @@ test("frameZone: 홀 + 첫 폐허만 있을 땐 확대 상한(1.45) — 캐릭�
   const f = frameZone(ZONE_MODULES.alchemy, moduleStates("alchemy", doneUpTo("alchemy", 0)));
   expect(f.zoom).toBeLessThanOrEqual(1.45);
   expect(f.y).toBe(1);
+});
+
+// v3.7.1: ㄱ자 구역에서 끌어 둘러볼 때 빈 모서리(조각 없는 곳)로는 못 감
+import { panClampModules } from "../../src/views/castle/modules";
+test("panClampModules: 조각(지어짐·폐허) 위나 바라보는 기준점 근처만, 빈 곳은 가장 가까운 조각으로", () => {
+  for (const zone of ZONES) {
+    const defs = ZONE_MODULES[zone];
+    const states = moduleStates(zone, doneUpTo(zone, 5));
+    const home = frameZone(defs, states);
+    const inside = (x: number, z: number) =>
+      defs.some((d, i) => states[i] !== "ghost" && x >= (d.gx - 0.5) * CELL - 1e-6 && x <= (d.gx + d.w - 0.5) * CELL + 1e-6 && z >= (d.gz - 0.5) * CELL - 1e-6 && z <= (d.gz + d.d - 0.5) * CELL + 1e-6);
+    // 기준점은 그대로
+    expect(panClampModules(defs, states, home.x, home.z, home)).toEqual([home.x, home.z]);
+    // 격자를 훑어 결과가 항상 조각 안이거나 기준점 근처
+    for (let x = -20; x <= 20; x += 1.7)
+      for (let z = -20; z <= 20; z += 1.7) {
+        const [cx, cz] = panClampModules(defs, states, x, z, home);
+        expect(inside(cx, cz) || Math.hypot(cx - home.x, cz - home.z) <= 1.5 + 1e-6, `${zone} ${x},${z}`).toBe(true);
+        if (inside(x, z)) expect([cx, cz]).toEqual([x, z]);
+      }
+  }
 });

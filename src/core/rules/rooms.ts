@@ -417,7 +417,7 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
           },
           {
             characterId: "quinn_nero",
-            line: "잠깐, 스테인드글라스에 비친 저 계단… 침입자의 흔적이 지하로 이어져요! 은빛 열쇠의 나머지 반쪽도 거기 있을지 몰라요!"
+            line: "잠깐, 스테인드글라스에 비친 저 계단… 침입자의 흔적이 지하로 이어져요! 할머니 비전서의 찢긴 마지막 장도 거기 있을지 몰라요!"
           }
         ]
       }
@@ -436,15 +436,15 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
         id: "cel_wine",
         name: "오크통 와인 셀러",
         cost: 3,
-        story: "와인 오크통 뒤 벽에서 은빛 열쇠 반쪽이 꼭 맞는 자물쇠 구멍을 찾아냈습니다!",
+        story: "와인 오크통 뒤 벽에서 은빛 열쇠가 꼭 맞는 자물쇠 구멍을 찾아냈습니다! 그런데 열쇠가 끝까지 돌아가지 않아요.",
         dialogues: [
           {
             characterId: "quinn",
-            line: "셀레네, 화분대에서 찾은 은빛 열쇠 반쪽 기억나요? 이 자물쇠 구멍, 모양이 똑같아요!"
+            line: "셀레네, 공방과 분수대에서 찾아 맞춘 은빛 열쇠 기억나요? 이 자물쇠 구멍, 모양이 똑같아요! 그런데 끝까지 안 돌아가네요."
           },
           {
             characterId: "nero",
-            line: "나머지 반쪽은 어디 있을까냥? 와인 냄새 사이로 촛농 냄새가 난다냥."
+            line: "열쇠 머리의 별 장식이 빠져 있다냥! 와인 냄새 사이로 촛농 냄새가 난다냥."
           }
         ]
       },
@@ -484,11 +484,11 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
         id: "cel_vault",
         name: "봉인 금고",
         cost: 4,
-        story: "봉인 금고를 열자 비전서 마지막 장 대신 '달빛 마탑' 설계도와 나머지 열쇠 반쪽이 나왔습니다!",
+        story: "봉인 금고를 열자 비전서 마지막 장 대신 '달빛 마탑' 설계도와 은빛 열쇠의 별 장식이 나왔습니다!",
         dialogues: [
           {
             characterId: "selene",
-            line: "열쇠 반쪽이 맞춰졌어! 그런데 비전서 마지막 장은 없고 서쪽 마탑 설계도만 남아 있네."
+            line: "별 장식을 끼우니 열쇠가 완전해졌어! 그런데 기록보관소에서 되찾은 건 골렘이 훔쳐 간 페이지들뿐이었지… 맨 처음 찢겨 나간 마지막 장은 여기에도 없고 서쪽 마탑 설계도만 남아 있네."
           },
           {
             characterId: "nero",
@@ -500,7 +500,7 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
         id: "cel_map",
         name: "지하 수맥 지도 벽",
         cost: 5,
-        story: "완성된 은빛 열쇠를 꽂자 지하 수맥 지도가 빛나며 성 서쪽 달빛 마탑으로 가는 길이 열렸습니다!",
+        story: "별 장식을 끼운 은빛 열쇠를 꽂자 지하 수맥 지도가 빛나며 성 서쪽 달빛 마탑으로 가는 길이 열렸습니다!",
         dialogues: [
           {
             characterId: "selene",

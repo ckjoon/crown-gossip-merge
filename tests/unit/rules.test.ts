@@ -79,3 +79,14 @@ describe("손님·캐릭터·명절·버전", () => {
     expect(VERSION_HISTORY.some((v) => v.version === "v2.5.0")).toBe(true);
   });
 });
+
+// v3.7.1 이야기 연속성: 은빛 열쇠 반쪽 두 개는 공방·분수대에서 이미 맞췄다 — 그 뒤 화에서 "반쪽"을 다시 찾지 않음
+import { ALL_SPOTS_IN_ORDER as STORY } from "../../src/core/rules/rooms";
+test("은빛 열쇠가 완성된 화(분수대) 뒤로는 '열쇠 반쪽'을 다시 찾는 문장이 없음", () => {
+  const done = STORY.findIndex((e) => e.spot.dialogues.some((d) => d.line.includes("열쇠가 완성")));
+  expect(done).toBeGreaterThan(0);
+  for (const e of STORY.slice(done + 1)) {
+    const texts = [e.spot.story, ...e.spot.dialogues.map((d) => d.line)];
+    for (const t of texts) expect(t, e.spot.id).not.toMatch(/반쪽/);
+  }
+});

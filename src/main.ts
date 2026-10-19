@@ -13,7 +13,8 @@ import { createRepository } from "./services/save/repository";
 import { restoreState, hasReportContent } from "./services/save/restore";
 import { createAutosave } from "./services/save/autosave";
 import { setApp } from "./views/ui/context";
-import { ui } from "./views/ui/ui.svelte";
+import { ui, say } from "./views/ui/ui.svelte";
+import { getGeneratorTierMeta } from "./core/rules/chains";
 import { attachFeedback } from "./views/ui/feedback";
 import { preloadTextures } from "./views/art/textures";
 import { FxLayer } from "./views/fx/FxLayer";
@@ -50,7 +51,7 @@ async function boot(): Promise<void> {
     }
     restored = restoreState(null, Date.now(), ctx);
   }
-  const { state, report, isNew } = restored;
+  const { state, report, isNew, granted } = restored;
   const store = createStore(state, ctx);
   // 처음 하는 사람에게는 지난 업데이트 노트를 띄우지 않는다 (다음 버전부터 보여 줌)
   if (isNew) store.dispatch(markVersionSeen, { version: APP_VERSION });
@@ -78,6 +79,8 @@ async function boot(): Promise<void> {
 
   await preloadTextures();
   mount(App, { target: document.getElementById("app")! });
+  // 불러오면서 레벨로 해금된 생성기를 새로 받았으면 알려 준다 (업데이트로 새 체인이 생긴 경우 등)
+  if (granted.length) say("대마녀 셀레네", `레벨 해금 선물로 새 생성기를 놓아 두었어 — ${granted.map((c) => getGeneratorTierMeta(c, 1).name).join(", ")}. 탭해서 새 재료를 만들어 봐!`);
   const fx = new FxLayer();
   await fx.init();
   attachJuice(store, fx, sfx);

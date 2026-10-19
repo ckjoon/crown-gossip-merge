@@ -2,6 +2,7 @@
 // v2.5 db.js mergeWithDefaultState의 모든 안전장치(숫자 검증, 오프라인 번개 충전, 보드 검증, 필수 생성기 보충)를 포함
 
 import { newUid, type Ctx } from "../../core/ctx";
+import type { GenChain } from "../../core/types";
 import { initCustomerOrders, createOrder, getZoneProgress } from "../../core/actions/orders";
 import { initHolidayBoard } from "../../core/actions/holiday";
 import { createInitialState } from "../../core/state";
@@ -61,16 +62,22 @@ export function restoreBoard(s: GameState, raw: unknown, now: number): void {
 }
 
 // 필수 생성기(기본 5종 + 레벨로 해금된 체인)가 보드에도 보관함에도 없으면 빈칸에 자동 지급 (보관함에 넣어 두고 새로고침해 공짜로 받는 것 방지)
-export function ensureGenerators(s: GameState): void {
+// 돌려주는 값: 이번에 새로 받은 레벨 해금 체인 (불러온 뒤 "새 생성기를 받았어요" 안내용)
+export function ensureGenerators(s: GameState): GenChain[] {
+  const granted: GenChain[] = [];
   for (const chain of unlockedChains(s.playerLv)) {
     const owned = [...s.board, ...s.bag].some((it) => it && it.isGenerator && it.chain === chain);
     if (owned) continue;
     const gen = { uid: newUid(s), state: "active" as const, isGenerator: true, chain, level: 1 };
     const empty = s.board.findIndex((it) => it === null);
+    let placed = true;
     if (empty !== -1) s.board[empty] = gen;
     // 레벨로 해금된 체인은 생성기가 없으면 주문을 만들 수 없으므로 보드가 꽉 차도 보관함에 넣는다
     else if (isExtraChain(chain) && s.bag.length < BAG_MAX) s.bag.push(gen);
+    else placed = false;
+    if (placed && isExtraChain(chain)) granted.push(chain);
   }
+  return granted;
 }
 
 // 같은 uid(또는 주문 id)가 두 번 나오면 뒤의 것에 새 uid를 준다 (보드 표시·주문 매칭이 uid 기준이라 중복이면 아이템이 안 보임)
@@ -203,7 +210,7 @@ export function newGame(ctx: Ctx): GameState {
   return s;
 }
 
-function restoreV4(data: Raw, updatedAt: number, now: number, ctx: Ctx): GameState {
+function restoreV4(data: Raw, updatedAt: number, now: number, ctx: Ctx): { s: GameState; granted: GenChain[] } {
   const s = newGame(ctx);
   s.playerLv = num(data.playerLv, 1, 1);
   s.xp = num(data.xp, 0);
@@ -226,20 +233,22 @@ function restoreV4(data: Raw, updatedAt: number, now: number, ctx: Ctx): GameSta
   fixCurrentTheme(s, data.currentThemeKey);
   fixUidSeq(s, data.uidSeq);
   dedupeUids(s);
-  ensureGenerators(s);
+  const granted = ensureGenerators(s);
   regenerateComboOrders(s, ctx);
-  return s;
+  return { s, granted };
 }
 
-export function restoreState(record: SaveRecord | null, now: number, ctx: Ctx): { state: GameState; report: MigrationReport | null; isNew: boolean } {
+// granted: 불러오면서 새로 받은 레벨 해금 생성기 체인 (화면이 안내)
+export function restoreState(record: SaveRecord | null, now: number, ctx: Ctx): { state: GameState; report: MigrationReport | null; isNew: boolean; granted: GenChain[] } {
   const data = asObj(record?.data);
-  if (!record || !data) return { state: newGame(ctx), report: null, isNew: true };
+  if (!record || !data) return { state: newGame(ctx), report: null, isNew: true, granted: [] };
   const updatedAt = num(record.updatedAt, now);
   if (num(record.schemaVersion, 0) < 4) {
     const { state, report } = migrateV2ToV4(data, updatedAt, now, ctx);
-    return { state, report, isNew: false };
+    return { state, report, isNew: false, granted: [] };
   }
-  return { state: restoreV4(data, updatedAt, now, ctx), report: null, isNew: false };
+  const { s, granted } = restoreV4(data, updatedAt, now, ctx);
+  return { state: s, report: null, isNew: false, granted };
 }
 
 export function hasReportContent(r: MigrationReport | null): boolean {

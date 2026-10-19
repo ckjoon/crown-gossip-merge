@@ -183,6 +183,8 @@ export class BoardView {
   // ---------- 그리기 ----------
 
   private relayout(): void {
+    // 칸 크기가 바뀌면 넛지가 붙잡고 있던 가운데(pivot)도 바뀌므로 멈추고 새 크기로 다시 (대기 힌트가 곧 다시 시작)
+    this.stopNudge();
     const W = this.app.screen.width;
     const H = this.app.screen.height;
     this.cw = Math.max(1, (W - GAP * (this.cols - 1)) / this.cols);

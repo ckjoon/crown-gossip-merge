@@ -153,3 +153,16 @@ describe("리뷰 수정: uid 고유성·공짜 생성기·이상한 체인 이�
     expect(state.board[30]).toBeNull();
   });
 });
+
+describe("v3.7.1: 불러올 때 레벨로 해금된 새 생성기를 받으면 알려 줄 수 있게", () => {
+  test("해금 레벨을 넘긴 세이브에 새 체인 생성기가 없으면 지급하고 granted로 돌려줌, 이미 있으면 빈 목록", () => {
+    const s = createInitialState(fixedCtx());
+    s.playerLv = 12;
+    const rec = (d: unknown): SaveRecord => ({ id: "main_save_v1", schemaVersion: 4, updatedAt: NOW, data: clone(d) });
+    const first = restoreState(rec(s), NOW, fixedCtx());
+    expect(first.granted).toEqual(["candle", "silk"]);
+    const again = restoreState(rec(first.state), NOW, fixedCtx());
+    expect(again.granted).toEqual([]);
+    expect(restoreState(null, NOW, fixedCtx()).granted).toEqual([]);
+  });
+});

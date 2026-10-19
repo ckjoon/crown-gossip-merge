@@ -27,21 +27,42 @@ describe("아이템 계보", () => {
     expect(l.steps.filter((x) => x.current).length).toBe(1);
   });
 
-  test("생성기가 아직 없으면 ★1 기준", () => {
+  test("생성기가 아직 없으면 바로 나오는 단계 없음 (합성으로만)", () => {
     const l = itemLineage(s, "tea", 1);
     expect(l.source).toMatchObject({ kind: "generator", chain: "tea", tier: 0 });
-    expect(l.steps[0].how).toBe("spawn");
+    expect(l.steps[0].how).toBe("merge");
   });
 
-  test("마법 광석은 가마솥 부산물", () => {
+  test("마법 광석은 가마솥 부산물 — 등급 단계로 바로, 배속 상한까지는 ⚡배속으로", () => {
     s.board[0] = gen("potion", 1);
     const l = itemLineage(s, "gem", 1);
     expect(l.source).toMatchObject({ kind: "byproduct", chain: "potion" });
+    expect(l.steps.map((x) => x.how)).toEqual(["spawn", "boost", "boost", "merge", "merge", "merge", "merge", "merge"].slice(0, l.steps.length));
+    s.board[0] = gen("potion", 3);
+    expect(itemLineage(s, "gem", 1).steps.map((x) => x.how).slice(0, 7)).toEqual(["below", "below", "spawn", "boost", "boost", "boost", "merge"].slice(0, Math.min(7, l.steps.length)));
   });
 
-  test("번개·코인 조각은 주문·합성 보너스로 나옴", () => {
-    expect(itemLineage(s, "energy", 1).source).toMatchObject({ kind: "drop" });
-    expect(itemLineage(s, "coin", 2).source).toMatchObject({ kind: "drop" });
+  test("생성기가 없는 체인(부산물 포함)은 전부 합성으로만", () => {
+    s.board[0] = item("candle", 3);
+    expect(new Set(itemLineage(s, "candle", 3).steps.map((x) => x.how))).toEqual(new Set(["merge"]));
+    expect(new Set(itemLineage(s, "gem", 2).steps.map((x) => x.how))).toEqual(new Set(["merge"]));
+  });
+
+  test("생성기 화면은 고른 생성기 등급 기준", () => {
+    s.board[0] = gen("potion", 1);
+    s.board[1] = gen("potion", 2);
+    expect(itemLineage(s, "potion", 0, 1).steps.slice(0, 3).map((x) => x.how)).toEqual(["spawn", "spawn", "boost"]);
+    expect(itemLineage(s, "potion", 0).steps.slice(0, 3).map((x) => x.how)).toEqual(["below", "spawn", "spawn"]);
+  });
+
+  test("조합품은 단계끼리 합치지 않고 각자 조합으로", () => {
+    expect(itemLineage(s, "combo", 1).source).toMatchObject({ kind: "recipe" });
+    expect(new Set(itemLineage(s, "combo", 1).steps.map((x) => x.how))).toEqual(new Set(["recipe"]));
+  });
+
+  test("번개 조각은 주문·합성 보너스, 코인 조각은 합성 보너스로만", () => {
+    expect(itemLineage(s, "energy", 1).source).toEqual({ kind: "drop", fromOrders: true });
+    expect(itemLineage(s, "coin", 2).source).toEqual({ kind: "drop", fromOrders: false });
   });
 
   test("열린 주문이 이 재료를 몇 개 원하는지", () => {

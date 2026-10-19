@@ -44,12 +44,13 @@ export function generatorCellFor(s: Pick<GameState, "board">, chain: ChainId, le
 }
 
 // 아이템 계보 (v3.11 계보 화면): 어디서 오는지, 단계마다 어떻게 얻는지(지금 가진 생성기 등급 기준), 지금 단계, 열린 주문이 원하는 수
-// how — spawn: 생성기(또는 출처)에서 바로, boost: ⚡배속으로 바로, merge: 아래 단계 둘을 합쳐서만, below: 지금 생성기로는 안 나오는 낮은 단계
-export type LineageHow = "spawn" | "boost" | "merge" | "below";
+// how — spawn: 생성기(또는 출처)에서 바로, boost: ⚡배속으로 바로, merge: 아래 단계 둘을 합쳐서만, below: 지금 생성기로는 안 나오는 낮은 단계,
+// recipe: 조합품 (단계끼리 합치지 않고 각자 다른 재료 둘을 조합)
+export type LineageHow = "spawn" | "boost" | "merge" | "below" | "recipe";
 export type LineageSource =
   | { kind: "generator"; chain: ChainId; tier: number; name: string }
   | { kind: "byproduct"; chain: ChainId; tier: number; name: string }
-  | { kind: "drop" }
+  | { kind: "drop"; fromOrders: boolean }
   | { kind: "recipe" };
 export interface LineageStep {
   level: number;
@@ -63,28 +64,29 @@ export interface Lineage {
   wanted: number;
 }
 
-export function itemLineage(s: Pick<GameState, "board" | "bag" | "codexSeen" | "orders">, chain: ChainId, level: number): Lineage {
+// genTier: 생성기 화면에서 고른 생성기 등급 (없으면 가진 최고 등급 기준). 생성기가 없으면 바로 나오는 단계 없이 모두 합성으로만
+export function itemLineage(s: Pick<GameState, "board" | "bag" | "codexSeen" | "orders">, chain: ChainId, level: number, genTier?: number): Lineage {
   const ch = CHAINS[chain];
   const byproductOf = (Object.keys(CHAINS) as ChainId[]).find((k) => CHAINS[k].rareDropChain === chain);
   let source: LineageSource;
   let how: (lv: number) => LineageHow;
   if (ch.generator) {
-    const tier = generatorSeen(s, chain);
+    const tier = genTier ?? generatorSeen(s, chain);
     const r = spawnRange(tier || 1);
-    source = { kind: "generator", chain, tier, name: generatorName(s, chain) };
-    how = (lv) => (lv < r.min ? "below" : lv <= r.max ? "spawn" : lv <= r.boostMax ? "boost" : "merge");
+    source = { kind: "generator", chain, tier, name: genTier ? getGeneratorTierMeta(chain, genTier).name : generatorName(s, chain) };
+    how = (lv) => (!tier ? "merge" : lv < r.min ? "below" : lv <= r.max ? "spawn" : lv <= r.boostMax ? "boost" : "merge");
   } else if (byproductOf) {
-    // 부산물은 생성기 등급과 같은 단계로 나온다 (★1 → Lv.1, ★2 → Lv.2, ★3 → Lv.3)
+    // 부산물은 생성기 등급과 같은 단계로 나오고 (★1 → Lv.1, ★2 → Lv.2, ★3 → Lv.3), 배속을 쓰면 그 등급의 배속 상한까지 (board.spawnFromGenerator)
     const tier = generatorSeen(s, byproductOf);
-    const from = Math.max(1, tier);
+    const cap = Math.min(spawnRange(tier || 1).boostMax, ch.items.length);
     source = { kind: "byproduct", chain: byproductOf, tier, name: generatorName(s, byproductOf) };
-    how = (lv) => (lv < from ? "below" : lv === from ? "spawn" : "merge");
+    how = (lv) => (!tier ? "merge" : lv < tier ? "below" : lv === tier ? "spawn" : lv <= cap ? "boost" : "merge");
   } else if (ch.isCollectible) {
-    source = { kind: "drop" };
+    source = { kind: "drop", fromOrders: chain === "energy" };
     how = (lv) => (lv === 1 ? "spawn" : "merge");
   } else {
     source = { kind: "recipe" };
-    how = () => "spawn";
+    how = () => "recipe";
   }
   const steps = ch.items.map((it) => ({
     level: it.level,

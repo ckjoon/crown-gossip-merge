@@ -17,7 +17,7 @@ test("생성기: 첫 탭은 선택과 설명만, 두 번째 탭에 생성", asyn
   page.on("pageerror", (e) => errors.push(e.message));
   await boot(page);
   const s0 = await state<S>(page);
-  const g = await cellCenter(page, 17); // 처음 선택은 칸 16이라 17은 고르지 않은 생성기
+  const g = await cellCenter(page, 17);
   await page.mouse.click(g.x, g.y);
   await page.waitForTimeout(400);
   const s1 = await state<S>(page);
@@ -51,7 +51,8 @@ test("계보 화면: 재료의 출처·단계·지금 위치, 못 본 단계는 
 
 test("계보 화면: 생성기는 ★ 등급(가진 등급까지만 공개)과 나오는 재료", async ({ page }) => {
   await boot(page);
-  // 처음부터 칸 16 가마솥이 골라져 있음
+  const g = await cellCenter(page, 16);
+  await page.mouse.click(g.x, g.y);
   await page.locator(".gh-inspector button[title='등급과 나오는 재료']").click();
   const modal = page.locator(".gh-modal");
   await expect(modal.locator(".cs-tier")).toHaveCount(3);

@@ -12,12 +12,12 @@
   const game = app().store;
   const info = ui.itemInfo!;
   const ch = CHAINS[info.chain];
-  const lin = $derived(itemLineage($game, info.chain, info.generator ? 0 : info.level));
+  const lin = $derived(itemLineage($game, info.chain, info.generator ? 0 : info.level, info.generator ? info.level : undefined));
   const meta = info.generator ? null : getItemMeta(info.chain, info.level);
   const owned = $derived(info.generator ? generatorSeen($game, info.chain) : 0);
   const title = info.generator ? getGeneratorTierMeta(info.chain, info.level).name : meta!.name;
   const sub = info.generator ? `${formatGeneratorStars(info.level)} 생성기 · ${ch.name}` : `Lv.${info.level}/${meta!.maxLv} · ${ch.name}`;
-  const HOW: Record<LineageHow, string> = { spawn: "바로 나옴", boost: "⚡배속으로", merge: "합성으로만", below: "지금은 안 나옴" };
+  const HOW: Record<LineageHow, string> = { spawn: "바로 나옴", boost: "⚡배속으로", merge: "합성으로만", below: "지금은 안 나옴", recipe: "조합으로" };
   const sourceText = $derived.by(() => {
     const src = lin.source;
     if (src.kind === "generator") {
@@ -25,8 +25,12 @@
       const r = spawnRange(src.tier);
       return `${src.name} ${formatGeneratorStars(src.tier)} · 바로 Lv.${r.min}~${r.max} · ⚡배속 Lv.${r.boostMax}까지`;
     }
-    if (src.kind === "byproduct") return `${src.name}에서 가끔 함께 나와요 (생성기 ★ 등급과 같은 단계로)`;
-    if (src.kind === "drop") return "주문을 완성하거나 Lv.4 이상 재료를 합치면 가끔 나와요. 누르면 바로 받아요";
+    if (src.kind === "byproduct") {
+      if (!src.tier) return `${src.name}에서 가끔 함께 나와요`;
+      const cap = Math.min(spawnRange(src.tier).boostMax, ch.items.length);
+      return `${src.name}에서 가끔 함께 나와요 · 바로 Lv.${src.tier} · ⚡배속 Lv.${cap}까지`;
+    }
+    if (src.kind === "drop") return `${src.fromOrders ? "주문을 완성하거나 " : ""}Lv.4 이상 재료를 합치면 가끔 나와요. 고른 뒤 한 번 더 누르면 받아요`;
     return ch.items[Math.max(0, info.level - 1)]?.recipeText ?? "특별한 조합으로 만들어요";
   });
   const srcIcon = $derived(lin.source.kind === "generator" || lin.source.kind === "byproduct" ? getItemSVG(lin.source.chain, Math.max(1, lin.source.tier), true) : getItemSVG(info.chain, 1, false));
@@ -73,11 +77,13 @@
   <h4 class="ii-h">{info.generator ? "여기서 나오는 재료" : "단계"}</h4>
   <ol class="ii-steps">
     {#each lin.steps as st, i (st.level)}
-      {#if i > 0}<li class="ii-join" aria-hidden="true">▼ 둘을 합치면</li>{/if}
-      <li class="ii-step ii-{st.how}" class:ii-current={st.current} class:cs-unknown={st.name === null}>
-        <span class="ii-step-icon cs-svg">{@html getItemSVG(info.chain, st.level, false)}</span>
-        <span class="ii-step-name"><b>Lv.{st.level}</b> {st.name ?? "???"}</span>
-        <span class="ii-tag">{st.current ? "지금 여기" : HOW[st.how]}</span>
+      <li>
+        {#if i > 0 && st.how !== "recipe"}<span class="ii-join" aria-hidden="true">▼ 둘을 합치면</span>{/if}
+        <div class="ii-step ii-{st.how}" class:ii-current={st.current} class:cs-unknown={st.name === null}>
+          <span class="ii-step-icon cs-svg">{@html getItemSVG(info.chain, st.level, false)}</span>
+          <span class="ii-step-name"><b>Lv.{st.level}</b> {st.name ?? "???"}{#if st.how === "recipe" && ch.items[st.level - 1]?.shortRecipe}<small>{ch.items[st.level - 1].shortRecipe}</small>{/if}</span>
+          <span class="ii-tag">{st.current ? `지금 · ${HOW[st.how]}` : HOW[st.how]}</span>
+        </div>
       </li>
     {/each}
   </ol>

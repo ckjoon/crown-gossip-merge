@@ -23,6 +23,8 @@ test("생성: 새 아이템이 도착 칸에 먼저 나타나지 않음", async 
     };
   });
   const g = await cellCenter(page, 16);
+  await page.mouse.click(g.x, g.y); // v3.11: 첫 탭은 고르기만
+  await page.waitForTimeout(300);
   await page.mouse.click(g.x, g.y);
   await page.waitForTimeout(600);
   const s1 = await state<S>(page);

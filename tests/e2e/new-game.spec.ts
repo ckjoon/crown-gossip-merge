@@ -11,6 +11,9 @@ test("새 게임: 생성 → 합성 → 주문 완료 → 제1화 복구 → �
   // 1. 가마솥(칸 16) 탭 → 재료 생성, 번개 −1
   const s0 = await state<S>(page);
   const g = await cellCenter(page, 16);
+  await page.mouse.click(g.x, g.y); // v3.11: 첫 탭은 고르기만
+  await page.waitForTimeout(300);
+  expect((await state<S>(page)).energy).toBe(s0.energy);
   await page.mouse.click(g.x, g.y);
   await page.waitForTimeout(300);
   const s1 = await state<S>(page);

@@ -21,7 +21,8 @@ export interface CutsceneView {
 
 export const ui = $state({
   screen: "merge" as Screen,
-  selectedCell: 2 * 7 + 2 as number | null,
+  // v3.11: 처음엔 아무것도 고르지 않음 (생성기는 고른 뒤 다시 눌러야 생성되므로, 미리 골라 두면 첫 탭이 바로 번개를 씀)
+  selectedCell: null as number | null,
   selectedEventCell: 6 as number | null,
   selectedOrderIdx: null as number | null,
   modal: null as ModalId | null,

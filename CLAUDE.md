@@ -23,7 +23,10 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
 - **`src/core`**: pure game logic.
   - `types.ts`: `GameState` and the other shared types.
   - `rules/`: data and balance.
-    - `progression.ts`: zone unlock, order caps, generator tier caps, boost, prices, holiday rewards.
+    - `progression.ts`: zone unlock (takes `playerLv`), order caps, generator tier caps and `spawnRange`, boost, prices, holiday rewards.
+    - `levels.ts` (v3.5): XP curve `xpToNext`, XP sources, level-up rewards, sell price and order coins, and the unlock table.
+      - Unlocks: zone entry levels, bag size `bagSize(lv)`, and new chains (`candle` Lv6, `silk` Lv12).
+      - A zone with any restored spot stays open regardless of level, for save compatibility.
     - `chains.ts`, `customers.ts`, `holidays.ts`, `rooms.ts` (spots, dialogues, `ambienceByProgress`), `characters.ts`, `versionHistory.ts`.
   - `actions/*.ts`: every state change is an `Action<P> = (draft, ctx, payload) => GameEvent[]`. Groups are `board`, `orders`, `progress`, `castle`, and `holiday`.
   - `store.ts`: `dispatch(action, payload, {transient?})` runs the action on a `structuredClone`, swaps in the new state, then notifies `subscribe` (Svelte store contract), `onCommit`, and `onEvent`.
@@ -69,7 +72,7 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
 
 1. Add an entry at the top of `VERSION_HISTORY` in `src/core/rules/versionHistory.ts`, bump `APP_VERSION`, and move the `LATEST` badge. The changelog pops up once when `lastSeenVersion` differs.
 2. Bump `version` in `package.json`.
-3. Run `npm test && npm run check && npm run test:e2e`.
+3. Run `npm test && npm run check && npm run test:e2e`. `tests/unit/balance.test.ts` runs a bot (`tests/unit/sim.ts`) through the whole game using real actions. If you change economy numbers (costs, XP, rewards), re-check its energy and level ranges.
 4. Merge to `main` and push. Vercel builds it, and the service worker precache updates automatically. No manual cache-name bump is needed. Models under `/models/` are not precached; the SW caches them on first view (`MODEL_CACHE` in `src/sw.ts`). If you change model files at the same path, bump `MODEL_CACHE` (older model caches are deleted on activate).
 
 Commit messages follow `feat(vX.Y.Z): ...` in Korean.

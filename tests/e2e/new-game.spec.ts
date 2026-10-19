@@ -35,7 +35,8 @@ test("새 게임: 생성 → 합성 → 주문 완료 → 제1화 복구 → �
   await page.waitForTimeout(300);
   expect((await state<S>(page)).coins).toBeGreaterThan(before);
 
-  // 4. 성 → 다음 이야기 진행 → 확정 → 컷신 → 제2화
+  // 4. 성 → 다음 이야기 진행 → 확정 → 컷신 → 제2화 (v3.5: 제1화 비용 800 — 주문 몇 번 분량을 미리 채움)
+  await seed(page, "d.coins = 2000");
   await page.locator(".gh-castle-btn").click();
   await page.waitForTimeout(600);
   await expect(page.locator(".story-next-btn")).toContainText("제1화");

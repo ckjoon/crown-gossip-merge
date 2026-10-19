@@ -43,23 +43,45 @@ export interface Toast {
   x: number;
   y: number;
   color: string;
+  bump: number; // 같은 문구가 다시 오면 올려서 떠오르는 애니메이션을 처음부터 다시
 }
 
 export const toasts = $state<Toast[]>([]);
 let toastSeq = 0;
 
-// 떠오르는 짧은 알림 (v2 floatText와 같은 위치 규칙: 화면 안쪽으로 보정, 연속 알림은 위로 비켜 쌓임)
+const TOAST_MS = 1050;
+const TOAST_MAX_W = 340; // .fx-float-text 최대 폭과 같게
+const toastTimers = new Map<number, ReturnType<typeof setTimeout>>();
+
+function expireToast(id: number): void {
+  clearTimeout(toastTimers.get(id));
+  toastTimers.set(
+    id,
+    setTimeout(() => {
+      toastTimers.delete(id);
+      const i = toasts.findIndex((t) => t.id === id);
+      if (i !== -1) toasts.splice(i, 1);
+    }, TOAST_MS),
+  );
+}
+
+// 떠오르는 짧은 알림: 상자가 화면 밖으로 나가지 않게 가운데 쪽으로 보정, 연속 알림은 위로 비켜 쌓임
+// 같은 문구가 떠 있는 동안 다시 오면(연타) 새로 쌓지 않고 시간만 늘린다
 export function toast(text: string, x?: number, y?: number, color = "#fbbf24"): void {
+  const same = toasts.find((t) => t.text === text);
+  if (same) {
+    same.bump += 1;
+    expireToast(same.id);
+    return;
+  }
   const slot = (toasts.length % 4) * 34;
   const w = typeof window !== "undefined" ? window.innerWidth : 412;
-  const safeX = Math.max(110, Math.min(w - 110, x ?? w / 2));
+  const half = Math.min(w - 24, TOAST_MAX_W) / 2;
+  const safeX = Math.max(12 + half, Math.min(w - 12 - half, x ?? w / 2));
   const safeY = Math.max(65, (y ?? 220) - 10 - slot);
   const id = ++toastSeq;
-  toasts.push({ id, text, x: safeX, y: safeY, color });
-  setTimeout(() => {
-    const i = toasts.findIndex((t) => t.id === id);
-    if (i !== -1) toasts.splice(i, 1);
-  }, 1050);
+  toasts.push({ id, text, x: safeX, y: safeY, color, bump: 0 });
+  expireToast(id);
 }
 
 export function say(speaker: string, text: string): void {

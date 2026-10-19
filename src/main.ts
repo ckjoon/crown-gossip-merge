@@ -6,7 +6,8 @@ import { mount } from "svelte";
 import App from "./views/ui/App.svelte";
 import { createCtx } from "./core/ctx";
 import { createStore } from "./core/store";
-import { tickEnergy } from "./core/actions/progress";
+import { tickEnergy, markVersionSeen } from "./core/actions/progress";
+import { APP_VERSION } from "./core/rules/versionHistory";
 import { SoundEngine } from "./services/audio";
 import { createRepository } from "./services/save/repository";
 import { restoreState, hasReportContent } from "./services/save/restore";
@@ -51,6 +52,8 @@ async function boot(): Promise<void> {
   }
   const { state, report, isNew } = restored;
   const store = createStore(state, ctx);
+  // 처음 하는 사람에게는 지난 업데이트 노트를 띄우지 않는다 (다음 버전부터 보여 줌)
+  if (isNew) store.dispatch(markVersionSeen, { version: APP_VERSION });
   const sfx = new SoundEngine();
   sfx.enabled = state.settings.sound;
   const autosave = createAutosave(store, repo, { debounceMs: 300, now: () => Date.now() });

@@ -1831,11 +1831,16 @@ body {
   background: rgba(15, 23, 42, 0.92);
   border: 1.5px solid rgba(255, 255, 255, 0.35);
   padding: 4px 10px;
-  border-radius: 999px;
+  border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
   animation: floatUpFade 1.05s ease-out forwards;
   pointer-events: none;
-  white-space: nowrap;
+  /* v3.7: 긴 문구는 화면 안에서 줄바꿈 (위치는 toast()가 최대 폭 기준으로 보정) */
+  width: max-content;
+  max-width: min(340px, calc(100vw - 24px));
+  white-space: normal;
+  text-align: center;
+  line-height: 1.35;
 }
 
 @keyframes floatUpFade {

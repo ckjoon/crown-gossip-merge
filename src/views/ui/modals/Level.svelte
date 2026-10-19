@@ -9,8 +9,10 @@
   const pct = $derived(Math.min(100, Math.round(($game.xp / req) * 100)));
   // 지난 레벨 1개 + 앞으로 8레벨
   const levels = $derived(Array.from({ length: 9 }, (_, i) => Math.max(2, $game.playerLv - 1) + i));
+  // 지난 레벨은 받은 생성기 이름, 앞으로의 레벨은 그때 열려 있는 체인에 따라 달라지므로 "생성기"로만
   function partOf(lv: number): string | null {
     if (!levelUpReward(lv).genPart) return null;
+    if (lv > $game.playerLv) return "생성기";
     const pool = unlockedChains($game);
     return getGeneratorTierMeta(pool[(lv / 2 - 1) % pool.length], 1).name;
   }

@@ -262,3 +262,25 @@ test("새 체인마다 건네주는 캐릭터와 짧은 대사가 있음", () =>
     expect(CHAIN_GIFT[c].line.length, c).toBeLessThanOrEqual(46);
   }
 });
+
+test("v3.8 리뷰: 구역 완성 선물은 같은 복구의 레벨업 파츠보다 먼저 — 선물 장면이 빠지지 않음", () => {
+  s.playerLv = 13;
+  s.xp = xpToNext(13) - 1; // 이번 복구 경험치로 Lv.14 (짝수 → 파츠)
+  s.coins = 10_000_000;
+  finishZone("alchemy");
+  ROOMS.harbor.spots.slice(0, 4).forEach((sp) => (s.rooms[sp.id] = { done: true, styleIdx: 0 }));
+  s.board[0] = { uid: "c", state: "active", isGenerator: true, chain: "candle", level: 1 };
+  const ev = renovate(s, fixedCtx(), { spotId: ROOMS.harbor.spots[4].id, styleIdx: 0 });
+  expect(ev.some((e) => e.type === "chainUnlocked" && e.chain === "silk")).toBe(true);
+  const gi = ev.findIndex((e) => e.type === "chainUnlocked");
+  const li = ev.findIndex((e) => e.type === "levelUp");
+  expect(gi).toBeLessThan(li === -1 ? Infinity : li);
+});
+
+test("v3.8 리뷰: 보드와 보관함(최대 칸)이 모두 꽉 차도 구역 완성 보상 생성기는 불러올 때 보관함으로 (주문만 나오고 생성기가 없는 상태 방지)", () => {
+  s.board = s.board.map(() => item("tea", 1));
+  for (let i = 0; i < 12; i++) s.bag.push(item("tea", 1));
+  finishZone("alchemy");
+  ensureGenerators(s);
+  expect(s.bag.some((c) => c.isGenerator && c.chain === "candle")).toBe(true);
+});

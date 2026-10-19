@@ -7,6 +7,8 @@ import { getGeneratorTierCap } from "../../core/rules/progression";
 import { say, toast } from "./ui.svelte";
 
 export function attachFeedback(store: Store, sfx: SoundEngine): () => void {
+  // 구역 완성 선물 생성기는 진화 파츠 안내 대신 선물 장면(RewardDirector)이 알린다 — 바로 뒤 지급 이벤트 하나를 건너뜀
+  let giftChain: string | null = null;
   return store.onEvent((e) => {
     switch (e.type) {
       case "orderServed":
@@ -39,7 +41,14 @@ export function attachFeedback(store: Store, sfx: SoundEngine): () => void {
           say("🔥 생성기 합성 진화 성공!", `${meta.name}(${"★".repeat(e.item.level)})으로 진화! 이제 한 번에 최대 Lv.${getGeneratorTierCap(e.item.level)}까지 나옵니다!`);
         }
         break;
+      case "chainUnlocked":
+        giftChain = e.chain;
+        break;
       case "generatorPartGranted": {
+        if (giftChain === e.chain) {
+          giftChain = null;
+          break;
+        }
         const meta = getGeneratorTierMeta(e.chain, 1);
         if (e.where === "board") say("🔥 생성기 진화 파츠 획득", `[${meta.name} ★]을 획득했습니다! 같은 생성기끼리 드래그해 합치면 등급이 올라갑니다!`);
         else if (e.where === "bag") say("🎒 보관함 지급", `보드가 가득 차서 [${meta.name} ★] 진화 파츠가 보관함(🎒)으로 지급되었습니다!`);

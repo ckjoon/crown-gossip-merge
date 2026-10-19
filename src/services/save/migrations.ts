@@ -94,6 +94,8 @@ export function migrateV2ToV4(data: Record<string, unknown>, updatedAt: number, 
       }
     }
   }
+  // 구역 완성 보상 생성기(v3.8)는 복구 기록을 읽은 뒤에야 알 수 있으므로 한 번 더
+  ensureGenerators(s);
   s.boostMultiplier = sanitizeBoost(data.boostMultiplier);
   s.settings = { sound: data.soundEnabled !== false, reduceMotion: false };
   s.lastSeenVersion = typeof data.lastSeenVersion === "string" ? data.lastSeenVersion : null;

@@ -273,7 +273,10 @@ export class CastleView {
     // 준비된 캐릭터부터 바로, 나머지는 각자 모델(과 옷 색)이 준비되는 대로 — 가장 늦은 캐릭터를 다 같이 기다리지 않게
     const now = missing.filter((id) => CharacterLibrary.ready(id));
     if (now.length) spawn(now);
-    for (const id of missing.filter((x) => !now.includes(x))) void CharacterLibrary.preload([id]).then(() => spawn([id]));
+    for (const id of missing.filter((x) => !now.includes(x)))
+      CharacterLibrary.preload([id])
+        .then(() => spawn([id]))
+        .catch((err) => console.warn("캐릭터를 불러오지 못함", id, err));
   }
 
   // 화면 좌표로 캐릭터 고르기 (탭해서 인사)
@@ -584,7 +587,8 @@ export class CastleView {
     this.preview = null;
     if (this.previewModule !== null) {
       this.previewModule = null;
-      if (this.mode === "room") this.renderModules();
+      // 확정해서 복구 연출이 곧 시작되면(holdSpot) 지어진 모습을 그대로 두고 연출이 다시 짓게 한다 — 폐허로 잠깐 돌아갔다 다시 지어지는 깜빡임 방지
+      if (this.mode === "room" && this.holdSpot !== id) this.renderModules();
     }
     if (id) this.renderSpot(id);
     this.resetCamera(true);

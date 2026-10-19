@@ -38,8 +38,6 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
   room.done = true;
   room.styleIdx = styleIdx;
   ev.push({ type: "spotRestored", spotId, zoneKey: found.zoneKey, chapter: found.chapter, coinCost, styleIdx });
-  gainXP(s, ev, RESTORE_XP);
-  grantGeneratorPart(s, ev, getGeneratorChainForTheme(found.zoneKey));
 
   // 이 복구로 구역이 완성되면 💎 보상 (같은 저장에 포함되도록 즉시 지급)
   const after = getZoneProgress(s);
@@ -55,5 +53,8 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
       grantGeneratorPart(s, ev, c, true);
     }
   }
+  // 경험치·구역 생성기 파츠는 선물 다음에 (같은 복구의 레벨업 파츠가 선물 생성기를 먼저 줘 선물 장면이 빠지지 않게)
+  gainXP(s, ev, RESTORE_XP);
+  grantGeneratorPart(s, ev, getGeneratorChainForTheme(found.zoneKey));
   return ev;
 };

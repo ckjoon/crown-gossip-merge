@@ -171,3 +171,10 @@ describe("v3.8: 불러올 때 구역 완성 보상 생성기를 받으면 알려
     expect(restoreState(rec(hi), NOW, fixedCtx()).granted).toEqual([]);
   });
 });
+
+describe("v3.8 리뷰: v2 세이브도 구역 완성 보상 생성기를 첫 실행부터", () => {
+  test("공방을 완성한 v2.4 세이브는 마이그레이션 직후 촛대 생성기를 가짐", () => {
+    const { state } = restoreState(clone(v24) as SaveRecord, NOW, fixedCtx());
+    expect([...state.board, ...state.bag].some((c) => c?.isGenerator && c.chain === "candle")).toBe(true);
+  });
+});

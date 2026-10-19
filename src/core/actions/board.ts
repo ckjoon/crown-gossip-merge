@@ -69,31 +69,47 @@ export const spawnFromGenerator: Action<{ cell: number }> = (s, ctx, { cell }) =
 
 // 드래그 드롭: 이동 / 생성기 진화 / 같은 재료 합성(거미줄 포함) / 교체
 // 생성기 흡수 (v3.8): 진화로 그 체인 ★1 생성기가 하나도 안 남으면(보드·보관함) Lv.1 재료는 더 만들 수 없어 짝 없이 남는다.
-// 그 체인 Lv.1(보드 활성·거미줄, 보관함)을 생성기가 빨아들이고 개당 Lv.1 판매가 코인·합성 경험치를 준다. 거미줄 칸이 비면 옆 봉인 상자도 열린다
+// 그 체인 Lv.1(보드 활성·거미줄, 보관함)을 생성기가 빨아들이고 개당 Lv.1 판매가 코인을 준다(경험치 없음). 거미줄 칸이 비면 옆 봉인 상자도 열리고,
+// 그 상자가 같은 체인 Lv.1 거미줄이 되면 그것도 흡수. 열린 주문이 요구하는 Lv.1은 요구 개수만큼 남긴다(활성 재료 먼저)
 function absorbOrphans(s: GameState, ev: GameEvent[], chain: ChainId, generator: number): void {
   const hasTier1 = [...s.board, ...s.bag].some((it) => it?.isGenerator && it.chain === chain && (it.level || 1) === 1);
   if (hasTier1) return;
+  let keep = s.orders.reduce((n, o) => n + o.reqs.filter((r) => r.chain === chain && r.level === 1).length, 0);
+  const isOrphan = (it: BoardItem | null) => !!it && !it.isGenerator && it.chain === chain && it.level === 1 && (it.state === "active" || it.state === "cobweb");
+  // 남길 것: 보드 활성 → 보관함 → 거미줄 순
+  const kept = new Set<string>();
+  for (const it of [...s.board.filter((x) => x?.state === "active"), ...s.bag, ...s.board.filter((x) => x?.state === "cobweb")]) {
+    if (keep <= 0) break;
+    if (isOrphan(it)) {
+      kept.add(it!.uid);
+      keep--;
+    }
+  }
   const cells: number[] = [];
   const items: BoardItem[] = [];
-  s.board.forEach((it, i) => {
-    if (!it || it.isGenerator || it.chain !== chain || it.level !== 1 || (it.state !== "active" && it.state !== "cobweb")) return;
-    cells.push(i);
-    items.push({ ...it });
-  });
-  const bagBefore = s.bag.length;
-  s.bag = s.bag.filter((it) => it.isGenerator || it.chain !== chain || it.level !== 1);
-  const bag = bagBefore - s.bag.length;
-  if (!cells.length && !bag) return;
   const opened: number[] = [];
-  for (const c of cells) {
-    const wasCobweb = s.board[c]!.state === "cobweb";
-    s.board[c] = null;
-    if (wasCobweb) opened.push(...crackAdjacentCrates(s, c));
+  const bagBefore = s.bag.length;
+  s.bag = s.bag.filter((it) => !isOrphan(it) || kept.has(it.uid));
+  const bag = bagBefore - s.bag.length;
+  for (let pass = 0; pass < 4; pass++) {
+    let found = false;
+    s.board.forEach((it, i) => {
+      if (!isOrphan(it) || kept.has(it!.uid)) return;
+      found = true;
+      cells.push(i);
+      items.push({ ...it! });
+      const wasCobweb = it!.state === "cobweb";
+      s.board[i] = null;
+      if (wasCobweb) opened.push(...crackAdjacentCrates(s, i));
+    });
+    if (!found) break;
   }
+  if (!cells.length && !bag) return;
   const n = cells.length + bag;
   const coins = n * sellPrice(1);
   ev.push({ type: "absorbed", chain, generator, cells, items, bag, coins });
-  if (opened.length) ev.push({ type: "cratesOpened", cells: opened });
+  const stillThere = opened.filter((c) => s.board[c]);
+  if (stillThere.length) ev.push({ type: "cratesOpened", cells: stillThere });
   grant(s, ev, "coins", coins, "absorb");
   // 경험치는 주지 않는다 (레벨업 번개·코인으로 경제가 흔들리지 않게 — 정리 자체가 보상)
 }

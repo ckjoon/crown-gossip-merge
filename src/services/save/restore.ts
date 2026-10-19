@@ -72,8 +72,8 @@ export function ensureGenerators(s: GameState): GenChain[] {
     const empty = s.board.findIndex((it) => it === null);
     let placed = true;
     if (empty !== -1) s.board[empty] = gen;
-    // 레벨로 해금된 체인은 생성기가 없으면 주문을 만들 수 없으므로 보드가 꽉 차도 보관함에 넣는다
-    else if (isExtraChain(chain) && s.bag.length < BAG_MAX) s.bag.push(gen);
+    // 새 체인(구역 완성 보상)은 생성기가 없으면 주문을 만들 수 없으므로 보드가 꽉 차면 보관함에 — 보관함이 꽉 차도 넣는다(잠시 넘침)
+    else if (isExtraChain(chain)) s.bag.push(gen);
     else placed = false;
     if (placed && isExtraChain(chain)) granted.push(chain);
   }

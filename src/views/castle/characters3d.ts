@@ -146,7 +146,10 @@ function warmRecolor(src: THREE.Texture, key: string, hue: number, sat: number):
       if (recolorCache.has(key)) return;
       ctx.putImageData(data, 0, 0);
       makeRecolored(src, cv, key);
-    })().finally(() => warming.delete(key));
+    })()
+      // 미리 칠하기에 실패해도(캔버스 읽기 불가 등) 캐릭터는 나와야 한다 — 만들 때 다시 시도하고, 그래도 안 되면 원래 색
+      .catch(() => undefined)
+      .finally(() => warming.delete(key));
     warming.set(key, job);
   }
   return job;
@@ -455,7 +458,11 @@ export const CharacterLibrary = {
       if (mat.map && (look.hue !== 0 || look.sat !== 1)) {
         const nm = mat.clone();
         nm.userData = { ...mat.userData, shared: false }; // 이 캐릭터 전용 (치울 때 해제)
-        nm.map = recolorTexture(mat.map, `${look.body}|${look.hue}|${look.sat}`, look.hue, look.sat);
+        try {
+          nm.map = recolorTexture(mat.map, `${look.body}|${look.hue}|${look.sat}`, look.hue, look.sat);
+        } catch {
+          // 색을 못 바꾸면 원래 옷 색 그대로
+        }
         mesh.material = nm;
       }
     });

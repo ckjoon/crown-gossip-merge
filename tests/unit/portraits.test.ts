@@ -37,3 +37,19 @@ test("모든 초상화는 XML로 올바름 (data URL 이미지로 그려짐)", (
     }
   expect(bad).toEqual([]);
 });
+
+// ---- v3.6: 3D 모델에서 구운 초상화 ----
+import fs from "node:fs";
+import { BAKED_PORTRAITS, bakedPortraitUrl } from "../../src/views/art/portraitManifest";
+
+test("17명 모두 표정 4종 초상화 그림이 구워져 있고 합계 1MB 미만", () => {
+  expect([...BAKED_PORTRAITS].sort()).toEqual(Object.keys(CHARACTERS).sort());
+  let total = 0;
+  for (const id of BAKED_PORTRAITS)
+    for (const ex of EXPRESSIONS) {
+      const file = "public" + bakedPortraitUrl(id, ex);
+      expect(fs.existsSync(file), file).toBe(true);
+      total += fs.statSync(file).size;
+    }
+  expect(total).toBeLessThan(1_000_000);
+});

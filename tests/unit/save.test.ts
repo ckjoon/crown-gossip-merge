@@ -154,15 +154,20 @@ describe("리뷰 수정: uid 고유성·공짜 생성기·이상한 체인 이�
   });
 });
 
-describe("v3.7.1: 불러올 때 레벨로 해금된 새 생성기를 받으면 알려 줄 수 있게", () => {
-  test("해금 레벨을 넘긴 세이브에 새 체인 생성기가 없으면 지급하고 granted로 돌려줌, 이미 있으면 빈 목록", () => {
+describe("v3.8: 불러올 때 구역 완성 보상 생성기를 받으면 알려 줄 수 있게", () => {
+  test("공방·하버를 완성한 세이브에 새 체인 생성기가 없으면 지급하고 granted로 돌려줌, 이미 있으면 빈 목록", () => {
     const s = createInitialState(fixedCtx());
     s.playerLv = 12;
+    for (const id of Object.keys(s.rooms)) if (id.startsWith("alc_") || id.startsWith("hb_")) s.rooms[id].done = true;
     const rec = (d: unknown): SaveRecord => ({ id: "main_save_v1", schemaVersion: 4, updatedAt: NOW, data: clone(d) });
     const first = restoreState(rec(s), NOW, fixedCtx());
     expect(first.granted).toEqual(["candle", "silk"]);
     const again = restoreState(rec(first.state), NOW, fixedCtx());
     expect(again.granted).toEqual([]);
     expect(restoreState(null, NOW, fixedCtx()).granted).toEqual([]);
+    // 레벨만 높고 구역을 완성하지 않았으면 받지 않음
+    const hi = createInitialState(fixedCtx());
+    hi.playerLv = 30;
+    expect(restoreState(rec(hi), NOW, fixedCtx()).granted).toEqual([]);
   });
 });

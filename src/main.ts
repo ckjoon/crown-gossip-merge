@@ -79,8 +79,8 @@ async function boot(): Promise<void> {
 
   await preloadTextures();
   mount(App, { target: document.getElementById("app")! });
-  // 불러오면서 레벨로 해금된 생성기를 새로 받았으면 알려 준다 (업데이트로 새 체인이 생긴 경우 등)
-  if (granted.length) say("대마녀 셀레네", `레벨 해금 선물로 새 생성기를 놓아 두었어 — ${granted.map((c) => getGeneratorTierMeta(c, 1).name).join(", ")}. 탭해서 새 재료를 만들어 봐!`);
+  // 불러오면서 구역 완성 보상 생성기를 새로 받았으면 알려 준다 (업데이트로 보상이 생긴 경우 등)
+  if (granted.length) say("대마녀 셀레네", `구역을 완성한 보상으로 새 생성기를 놓아 두었어 — ${granted.map((c) => getGeneratorTierMeta(c, 1).name).join(", ")}. 탭해서 새 재료를 만들어 봐!`);
   const fx = new FxLayer();
   await fx.init();
   attachJuice(store, fx, sfx);

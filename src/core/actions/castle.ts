@@ -6,8 +6,8 @@ import type { Action } from "../store";
 import { getGeneratorChainForTheme } from "../rules/chains";
 import { findSpot } from "../rules/rooms";
 import { GEM_REWARDS, getSpotCoinCost } from "../rules/progression";
-import type { ZoneKey } from "../types";
-import { RESTORE_XP } from "../rules/levels";
+import type { ExtraChain, ZoneKey } from "../types";
+import { CHAIN_UNLOCK_ZONE, RESTORE_XP } from "../rules/levels";
 import { getZoneProgress } from "./orders";
 import { gainXP, grantGeneratorPart } from "./progress";
 
@@ -47,6 +47,13 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
     grant(s, ev, "gems", GEM_REWARDS.zoneComplete, "zoneComplete");
     const revealKey = after.currentZoneKey !== found.zoneKey ? after.currentZoneKey : null;
     ev.push({ type: "zoneCompleted", zoneKey: found.zoneKey, gems: GEM_REWARDS.zoneComplete, revealKey, nextLockedLv: after.nextSpotLockedLv });
+    // 구역 완성 보상 생성기 (공방 → 촛대 제단, 하버 → 요정 물레). 이미 가지고 있으면(예전 레벨 해금) 또 주지 않음. 잃으면 안 되므로 보관함이 꽉 차도 넣는다
+    for (const c of Object.keys(CHAIN_UNLOCK_ZONE) as ExtraChain[]) {
+      if (CHAIN_UNLOCK_ZONE[c] !== found.zoneKey) continue;
+      if ([...s.board, ...s.bag].some((it) => it?.isGenerator && it.chain === c)) continue;
+      ev.push({ type: "chainUnlocked", chain: c });
+      grantGeneratorPart(s, ev, c, true);
+    }
   }
   return ev;
 };

@@ -27,7 +27,7 @@ export function createOrder(s: GameState, ctx: Ctx, slotIdx: number, customReqs?
   const zoneKey = getCurrentZoneKey(s);
   const list = CUSTOMERS_BY_ZONE[zoneKey] ?? CUSTOMERS_BY_ZONE.alchemy;
   const cust = list[(s.playerLv + slotIdx) % list.length];
-  const reqs: OrderReq[] = customReqs ?? rollOrderReqs(zoneKey, unlockedChains(s.playerLv), ctx.rng);
+  const reqs: OrderReq[] = customReqs ?? rollOrderReqs(zoneKey, unlockedChains(s), ctx.rng);
   const coins = orderCoins(reqs);
   return { id: newUid(s), customer: { ...cust }, reqs: reqs.map((r) => ({ ...r })), coins };
 }

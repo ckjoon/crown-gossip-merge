@@ -8,7 +8,10 @@ import type { SoundEngine } from "../../services/audio";
 import { findSpot, ROOMS } from "../../core/rules/rooms";
 import { getCastleView } from "../castle/registry";
 import { elementCenter, type FxLayer } from "../fx/FxLayer";
-import { say, ui } from "../ui/ui.svelte";
+import { say, toast, ui } from "../ui/ui.svelte";
+import { CHAIN_GIFT } from "../../core/rules/levels";
+import { getGeneratorTierMeta } from "../../core/rules/chains";
+import type { ExtraChain } from "../../core/types";
 
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
@@ -24,6 +27,8 @@ export function attachRewardDirector(store: Store, fx: FxLayer, sfx: SoundEngine
     const restored = events.find((e) => e.type === "spotRestored") as Extract<GameEvent, { type: "spotRestored" }> | undefined;
     const restyled = events.find((e) => e.type === "spotRestyled") as Extract<GameEvent, { type: "spotRestyled" }> | undefined;
     const zone = events.find((e) => e.type === "zoneCompleted") as Extract<GameEvent, { type: "zoneCompleted" }> | undefined;
+    const gifts = events.filter((e) => e.type === "chainUnlocked") as Extract<GameEvent, { type: "chainUnlocked" }>[];
+    const giftWhere = (chain: string) => (events.find((e) => e.type === "generatorPartGranted" && e.chain === chain) as Extract<GameEvent, { type: "generatorPartGranted" }> | undefined)?.where;
     if (restyled) {
       getCastleView()?.constructionBurst(restyled.spotId, 12);
       sfx.serve();
@@ -34,13 +39,13 @@ export function attachRewardDirector(store: Store, fx: FxLayer, sfx: SoundEngine
     const view = getCastleView();
     if (view) view.holdSpot = restored.spotId;
     ui.inputLocked = true;
-    queue = queue.then(() => play(restored, zone)).catch(() => {}).finally(() => {
+    queue = queue.then(() => play(restored, zone, gifts.map((g) => ({ chain: g.chain, inBag: giftWhere(g.chain) === "bag" })))).catch(() => {}).finally(() => {
       ui.inputLocked = false;
       ui.reward = null;
     });
   };
 
-  async function play(r: Extract<GameEvent, { type: "spotRestored" }>, z?: Extract<GameEvent, { type: "zoneCompleted" }>) {
+  async function play(r: Extract<GameEvent, { type: "spotRestored" }>, z?: Extract<GameEvent, { type: "zoneCompleted" }>, gifts: { chain: ExtraChain; inBag: boolean }[] = []) {
     const view = getCastleView();
     const found = findSpot(r.spotId)!;
     sfx.serve();
@@ -72,6 +77,16 @@ export function attachRewardDirector(store: Store, fx: FxLayer, sfx: SoundEngine
     await showcase;
     skipZone = null;
     ui.reward = null;
+
+    // 구역 완성 보상 생성기를 건네주는 장면 (v3.8: 새 생성기는 레벨이 아니라 이야기에서 받는다)
+    for (const g of gifts) {
+      const gift = CHAIN_GIFT[g.chain];
+      ui.reward = { kind: "reaction", characterId: gift.characterId, line: gift.line };
+      sfx.reward();
+      await wait(2200);
+      ui.reward = null;
+      toast(`🎁 ${getGeneratorTierMeta(g.chain, 1).name}${g.inBag ? " — 🎒 보관함에 넣어 두었어요" : " — 보드에 놓아 두었어요"}`);
+    }
 
     if (z.revealKey) {
       ui.castleMap = true;

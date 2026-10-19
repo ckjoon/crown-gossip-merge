@@ -5,8 +5,8 @@ import { grant, spend } from "../economy";
 import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
 import { GEM_SHOP_ENERGY, nextBoost } from "../rules/progression";
-import { CHAIN_UNLOCK_LEVEL, bagSize, levelUpReward, unlockedChains, unlocksAt, xpToNext } from "../rules/levels";
-import { ENERGY_REGEN_SEC, NATURAL_ENERGY_CAP, type ExtraChain, type GameState, type GenChain, type Settings } from "../types";
+import { bagSize, levelUpReward, unlockedChains, unlocksAt, xpToNext } from "../rules/levels";
+import { ENERGY_REGEN_SEC, NATURAL_ENERGY_CAP, type GameState, type GenChain, type Settings } from "../types";
 import { findNearestEmptyCell } from "./board";
 
 // force: 새 체인 해금 생성기처럼 잃으면 안 되는 지급은 보관함이 꽉 차 있어도 넣는다
@@ -24,26 +24,21 @@ export function grantGeneratorPart(s: GameState, ev: GameEvent[], chain: GenChai
   }
 }
 
-// 레벨업 보상(levels.ts): 코인 25×레벨, 번개 +5, 💎3, 짝수 레벨에 생성기 파츠(해금 체인 순환)
-// 새 체인 해금 레벨에 닿으면 그 체인 ★1 생성기를 준다
+// 레벨업 보상(levels.ts): 코인 25×레벨, 번개 +5, 💎3, 짝수 레벨에 생성기 파츠(쓸 수 있는 체인 순환)
+// 새 체인 생성기는 레벨이 아니라 구역 완성 보상 (castle.renovate)
 export function gainXP(s: GameState, ev: GameEvent[], amount: number): void {
   s.xp += amount;
   while (s.xp >= xpToNext(s.playerLv)) {
     s.xp -= xpToNext(s.playerLv);
     s.playerLv += 1;
     const r = levelUpReward(s.playerLv);
-    const pool = unlockedChains(s.playerLv);
+    const pool = unlockedChains(s);
     const genChain = r.genPart ? pool[(s.playerLv / 2 - 1) % pool.length] : null;
     grant(s, ev, "coins", r.coins, "levelUp");
     grant(s, ev, "energy", r.energy, "levelUp");
     grant(s, ev, "gems", r.gems, "levelUp");
     ev.push({ type: "levelUp", level: s.playerLv, coins: r.coins, energy: r.energy, gems: r.gems, genChain, unlocks: unlocksAt(s.playerLv) });
     if (genChain) grantGeneratorPart(s, ev, genChain);
-    for (const c of Object.keys(CHAIN_UNLOCK_LEVEL) as ExtraChain[]) {
-      if (CHAIN_UNLOCK_LEVEL[c] !== s.playerLv) continue;
-      ev.push({ type: "chainUnlocked", chain: c });
-      grantGeneratorPart(s, ev, c, true);
-    }
   }
 }
 

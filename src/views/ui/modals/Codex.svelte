@@ -4,12 +4,13 @@
   import { app } from "../context";
   import { ui } from "../ui.svelte";
   import { CHAINS } from "../../../core/rules/chains";
-  import { CHAIN_UNLOCK_LEVEL, CORE_GEN_CHAINS, isExtraChain } from "../../../core/rules/levels";
+  import { CHAIN_UNLOCK_ZONE, CORE_GEN_CHAINS, chainUnlockLabel, isExtraChain, unlockedChains } from "../../../core/rules/levels";
   import { getItemSVG } from "../../art/sprites";
   import type { ChainId, ExtraChain, GenChain } from "../../../core/types";
   let { onclose }: { onclose: () => void } = $props();
   const game = app().store;
-  const genChains: GenChain[] = [...CORE_GEN_CHAINS, ...(Object.keys(CHAIN_UNLOCK_LEVEL) as ExtraChain[])];
+  const genChains: GenChain[] = [...CORE_GEN_CHAINS, ...(Object.keys(CHAIN_UNLOCK_ZONE) as ExtraChain[])];
+  const open = $derived(unlockedChains($game));
   // 보유한 생성기 중 가장 높은 등급 (보드 + 보관함)
   const owned = $derived.by(() => {
     const m = new Map<string, number>();
@@ -35,8 +36,8 @@
   </div>
   <div bind:this={listEl}>
     {#each genChains as c (c)}
-      {@const lockLv = isExtraChain(c) && $game.playerLv < CHAIN_UNLOCK_LEVEL[c] ? CHAIN_UNLOCK_LEVEL[c] : null}
-      <div data-chain={c}><ChainStrip chain={c} tier={owned.get(c) ?? null} lockedLv={lockLv} focus={ui.codexFocus === c} /></div>
+      {@const lockText = isExtraChain(c) && !open.includes(c) ? chainUnlockLabel(c) : null}
+      <div data-chain={c}><ChainStrip chain={c} tier={owned.get(c) ?? null} locked={lockText} focus={ui.codexFocus === c} /></div>
     {/each}
   </div>
   {#each others as key (key)}

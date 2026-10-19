@@ -11,7 +11,7 @@
   const levels = $derived(Array.from({ length: 9 }, (_, i) => Math.max(2, $game.playerLv - 1) + i));
   function partOf(lv: number): string | null {
     if (!levelUpReward(lv).genPart) return null;
-    const pool = unlockedChains(lv);
+    const pool = unlockedChains($game);
     return getGeneratorTierMeta(pool[(lv / 2 - 1) % pool.length], 1).name;
   }
 </script>
@@ -25,7 +25,7 @@
     <div style="height:10px;background:rgba(0,0,0,0.4);border-radius:99px;overflow:hidden;margin-bottom:6px">
       <div style="height:100%;width:{pct}%;background:linear-gradient(90deg,#38bdf8,#fde047)"></div>
     </div>
-    <p style="font-size:11px;color:#e9d5ff;line-height:1.4">높은 단계 재료를 합치고 큰 주문을 끝낼수록 경험치가 많아요. 레벨이 오르면 <b>새 구역·새 생성기·보관함 칸</b>이 열려요.</p>
+    <p style="font-size:11px;color:#e9d5ff;line-height:1.4">높은 단계 재료를 합치고 큰 주문을 끝낼수록 경험치가 많아요. 레벨이 오르면 <b>새 구역·보관함 칸</b>이 열려요. 새 생성기는 <b>구역을 완성</b>하면 받아요.</p>
   </div>
   {#each levels as lv (lv)}
     {@const done = $game.playerLv >= lv}

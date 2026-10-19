@@ -65,7 +65,7 @@ export function restoreBoard(s: GameState, raw: unknown, now: number): void {
 // 돌려주는 값: 이번에 새로 받은 레벨 해금 체인 (불러온 뒤 "새 생성기를 받았어요" 안내용)
 export function ensureGenerators(s: GameState): GenChain[] {
   const granted: GenChain[] = [];
-  for (const chain of unlockedChains(s.playerLv)) {
+  for (const chain of unlockedChains(s)) {
     const owned = [...s.board, ...s.bag].some((it) => it && it.isGenerator && it.chain === chain);
     if (owned) continue;
     const gen = { uid: newUid(s), state: "active" as const, isGenerator: true, chain, level: 1 };

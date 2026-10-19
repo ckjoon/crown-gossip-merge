@@ -395,6 +395,7 @@ export const CharacterLibrary = {
       if (o.name && OPTIONAL.test(o.name) && !(o as THREE.Bone).isBone) o.visible = (look.show ?? []).includes(o.name);
       const mesh = o as THREE.SkinnedMesh;
       if (!mesh.isMesh) return;
+      mesh.userData.shared = true; // 기하는 원본 체형과 공유 — 해제하지 않는다
       mesh.castShadow = true;
       mesh.userData.noOutline = true; // 스킨 메시는 뒤집힌 껍데기 외곽선이 따라오지 않는다
       const mat = mesh.material as THREE.MeshStandardMaterial;

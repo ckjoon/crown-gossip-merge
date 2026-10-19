@@ -15,7 +15,9 @@ import { addOutline, disposeGroup, toonify } from "./toon";
 import { setDecorGlow } from "./decor";
 import { ZONE_MODULES, moduleIndexOf, moduleStates, panClamp, zoneBounds, fitZoom, type Bounds, type ModuleState } from "./modules";
 import { animateModuleAppear, animateModuleBuild, buildModules } from "./roomBuilder";
-import { Resident } from "./resident";
+import { ZONE_RESIDENT } from "./resident";
+import { CharacterActor, walkTargets, zoneGuests } from "./actor";
+import { CharacterLibrary } from "./characters3d";
 
 const DEFAULT_CAM = new THREE.Vector3(10, 10.5, 10);
 // 방은 조금 위에서 내려다보고(바닥이 화면을 더 채우게) 확대한 뒤, 손가락으로 끌어 둘러본다
@@ -145,7 +147,9 @@ export class CastleView {
   private dirLight: THREE.DirectionalLight | null = null;
   private zoneProps: THREE.Group | null = null;
   private zonePropsCount = -1;
-  resident: Resident | null = null;
+  // 방 안 3D 캐릭터: 구역 주민 + 복구한 장소 대사에 나온 손님 (최대 3명)
+  actors: CharacterActor[] = [];
+  private actorToken = 0;
 
   // 복구 수에 맞춰 분위기 소품을 다시 놓는다 (늘어난 소품은 톡 튀어나오게)
   private renderZoneProps(animate: boolean): void {
@@ -173,8 +177,9 @@ export class CastleView {
   }
 
   private clearGroup(): void {
-    this.resident?.dispose();
-    this.resident = null;
+    for (const a of this.actors) a.dispose();
+    this.actors = [];
+    this.actorToken++;
     for (const child of [...this.roomGroup.children]) {
       this.roomGroup.remove(child);
       disposeGroup(child);
@@ -222,8 +227,6 @@ export class CastleView {
       this.glowStep = step;
       if (this.modules) setDecorGlow(this.modules, step);
     });
-    this.resident = new Resident(zone);
-    this.roomGroup.add(this.resident.group);
     this.roomGroup.add(this.ambience.group);
     this.ambience.apply(this.doneCount(), false);
     this.renderZoneProps(false);
@@ -231,7 +234,61 @@ export class CastleView {
     this.resetCamera(false);
     this.resize();
     this.loadZoneModels(zone);
+    this.syncActors();
     this.refreshShadows();
+  }
+
+  // 있어야 할 캐릭터를 맞춘다: 모델이 준비된 캐릭터는 바로, 아니면 불러온 뒤 (그 사이 구역이 바뀌면 무시)
+  private syncActors(): void {
+    if (this.mode !== "room") return;
+    const resident = ZONE_RESIDENT[this.zone].id;
+    const want = [resident, ...zoneGuests(this.zone, this.rooms, resident)];
+    for (const a of this.actors.filter((x) => !want.includes(x.id))) a.dispose();
+    this.actors = this.actors.filter((x) => want.includes(x.id));
+    const targets = walkTargets(this.zone, this.states);
+    for (const a of this.actors) a.setTargets(targets);
+    const missing = want.filter((id) => !this.actors.some((a) => a.id === id));
+    if (!missing.length) return;
+    const token = ++this.actorToken;
+    const spawn = () => {
+      if (token !== this.actorToken || this.mode !== "room") return;
+      for (const id of missing) {
+        if (this.actors.some((a) => a.id === id)) continue;
+        const built = CharacterLibrary.build(id);
+        if (!built) continue;
+        toonify(built.root);
+        const at: [number, number] = id === resident ? [1.3, 1.3] : targets[(this.actors.length * 3 + 1) % Math.max(1, targets.length)] ?? [1.3, 1.3];
+        const actor = new CharacterActor(id, built, at);
+        actor.setTargets(targets);
+        this.roomGroup.add(actor.group);
+        this.actors.push(actor);
+        gsap.from(actor.group.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.45, ease: "back.out(2)" });
+      }
+      this.refreshShadowsFor(600);
+    };
+    if (missing.every((id) => CharacterLibrary.ready(id))) spawn();
+    else CharacterLibrary.preload(missing).then(spawn);
+  }
+
+  // 화면 좌표로 캐릭터 고르기 (탭해서 인사)
+  pickActor(clientX: number, clientY: number): CharacterActor | null {
+    if (this.mode !== "room" || !this.actors.length) return null;
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(ndc, this.camera);
+    let best: { a: CharacterActor; d: number } | null = null;
+    for (const a of this.actors) {
+      // 스킨 메시는 정확한 판정이 비싸므로 캐릭터를 감싸는 원기둥 근사로 고른다
+      const p = a.group.position;
+      const box = new THREE.Box3(new THREE.Vector3(p.x - 0.7, 0, p.z - 0.7), new THREE.Vector3(p.x + 0.7, 2.3, p.z + 0.7));
+      const hit = ray.ray.intersectBox(box, new THREE.Vector3());
+      if (hit) {
+        const d = hit.distanceTo(ray.ray.origin);
+        if (!best || d < best.d) best = { a, d };
+      }
+    }
+    return best?.a ?? null;
   }
 
   moduleStateList(): ModuleState[] {
@@ -324,6 +381,7 @@ export class CastleView {
       for (const spot of ROOMS[this.zone].spots) this.renderSpot(spot.id);
       this.updateFraming();
       this.resetCamera(false);
+      this.syncActors();
     }
     this.renderZoneProps(true);
   }
@@ -386,7 +444,7 @@ export class CastleView {
       gsap.fromTo(g.position, { y: layout.pos[1] + 2.8 }, { y: layout.pos[1], duration: 0.65, ease: "bounce.out" });
       gsap.fromTo(g.scale, { x: 0.4, y: 0.4, z: 0.4 }, { x: 1, y: 1, z: 1, duration: 0.55, ease: "elastic.out(1, 0.5)" });
     }
-    this.resident?.cheer();
+    for (const a of this.actors) a.cheer();
     await wait(450);
     this.constructionBurst(spotId, 22);
     await wait(250);
@@ -406,6 +464,7 @@ export class CastleView {
     this.renderZoneProps(true);
     this.updateFraming();
     this.resetCamera(true);
+    this.syncActors();
     await wait(700);
     this.restoring = false;
     if (this.rerenderAfterRestore && this.mode === "room") {
@@ -620,7 +679,7 @@ export class CastleView {
       }
     }
     this.ambience?.tick(dt);
-    this.resident?.tick(dt);
+    for (const a of this.actors) a.tick(dt);
     for (const fn of this.frameHooks) fn(dt);
   }
 }

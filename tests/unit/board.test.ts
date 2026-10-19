@@ -161,10 +161,10 @@ describe("수집·거미줄·정렬·보관함·판매", () => {
     expect(ev).toEqual([{ type: "bagRetrieved", to: 27, bagIdx: 0 }]);
     expect(s.bag.length).toBe(5);
   });
-  test("판매는 판매가만큼 코인, 생성기는 판매 불가", () => {
+  test("판매는 판매가만큼 코인(v3.5 표: Lv.4 = 3), 생성기는 판매 불가", () => {
     s.board[3] = item("potion", 4);
     sellItem(s, fixedCtx(), { cell: 3 });
-    expect(s.coins).toBe(378);
+    expect(s.coins).toBe(353);
     s.board[4] = gen("potion");
     expect(sellItem(s, fixedCtx(), { cell: 4 })).toEqual([]);
   });

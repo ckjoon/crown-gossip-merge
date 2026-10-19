@@ -5,10 +5,10 @@ import type { ChainId, CoreChain, ExtraChain, OrderReq, ZoneKey } from "../types
 
 export const CORE_GEN_CHAINS: CoreChain[] = ["potion", "grimoire", "herb", "bakery", "tea"];
 
-// 다음 레벨까지 필요한 경험치 (L1 80 → L10 926 → L20 3006)
+// 다음 레벨까지 필요한 경험치 (L1 150 → L10 2202 → L20 6762)
 export function xpToNext(lv: number): number {
   const n = Math.max(1, Math.floor(lv)) - 1;
-  return 80 + 40 * n + 6 * n * n;
+  return 150 + 120 * n + 12 * n * n;
 }
 
 // 재료 합성: 결과 레벨만큼 (높은 단계일수록 가치)
@@ -21,6 +21,17 @@ export const RESTORE_XP = 35;
 // 주문 완료: 5 + 3 × 요구 레벨 합
 export function orderXP(reqs: OrderReq[]): number {
   return 5 + 3 * reqs.reduce((sum, r) => sum + r.level, 0);
+}
+
+// 판매가: 팔아서 버는 코인이 주문보다 훨씬 적게 (예전 판매가는 번개당 코인이 주문만큼 나와 복구 비용을 쉽게 넘었다)
+const SELL_BY_LEVEL = [1, 1, 2, 3, 5, 8, 12, 20];
+export function sellPrice(level: number): number {
+  return SELL_BY_LEVEL[Math.min(SELL_BY_LEVEL.length, Math.max(1, Math.floor(level))) - 1];
+}
+
+// 주문 코인: 요구 레벨마다 2^레벨 × 4 + 15
+export function orderCoins(reqs: OrderReq[]): number {
+  return reqs.reduce((sum, r) => sum + Math.pow(2, r.level) * 4, 0) + 15;
 }
 
 export interface LevelUpReward {
@@ -36,7 +47,7 @@ export function levelUpReward(newLv: number): LevelUpReward {
 }
 
 // 구역 입장 레벨 (이미 장소를 하나라도 복구한 구역은 레벨과 상관없이 입장 가능 — 세이브 호환)
-export const ZONE_REQUIRED_LEVEL: Record<ZoneKey, number> = { alchemy: 1, harbor: 4, garden: 8, banquet: 12, cellar: 16, tower: 20 };
+export const ZONE_REQUIRED_LEVEL: Record<ZoneKey, number> = { alchemy: 1, harbor: 6, garden: 11, banquet: 14, cellar: 17, tower: 21 };
 
 // 새 체인은 이 레벨이 되면 ★1 생성기를 주고 주문에 나오기 시작한다
 export const CHAIN_UNLOCK_LEVEL: Record<ExtraChain, number> = { candle: 6, silk: 12 };

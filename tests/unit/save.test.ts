@@ -31,7 +31,8 @@ describe("v2.4 세이브 → v4 (세이브 정리)", () => {
     expect(state.rooms.alc_counter).toEqual({ done: true, styleIdx: 1 });
     expect(state.rooms.gd_pond).toEqual({ done: true, styleIdx: 2 });
     expect(state.rooms.hb_arch).toEqual({ done: false, styleIdx: 0 });
-    expect(state.currentThemeKey).toBe("harbor");
+    // v3.5: Lv4는 하버 입장 레벨(6) 미만이고 하버는 손대지 않음 → 진행이 있는 온실을 보여 준다
+    expect(state.currentThemeKey).toBe("garden");
     expect(state.settings).toEqual({ sound: true, reduceMotion: false });
     expect(state.playerLv).toBe(4);
     expect(state.board[0]).toMatchObject({ state: "crate", chain: "tea" });

@@ -75,7 +75,7 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "alc_cauldron",
         name: "마법 가마솥 화로",
-        cost: 2,
+        cost: 1,
         story: "가마솥 바닥에서 붉은 달의 밤에 누군가 몰래 넣은 '금지된 흑요석 폭약' 파편을 발견했습니다!",
         dialogues: [
           {
@@ -135,7 +135,7 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "alc_window",
         name: "스테인드글라스 창문",
-        cost: 3,
+        cost: 4,
         story: "스테인드글라스를 통과한 달빛이 바닥을 비추며 숨겨진 마법진 지도를 드러냈습니다!",
         dialogues: [
           {
@@ -151,7 +151,7 @@ export const ROOMS: Record<ZoneKey, RoomDef> = {
       {
         id: "alc_counter",
         name: "연금술 포션 카운터",
-        cost: 4,
+        cost: 5,
         story: "성 본관 1층 마녀의 연금술 공방이 완벽히 부활했습니다! 이제 성 앞마당 정원으로 나가 단서를 추적하세요!",
         dialogues: [
           {

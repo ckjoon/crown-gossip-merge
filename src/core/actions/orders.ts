@@ -7,7 +7,7 @@ import type { Action } from "../store";
 import { CUSTOMERS_BY_ZONE } from "../rules/customers";
 import { ROOMS } from "../rules/rooms";
 import { computeZoneProgress, getItemGemPrice, rollOrderReqs, ZONE_ORDER, type ZoneProgress } from "../rules/progression";
-import { bagSize, orderXP, unlockedChains } from "../rules/levels";
+import { bagSize, orderCoins, orderXP, unlockedChains } from "../rules/levels";
 import { type BoardItem, type GameState, type Order, type OrderReq, type ZoneKey } from "../types";
 import { findNearestEmptyCell } from "./board";
 import { gainXP } from "./progress";
@@ -28,7 +28,7 @@ export function createOrder(s: GameState, ctx: Ctx, slotIdx: number, customReqs?
   const list = CUSTOMERS_BY_ZONE[zoneKey] ?? CUSTOMERS_BY_ZONE.alchemy;
   const cust = list[(s.playerLv + slotIdx) % list.length];
   const reqs: OrderReq[] = customReqs ?? rollOrderReqs(zoneKey, unlockedChains(s.playerLv), ctx.rng);
-  const coins = reqs.reduce((sum, r) => sum + Math.pow(2, r.level) * 9, 0) + 20;
+  const coins = orderCoins(reqs);
   return { id: newUid(s), customer: { ...cust }, reqs: reqs.map((r) => ({ ...r })), coins };
 }
 

@@ -13,8 +13,8 @@ describe("체인 데이터", () => {
       expect(CHAINS[c].items.map((i) => i.level)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
     }
   });
-  test("v2.5 이름·판매가 유지", () => {
-    expect(getItemMeta("potion", 8)).toMatchObject({ name: "마녀왕의 불로약", sell: 780, maxLv: 8 });
+  test("v2.5 이름 유지, 판매가는 v3.5 표", () => {
+    expect(getItemMeta("potion", 8)).toMatchObject({ name: "마녀왕의 불로약", sell: 20, maxLv: 8 });
     expect(getItemMeta("gem", 1).name).toBe("광석 파편");
     expect(CHAINS.gem.name).toBe("마법 광석 체인 (가마솥 부산물)");
     expect(getItemMeta("coin", 2)).toMatchObject({ isCollectible: true, rewardType: "coins", amount: 45 });
@@ -28,8 +28,8 @@ describe("체인 데이터", () => {
     expect(formatGeneratorStars(2)).toBe("★★☆");
   });
   test("XP 요구량과 구역별 생성기", () => {
-    expect(getRequiredXP(1)).toBe(80);
-    expect(getRequiredXP(3)).toBe(184);
+    expect(getRequiredXP(1)).toBe(150);
+    expect(getRequiredXP(3)).toBe(438);
     expect(CORE_CHAINS).toEqual(["potion", "grimoire", "herb", "bakery", "tea"]);
     expect(getGeneratorChainForTheme("harbor")).toBe("bakery");
   });

@@ -10,7 +10,7 @@ export const ZONE_ORDER: ZoneKey[] = ["alchemy", "harbor", "garden", "banquet", 
 // 구역별 손님 주문 요구 레벨 상한
 export const ORDER_LEVEL_CAP: Record<ZoneKey, number> = { alchemy: 4, harbor: 5, garden: 6, banquet: 8, cellar: 8, tower: 8 };
 // 장소 복구 비용 = spot.cost × 구역 단가(🪙)
-export const ZONE_COIN_UNIT: Record<ZoneKey, number> = { alchemy: 150, harbor: 300, garden: 600, banquet: 1200, cellar: 1800, tower: 2600 };
+export const ZONE_COIN_UNIT: Record<ZoneKey, number> = { alchemy: 800, harbor: 1400, garden: 2400, banquet: 3600, cellar: 5400, tower: 7600 };
 // 생성기 등급(★)별 한 번에 나오게 할 수 있는 최대 재료 레벨
 export const GENERATOR_TIER_CAP: Record<number, number> = { 1: 3, 2: 5, 3: 6 };
 // 배속별 추가 단계 (×2 = +1단계, ×4 = +2단계)
@@ -103,7 +103,8 @@ export function rollOrderReqs<C extends string>(zoneKey: string, coreChains: rea
   const lv1 = Math.min(cap, 2 + Math.floor(rng() * (cap - 1)));
   const reqs = [{ chain: pick(), level: lv1 }];
   if (rng() < 0.55) {
-    reqs.push({ chain: pick(), level: Math.max(1, lv1 - 1) });
+    // 두 번째 요구도 Lv.2 이상: ★2·★3 생성기는 Lv.1을 만들지 못한다
+    reqs.push({ chain: pick(), level: Math.max(2, lv1 - 1) });
   }
   return reqs;
 }

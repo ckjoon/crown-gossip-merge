@@ -57,8 +57,8 @@ test("구역별 주문 상한과 복구 비용", () => {
   expect(P.getOrderLevelCap("harbor")).toBe(5);
   expect(P.getOrderLevelCap("garden")).toBe(6);
   expect(P.getOrderLevelCap("banquet")).toBe(8);
-  expect(P.getSpotCoinCost("alchemy", 2)).toBe(300);
-  expect(P.getSpotCoinCost("banquet", 5)).toBe(6000);
+  expect(P.getSpotCoinCost("alchemy", 2)).toBe(1600);
+  expect(P.getSpotCoinCost("banquet", 5)).toBe(18000);
 });
 
 test("주문 요구 레벨은 항상 2..상한 범위 (상한 끝값 포함)", () => {

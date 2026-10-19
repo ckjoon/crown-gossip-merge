@@ -20,10 +20,10 @@ const finishZone = (z: ZoneKey) => ROOMS[z].spots.forEach((sp) => (s.rooms[sp.id
 
 describe("경험치 곡선과 출처", () => {
   test("필요 경험치는 가파르게 늘어남", () => {
-    expect(xpToNext(1)).toBe(80);
-    expect(xpToNext(2)).toBe(126);
-    expect(xpToNext(10)).toBe(926);
-    expect(xpToNext(20)).toBe(3006);
+    expect(xpToNext(1)).toBe(150);
+    expect(xpToNext(2)).toBe(282);
+    expect(xpToNext(10)).toBe(2202);
+    expect(xpToNext(20)).toBe(6762);
   });
   test("합성 경험치 = 결과 레벨, 주문 경험치 = 5 + 3×요구 레벨 합", () => {
     expect(mergeXP(2)).toBe(2);
@@ -50,7 +50,7 @@ describe("레벨업 보상", () => {
     expect(levelUpReward(3)).toEqual({ coins: 75, energy: 5, gems: 3, genPart: false });
     const ev: GameEvent[] = [];
     const e0 = s.energy;
-    gainXP(s, ev, 80);
+    gainXP(s, ev, 150);
     expect(s.playerLv).toBe(2);
     expect(s.energy).toBe(e0 + 5);
     expect(ev.filter((e) => e.type === "generatorPartGranted").length).toBe(1);
@@ -79,8 +79,8 @@ describe("해금표", () => {
     expect([1, 5, 10, 15, 30].map(bagSize)).toEqual([6, 8, 10, 12, 12]);
   });
   test("구역 입장 레벨과 해금 문구", () => {
-    expect(ZONE_REQUIRED_LEVEL).toMatchObject({ alchemy: 1, harbor: 4, garden: 8, banquet: 12 });
-    expect(unlocksAt(4).some((t) => t.includes("하버"))).toBe(true);
+    expect(ZONE_REQUIRED_LEVEL).toMatchObject({ alchemy: 1, harbor: 6, garden: 11, banquet: 14 });
+    expect(unlocksAt(6).some((t) => t.includes("하버"))).toBe(true);
     expect(unlocksAt(5).some((t) => t.includes("보관함"))).toBe(true);
     expect(unlocksAt(6).some((t) => t.includes("촛불"))).toBe(true);
   });
@@ -95,17 +95,17 @@ describe("해금표", () => {
 });
 
 describe("구역 입장 레벨", () => {
-  test("공방을 다 깨도 Lv3이면 하버는 잠김, 복구 거절, 주문은 공방 기준", () => {
+  test("공방을 다 깨도 Lv5면 하버는 잠김, 복구 거절, 주문은 공방 기준", () => {
     finishZone("alchemy");
-    s.playerLv = 3;
+    s.playerLv = 5;
     s.coins = 99999;
     const zp = getZoneProgress(s);
     expect(zp.accessibleKeys).toEqual(["alchemy"]);
     expect(zp.nextSpotId).toBe(ROOMS.harbor.spots[0].id);
-    expect(zp.nextSpotLockedLv).toBe(4);
+    expect(zp.nextSpotLockedLv).toBe(6);
     expect(zp.currentZoneKey).toBe("alchemy");
     expect(renovate(s, fixedCtx(), { spotId: ROOMS.harbor.spots[0].id, styleIdx: 0 })[0]).toMatchObject({ type: "rejected", reason: "levelLocked" });
-    s.playerLv = 4;
+    s.playerLv = 6;
     const zp4 = getZoneProgress(s);
     expect(zp4.accessibleKeys).toEqual(["alchemy", "harbor"]);
     expect(zp4.nextSpotLockedLv).toBeNull();
@@ -164,11 +164,11 @@ import { ZONE_ORDER, rollOrderReqs } from "../../src/core/rules/progression";
 import { characterIdForName } from "../../src/core/rules/characters";
 
 describe("새 구역: 지하 저장고·달빛 마탑 (제21~30화)", () => {
-  test("6구역 30화, 새 구역 입장 레벨 16·20, 대사 화자는 모두 등록된 캐릭터", () => {
+  test("6구역 30화, 새 구역 입장 레벨 17·21, 대사 화자는 모두 등록된 캐릭터", () => {
     expect(ZONE_ORDER).toEqual(["alchemy", "harbor", "garden", "banquet", "cellar", "tower"]);
     expect(ALL_SPOTS_IN_ORDER.length).toBe(30);
     expect(ALL_SPOTS_IN_ORDER[20].spot.id).toBe("cel_wine");
-    expect(ZONE_REQUIRED_LEVEL).toMatchObject({ cellar: 16, tower: 20 });
+    expect(ZONE_REQUIRED_LEVEL).toMatchObject({ cellar: 17, tower: 21 });
     for (const e of ALL_SPOTS_IN_ORDER.slice(20)) {
       expect(e.spot.dialogues.length, e.spot.id).toBeGreaterThanOrEqual(2);
       for (const d of e.spot.dialogues) expect(["selene", "quinn", "nero", "quinn_nero", "lucian", "margaret", "oberon", "arthur"]).toContain(d.characterId);
@@ -189,5 +189,21 @@ describe("새 구역: 지하 저장고·달빛 마탑 (제21~30화)", () => {
     };
     expect(count("cellar", "candle")).toBeGreaterThan(count("banquet", "candle") * 2);
     expect(count("tower", "silk")).toBeGreaterThan(count("banquet", "silk") * 2);
+  });
+});
+
+describe("버그 수정: 해금 생성기 유실·만들 수 없는 주문", () => {
+  test("보드와 보관함이 꽉 차 있어도 해금 체인 생성기는 보관함에 들어감", () => {
+    s.board = s.board.map(() => item("tea", 1));
+    for (let i = 0; i < bagSize(CHAIN_UNLOCK_LEVEL.candle); i++) s.bag.push(item("tea", 1));
+    s.playerLv = CHAIN_UNLOCK_LEVEL.candle - 1;
+    const ev: GameEvent[] = [];
+    gainXP(s, ev, xpToNext(s.playerLv));
+    expect([...s.board, ...s.bag].some((c) => c?.isGenerator && c.chain === "candle")).toBe(true);
+  });
+  test("주문 요구 레벨은 2 이상 (★2·★3 생성기도 만들 수 있게)", () => {
+    let seed = 3;
+    const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    for (let i = 0; i < 500; i++) for (const r of rollOrderReqs("garden", unlockedChains(10), rng)) expect(r.level).toBeGreaterThanOrEqual(2);
   });
 });

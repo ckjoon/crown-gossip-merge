@@ -9,13 +9,14 @@ import { CHAIN_UNLOCK_LEVEL, bagSize, levelUpReward, unlockedChains, unlocksAt, 
 import { ENERGY_REGEN_SEC, NATURAL_ENERGY_CAP, type ExtraChain, type GameState, type GenChain, type Settings } from "../types";
 import { findNearestEmptyCell } from "./board";
 
-export function grantGeneratorPart(s: GameState, ev: GameEvent[], chain: GenChain): void {
+// force: 새 체인 해금 생성기처럼 잃으면 안 되는 지급은 보관함이 꽉 차 있어도 넣는다
+export function grantGeneratorPart(s: GameState, ev: GameEvent[], chain: GenChain, force = false): void {
   const part = { uid: newUid(s), state: "active" as const, isGenerator: true, chain, level: 1 };
   const cell = findNearestEmptyCell(s, 24, () => 0);
   if (cell !== -1) {
     s.board[cell] = part;
     ev.push({ type: "generatorPartGranted", chain, where: "board", cell });
-  } else if (s.bag.length < bagSize(s.playerLv)) {
+  } else if (force || s.bag.length < bagSize(s.playerLv)) {
     s.bag.push(part);
     ev.push({ type: "generatorPartGranted", chain, where: "bag", cell: null });
   } else {
@@ -41,7 +42,7 @@ export function gainXP(s: GameState, ev: GameEvent[], amount: number): void {
     for (const c of Object.keys(CHAIN_UNLOCK_LEVEL) as ExtraChain[]) {
       if (CHAIN_UNLOCK_LEVEL[c] !== s.playerLv) continue;
       ev.push({ type: "chainUnlocked", chain: c });
-      grantGeneratorPart(s, ev, c);
+      grantGeneratorPart(s, ev, c, true);
     }
   }
 }

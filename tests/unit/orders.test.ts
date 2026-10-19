@@ -13,7 +13,7 @@ beforeEach(() => {
 
 describe("주문 생성", () => {
   test("공방에서는 최대 Lv.4, 공방 완성 뒤(하버 입장 레벨)에는 최대 Lv.5 + 하버 손님", () => {
-    s.playerLv = 4;
+    s.playerLv = 6;
     const ctx = createCtx();
     let max = 0;
     for (let i = 0; i < 200; i++) for (const r of createOrder(s, ctx, i % 3).reqs) max = Math.max(max, r.level);
@@ -29,9 +29,9 @@ describe("주문 생성", () => {
     }
     expect(max).toBe(5);
   });
-  test("보상 코인 = Σ 2^lv × 9 + 20, 초기 주문 3개", () => {
+  test("보상 코인 = Σ 2^lv × 4 + 15, 초기 주문 3개", () => {
     const o = createOrder(s, fixedCtx(), 0, [{ chain: "tea", level: 3 }]);
-    expect(o.coins).toBe(8 * 9 + 20);
+    expect(o.coins).toBe(8 * 4 + 15);
     initCustomerOrders(s, fixedCtx());
     expect(s.orders.map((o) => o.reqs)).toEqual([
       [{ chain: "potion", level: 3 }],

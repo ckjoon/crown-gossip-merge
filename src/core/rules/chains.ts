@@ -668,7 +668,8 @@ export function getItemMeta(chain: ChainId, level: number): ItemMeta {
   const ch = CHAINS[chain];
   if (!ch) return { level: 1, name: "미확인", css: "", maxLv: 1, chainName: "", isCollectible: false };
   const item = ch.items[Math.min(Math.max(1, level) - 1, ch.items.length - 1)];
-  return { ...item, chainName: ch.name, css: ch.css, maxLv: ch.items.length, isCollectible: !!ch.isCollectible };
+  // v3.5: 판매가는 levels.ts 표로 통일 (예전 데이터의 sell 값은 v2 이전 보상 계산에만 씀)
+  return { ...item, sell: item.sell !== undefined ? sellPrice(item.level) : undefined, chainName: ch.name, css: ch.css, maxLv: ch.items.length, isCollectible: !!ch.isCollectible };
 }
 
 export function getGeneratorTierMeta(chain: ChainId, level = 1): GeneratorTier & { maxGenLv: number } {
@@ -687,6 +688,7 @@ export function formatGeneratorStars(lv: number): string {
 
 // 레벨 곡선은 levels.ts (v3.5)
 export { xpToNext as getRequiredXP } from "./levels";
+import { sellPrice } from "./levels";
 
 const THEME_GENERATOR: Record<ZoneKey, GenChain> = { alchemy: "potion", harbor: "bakery", garden: "herb", banquet: "grimoire", cellar: "candle", tower: "silk" };
 

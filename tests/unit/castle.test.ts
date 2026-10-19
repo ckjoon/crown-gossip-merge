@@ -26,16 +26,16 @@ describe("장소 복구", () => {
     expect(s.coins).toBe(299);
     expect(s.rooms.alc_cauldron.done).toBe(false);
   });
-  test("정상 복구: 코인 −300, 완료·스타일, XP 35, 생성기 파츠, spotRestored", () => {
+  test("정상 복구(제1화 비용 1×800): 코인 −800, 완료·스타일, XP 35, 생성기 파츠, spotRestored", () => {
     const ev = renovate(s, fixedCtx(), { spotId: "alc_cauldron", styleIdx: 2 });
-    expect(s.coins).toBe(9700);
+    expect(s.coins).toBe(9200);
     expect(s.rooms.alc_cauldron).toEqual({ done: true, styleIdx: 2 });
     expect(s.xp).toBe(35);
-    expect(ev.find((e) => e.type === "spotRestored")).toEqual({ type: "spotRestored", spotId: "alc_cauldron", zoneKey: "alchemy", chapter: 1, coinCost: 300, styleIdx: 2 });
+    expect(ev.find((e) => e.type === "spotRestored")).toEqual({ type: "spotRestored", spotId: "alc_cauldron", zoneKey: "alchemy", chapter: 1, coinCost: 800, styleIdx: 2 });
     expect(ev.some((e) => e.type === "generatorPartGranted")).toBe(true);
   });
-  test("구역 마지막 장소: 💎50 + zoneCompleted(revealKey harbor) — 하버 입장 레벨(4) 이상", () => {
-    s.playerLv = 4;
+  test("구역 마지막 장소: 💎50 + zoneCompleted(revealKey harbor) — 하버 입장 레벨(6) 이상", () => {
+    s.playerLv = 6;
     for (const id of ALC.slice(0, 4)) s.rooms[id].done = true;
     const gems = s.gems;
     const ev = renovate(s, fixedCtx(), { spotId: "alc_counter", styleIdx: 0 });
@@ -43,7 +43,7 @@ describe("장소 복구", () => {
     expect(ev.find((e) => e.type === "zoneCompleted")).toEqual({ type: "zoneCompleted", zoneKey: "alchemy", gems: 50, revealKey: "harbor" });
   });
   test("v2식 진행(하버 이미 완성)에서 공방 완성 → 공개 대상은 온실", () => {
-    s.playerLv = 8;
+    s.playerLv = 11;
     for (const id of ALC.slice(0, 4)) s.rooms[id].done = true;
     for (const id of ["hb_espresso", "hb_parasol", "hb_fountain", "hb_bakery", "hb_arch"]) s.rooms[id].done = true;
     const ev = renovate(s, fixedCtx(), { spotId: "alc_counter", styleIdx: 0 });

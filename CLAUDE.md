@@ -49,6 +49,11 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
     - `roomBuilder.ts` draws modules (per-zone wall style, ornaments with `glowBase`) and plays the build animation inside `playRestore`.
     - `floorplan.ts` draws the castle map: a courtyard plus 4 zone wings made of module blocks.
     - `ZONE_PROPS` coordinates are local to module `step`.
+    - Characters (v3.6): `characters3d.ts` defines `CHARACTER_LOOKS` and `CharacterLibrary`, which loads `/models/characters/*.glb` plus the shared `anims.glb`.
+      - Each character has a KayKit CC0 body type, a clothing hue (skin is preserved), visible parts, and procedural accessories. Nero and Pip are procedural animals.
+      - `actor.ts` (`CharacterActor`, `walkTargets`, `zoneGuests`) walks up to 3 characters per room.
+      - Rebuild the assets with `node tools/prepare-characters.mjs <KayKit gltf dir>`.
+      - Portraits are baked from the same models by `node tools/bake-portraits.mjs` (dev server running) into `public/portraits` and `art/portraitManifest.ts`. Re-bake after changing looks.
     - `castle/models/`: CC0 glTF models in `public/models` (credits in `public/models/CREDITS.md`). `manifest.ts` lists them, `recipes.ts` places them per spot (`SPOT_RECIPES`, 3 style variants), before-restore clutter (`CLUTTER`), and zone props that appear as more spots are restored (`ZONE_PROPS`). `library.ts` loads them per zone and clones synchronously; until loaded, spots fall back to procedural furniture.
     - To change the model set, edit `PICK` in `tools/prepare-models.mjs`, rerun it against the downloaded packs (macOS `sips` + Pillow), and update `manifest.ts`. `recipes.test.ts` checks every referenced model exists.
   - `reward/RewardDirector.ts`: sequences a restore: 3D drop, ribbon, reaction, cutscene, then (on zone complete) the showcase, a gem flight, and the next-zone reveal. Input stays locked throughout.

@@ -8,13 +8,24 @@ export interface VersionEntry {
   changes: string[];
 }
 
-export const APP_VERSION = "v3.5.0";
+export const APP_VERSION = "v3.6.0";
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
-    version: "v3.5.0",
+    version: "v3.6.0",
     date: "2026-10-20",
     badge: "LATEST",
+    title: "살아 움직이는 3D 캐릭터",
+    changes: [
+      "🧙 [3D 캐릭터] 셀레네·퀸·루시안 공작 등 17명이 3D 캐릭터로 바뀌었어요. 모자·왕관·안경·꽃관으로 각자 다르게 꾸몄고, 네로는 검은 고양이, 핍은 우편 모자를 쓴 갈매기예요.",
+      "🚶 [방 안에서] 구역 주민과 이야기에 나온 손님이 지어진 방 사이를 걸어 다녀요. 캐릭터를 탭하면 손을 흔들며 말을 걸고, 복구할 때는 다 같이 환호해요.",
+      "🖼️ [새 초상화] 주문 카드와 대사창 초상화도 같은 3D 캐릭터 얼굴로 바뀌었어요. 표정에 따라 포즈와 ✨❗💦 표시가 달라져요.",
+    ],
+  },
+  {
+    version: "v3.5.0",
+    date: "2026-10-20",
+    badge: "LEVEL",
     title: "새 구역 2곳·새 생성기 2종, 의미 있는 레벨",
     changes: [
       "🕯️ [새 구역 2곳 · 제21~30화] 연회장 아래 '지하 비밀 저장고'와 서쪽 '달빛 마탑'이 열렸어요. 붉은 달의 밤 침입자의 정체와 비전서 마지막 장의 진실을 밝혀 보세요!",

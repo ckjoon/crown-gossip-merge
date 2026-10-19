@@ -49,7 +49,8 @@ test("새 게임: 생성 → 합성 → 주문 완료 → 제1화 복구 → �
   expect(await modules()).toEqual(["built", "ruin", "ghost", "ghost", "ghost", "ghost"]);
   await page.locator(".story-next-btn").click();
   await page.locator(".style-confirm-btn").click();
-  await expect(page.locator(".story-cutscene-modal")).toBeVisible({ timeout: 10_000 });
+  // 복구 연출(모델 대기·조각 짓기·가구 낙하)이 끝난 뒤 컷신 — E2E 병렬 실행 중에는 CPU가 부족해 10초를 넘기기도 한다
+  await expect(page.locator(".story-cutscene-modal")).toBeVisible({ timeout: 20_000 });
   await expect(page.locator(".cutscene-stage-banner strong")).toContainText("제1화");
   await page.locator(".story-cutscene-modal .gh-close-btn").click();
   await expect(page.locator(".story-next-btn")).toContainText("제2화", { timeout: 5_000 });

@@ -42,6 +42,10 @@ test("새 게임: 생성 → 합성 → 주문 완료 → 제1화 복구 → �
   await expect(page.locator(".story-next-btn")).toContainText("제1화");
   // 레고식 방: 처음엔 입구 홀만 지어져 있고 제1화 장소는 폐허
   const modules = () => page.evaluate(() => (window as unknown as { __castle(): { moduleStateList(): string[] } }).__castle().moduleStateList());
+  // v3.6: 3D 주민 캐릭터(셀레네)가 모델을 받은 뒤 방에 나타남
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as { __castle(): { actors: Array<{ id: string }> } }).__castle().actors.map((a) => a.id)), { timeout: 15_000 })
+    .toContain("selene");
   expect(await modules()).toEqual(["built", "ruin", "ghost", "ghost", "ghost", "ghost"]);
   await page.locator(".story-next-btn").click();
   await page.locator(".style-confirm-btn").click();

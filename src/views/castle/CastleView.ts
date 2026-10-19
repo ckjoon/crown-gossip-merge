@@ -281,7 +281,7 @@ export class CastleView {
     for (const a of this.actors) {
       // 스킨 메시는 정확한 판정이 비싸므로 캐릭터를 감싸는 원기둥 근사로 고른다
       const p = a.group.position;
-      const box = new THREE.Box3(new THREE.Vector3(p.x - 0.7, 0, p.z - 0.7), new THREE.Vector3(p.x + 0.7, 2.3, p.z + 0.7));
+      const box = new THREE.Box3(new THREE.Vector3(p.x - 0.7, 0, p.z - 0.7), new THREE.Vector3(p.x + 0.8, 2.8, p.z + 0.8));
       const hit = ray.ray.intersectBox(box, new THREE.Vector3());
       if (hit) {
         const d = hit.distanceTo(ray.ray.origin);

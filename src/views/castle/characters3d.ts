@@ -51,7 +51,7 @@ export const CHARACTER_LOOKS: Record<string, Look3D> = {
 
 // 선택 부속: look.show에 없으면 숨긴다
 const OPTIONAL = /(Spellbook|Wand|Staff|Hat|Helmet|Cape|Mug)/;
-export const CHARACTER_HEIGHT = 2.1;
+export const CHARACTER_HEIGHT = 2.6;
 
 // ---------- 옷 색 바꾸기 (피부·회색 계열은 그대로) ----------
 function rgbToHsl(r: number, g: number, b: number): [number, number, number] {

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { tapLine } from "../../castle/actor";
+  import { CHARACTERS } from "../../../core/rules/characters";
   // 🏰 마녀의 성 화면: 구역 탭, Three.js 3D 뷰 + 핀, 스타일 선택, 퀘스트 패널(제N화 카드·다음 이야기 진행·스토리)
   import { app } from "../context";
   import { ui, say } from "../ui.svelte";
@@ -103,7 +105,16 @@
     panFrom.y = e.clientY;
   }
   function panUp(e: PointerEvent) {
-    if (panFrom && e.pointerId === panFrom.id) panFrom = null;
+    if (!panFrom || e.pointerId !== panFrom.id) return;
+    const tapped = !panFrom.moved;
+    panFrom = null;
+    // 끌지 않은 탭이면 캐릭터 인사 (손 흔들기 + 말풍선)
+    if (!tapped || !view) return;
+    const actor = view.pickActor(e.clientX, e.clientY);
+    if (!actor) return;
+    app().sfx.tap();
+    actor.wave();
+    say(CHARACTERS[actor.id]?.name ?? "", tapLine(actor.id, $game.rooms));
   }
 
   const pick = $derived(ui.stylePick);

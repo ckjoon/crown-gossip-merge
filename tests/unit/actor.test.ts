@@ -38,3 +38,11 @@ test("손님은 그 구역 복구한 장소 대사에 나온 캐릭터 중 최�
   // 퀸 & 네로는 각각의 캐릭터로 나뉘어 등장
   for (const z of ZONES) expect(zoneGuests(z, rooms(z, 5), "x")).not.toContain("quinn_nero");
 });
+
+import { tapLine } from "../../src/views/castle/actor";
+test("탭 대사: 이미 본 이야기의 그 캐릭터 대사 중 하나, 없으면 짧은 인사", () => {
+  const r = rooms("alchemy", 1);
+  const line = tapLine("selene", r, () => 0);
+  expect(ROOMS.alchemy.spots[0].dialogues.map((d) => d.line)).toContain(line);
+  expect(tapLine("oberon", rooms("alchemy", 0), () => 0).length).toBeGreaterThan(0);
+});

@@ -34,6 +34,15 @@ export function zoneGuests(zone: ZoneKey, rooms: Record<string, SpotState>, resi
   return out.slice(0, 2);
 }
 
+// 탭했을 때 말풍선: 이미 본 이야기에서 그 캐릭터가 한 말 중 하나 (없으면 인사)
+export function tapLine(id: string, rooms: Record<string, SpotState>, rng: () => number = Math.random): string {
+  const lines: string[] = [];
+  for (const z of Object.keys(ROOMS) as ZoneKey[])
+    for (const s of ROOMS[z].spots) if (rooms[s.id]?.done) for (const d of s.dialogues) if (d.characterId === id) lines.push(d.line);
+  if (!lines.length) return "안녕하세요! 오늘도 성을 함께 꾸며 봐요.";
+  return lines[Math.min(lines.length - 1, Math.floor(rng() * lines.length))];
+}
+
 type Mode = "idle" | "walk" | "act";
 const SPEED = 1.4; // 초당
 const FADE = 0.25;

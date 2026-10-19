@@ -8,13 +8,22 @@ export interface VersionEntry {
   changes: string[];
 }
 
-export const APP_VERSION = "v3.3.1";
+export const APP_VERSION = "v3.3.2";
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
-    version: "v3.3.1",
+    version: "v3.3.2",
     date: "2026-10-20",
     badge: "LATEST",
+    title: "생성·합성 깜빡임 수정",
+    changes: [
+      "✨ [깜빡임 수정] 아이템을 생성하거나 합성할 때 도착 칸에 잠깐 먼저 보였다가 애니메이션이 시작되던 문제를 고쳤어요. 이제 생성기에서 바로 날아가요.",
+    ],
+  },
+  {
+    version: "v3.3.1",
+    date: "2026-10-20",
+    badge: "FIX",
     title: "보드 아이콘 빈칸 수정",
     changes: [
       "🩹 [아이콘 빈칸 수정] Lv.5 이상 아이템이 보드에서 빈칸으로 보이던 문제를 고쳤어요.",

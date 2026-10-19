@@ -40,6 +40,7 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
   function onSpawned(board: BoardView, e: Extract<GameEvent, { type: "spawned" }>) {
     sfx.spawn();
     vibrate(HAPTIC.spawn);
+    board.expectAppear(e.to, { from: e.from, scale: 0.4 });
     const gen = board.nodeAt(e.from);
     if (gen) {
       gsap.killTweensOf(gen.c.scale);
@@ -48,7 +49,10 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
     afterRender(() => {
       const node = board.nodeAt(e.to);
       // 그 사이 사용자가 집었거나 다른 칸으로 옮겼다면 포물선을 생략
-      if (!node || node.cell !== e.to || board.isDragging(node)) return;
+      if (!node || node.cell !== e.to || board.isDragging(node)) {
+        if (node && !board.isDragging(node)) node.c.scale.set(1);
+        return;
+      }
       const a = board.cellCenter(e.from);
       const b = board.cellCenter(e.to);
       const arc = Math.max(24, Math.hypot(b.x - a.x, b.y - a.y) * 0.4);
@@ -83,6 +87,7 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
     const lv = e.item.level;
     sfx.merge(lv, e.generatorEvolved);
     vibrate(lv >= 5 || e.generatorEvolved ? HAPTIC.bigMerge : HAPTIC.merge);
+    board.expectAppear(e.to, { scale: 0.6 });
     afterRender(() => {
       const node = board.nodeAt(e.to);
       const c = board.cellCenter(e.to);
@@ -152,6 +157,7 @@ export function attachJuice(store: Store, fx: FxLayer, sfx: SoundEngine): () => 
         if (board) onCollected(board, e);
         break;
       case "bonusDropped":
+        if (board) board.expectAppear(e.cell, { scale: 0.2 });
         if (board)
           afterRender(() => {
             const node = board.nodeAt(e.cell);

@@ -154,6 +154,14 @@ export class BoardView {
     return row * this.cols + col;
   }
 
+  // 생성·합성 이벤트는 다시 그리기보다 먼저 온다: 그 칸에 새로 생길 노드를 연출의 첫 모습(생성기 자리·작은 크기)으로
+  // 시작시켜, 연출이 붙기 전 한두 프레임 동안 완성된 모습으로 먼저 보이는 깜빡임을 막는다
+  private appear = new Map<number, { from?: number; scale: number; at: number }>();
+
+  expectAppear(cell: number, opts: { from?: number; scale: number }): void {
+    this.appear.set(cell, { ...opts, at: performance.now() });
+  }
+
   isDragging(node: ItemNode): boolean {
     return this.drag?.node === node;
   }
@@ -216,6 +224,15 @@ export class BoardView {
         this.nodes.set(vis.key, node);
         this.itemsLayer.addChild(node.c);
         this.drawNode(node);
+        const ap = this.appear.get(cell);
+        if (ap) {
+          this.appear.delete(cell);
+          if (performance.now() - ap.at < 1000) {
+            const a = this.cellCenter(ap.from ?? cell);
+            node.c.position.set(a.x, a.y);
+            node.c.scale.set(ap.scale);
+          }
+        }
       } else if (!sameVisual(node.vis, vis) || node.w !== this.cw * 0.96) {
         node.vis = vis;
         this.drawNode(node);

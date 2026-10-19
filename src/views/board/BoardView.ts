@@ -270,6 +270,7 @@ export class BoardView {
   // 합칠 두 타일이 서로를 향해 "톡톡" 기울어지고, 한 칸이면 위로 통통 — 입력이 들어오면 멈춘다
   // 위치(position)는 render·드래그가 맡으므로 건드리지 않고 pivot만 흔든다
   private nudges: { node: ItemNode; tl: gsap.core.Timeline }[] = [];
+  reduceMotion = false; // 연출 줄이기: 한 번만 톡톡
 
   nudge(cells: number[]): void {
     this.stopNudge();
@@ -291,7 +292,7 @@ export class BoardView {
       const amp = Math.min(this.cw, this.ch) * 0.12;
       const bx = node.w / 2;
       const by = node.h / 2;
-      const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.1, delay: 0.3 + k * 0.08 });
+      const tl = gsap.timeline({ repeat: this.reduceMotion ? 0 : -1, repeatDelay: 1.1, delay: 0.3 + k * 0.08 });
       for (let n = 0; n < 2; n++) {
         tl.to(node.c.pivot, { x: bx - dx * amp, y: by - dy * amp, duration: 0.14, ease: "sine.out" });
         tl.to(node.c.pivot, { x: bx, y: by, duration: 0.26, ease: "back.out(3)" });
@@ -309,11 +310,18 @@ export class BoardView {
     return this.nudges.length > 0;
   }
 
+  // 손가락이 보드에 닿아 있는 동안 (아직 끌기 전 누르고만 있어도)
+  isPressing(): boolean {
+    return this.drag !== null;
+  }
+
+  // 넛지 중인 타일이 사라지면(판매·보관·주문 완성 등 보드 밖 행동) 짝도 함께 멈춘다 — 빈칸을 향해 혼자 톡톡대지 않게
   private dropNudge(node: ItemNode): void {
     const i = this.nudges.findIndex((n) => n.node === node);
     if (i === -1) return;
     this.nudges[i].tl.kill();
     this.nudges.splice(i, 1);
+    this.stopNudge();
   }
 
   private resetNudge(n: { node: ItemNode; tl: gsap.core.Timeline }): void {
@@ -443,6 +451,7 @@ export class BoardView {
       if (!vis || vis.state !== "active" || !node) return;
       d.active = true;
       d.node = node;
+      this.stopNudge();
       if (node.arc) {
         node.arc.tween.kill();
         node.arc = null;

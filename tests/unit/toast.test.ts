@@ -32,3 +32,10 @@ describe("떠오르는 알림 (v3.7)", () => {
     expect(toasts[0].x + half).toBeLessThanOrEqual(412 - 12);
   });
 });
+
+test("v3.7 리뷰: 짧은 알림은 누른 자리 가까이 (긴 문구만 가운데 쪽으로)", () => {
+  vi.useFakeTimers();
+  toasts.splice(0, toasts.length);
+  toast("+🪙5", 30, 400);
+  expect(toasts[0].x).toBeLessThan(80);
+});

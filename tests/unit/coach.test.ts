@@ -64,3 +64,15 @@ describe("coachStep", () => {
     expect(coachStep(s)).toBeNull();
   });
 });
+
+test("v3.7 리뷰: 코치는 주문에 쓰일 재료를 합치라고 하지 않는다 — 다른 쌍이 없으면 생성기", () => {
+  const s = createInitialState(fixedCtx());
+  emptyBoard(s);
+  s.board[3] = gen("tea");
+  s.board[0] = item("potion", 2);
+  s.board[1] = item("potion", 2, { state: "cobweb" });
+  s.orders = [{ ...s.orders[0], reqs: [{ chain: "potion", level: 2 }, { chain: "tea", level: 6 }] }];
+  const c = coachStep(s)!;
+  expect(c.step).toBe("spawn");
+  expect(c.cells).toEqual([3]);
+});

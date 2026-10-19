@@ -219,14 +219,14 @@ export function getMergeTargets(s: GameState, from: number): number[] {
 
 // 막혔을 때 보여 줄 합성 힌트 한 쌍 [끌 칸, 놓을 칸] (v3.7)
 // 순위: ① 활성 재료 둘 ② 활성 재료 → 같은 그림의 거미줄 칸 ③ 같은 등급 생성기. 같은 순위면 낮은 레벨 먼저
-// 수집품(탭해서 받는 코인·번개 조각)과 최대 레벨은 힌트로 주지 않는다
-export function findMergePair(s: GameState): [number, number] | null {
+// 수집품(탭해서 받는 코인·번개 조각)과 최대 레벨, exclude(주문에 쓰일 재료 uid)는 힌트로 주지 않는다
+export function findMergePair(s: GameState, exclude: ReadonlySet<string> = new Set()): [number, number] | null {
   let best: { rank: number; level: number; pair: [number, number] } | null = null;
   const offer = (rank: number, level: number, from: number, to: number) => {
     if (!best || rank < best.rank || (rank === best.rank && level < best.level)) best = { rank, level, pair: [from, to] };
   };
   s.board.forEach((a, i) => {
-    if (!a || a.state !== "active") return;
+    if (!a || a.state !== "active" || exclude.has(a.uid)) return;
     if (a.isGenerator) {
       if ((a.level || 1) >= 3) return;
       s.board.forEach((b, j) => {
@@ -237,7 +237,7 @@ export function findMergePair(s: GameState): [number, number] | null {
     const meta = getItemMeta(a.chain, a.level);
     if (meta.isCollectible || a.chain === "combo" || a.level >= meta.maxLv) return;
     s.board.forEach((b, j) => {
-      if (j === i || !b || b.isGenerator || b.chain !== a.chain || b.level !== a.level) return;
+      if (j === i || !b || b.isGenerator || b.chain !== a.chain || b.level !== a.level || exclude.has(b.uid)) return;
       if (b.state === "active" && j > i) offer(1, a.level, i, j);
       else if (b.state === "cobweb") offer(2, a.level, i, j);
     });

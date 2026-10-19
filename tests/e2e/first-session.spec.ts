@@ -103,3 +103,47 @@ test("첫 복구 코치: 합성 → 주문 완성 → 성으로 단계가 바뀌
   await expect(page.locator(".story-next-btn")).not.toHaveClass(/coach-pulse/);
   expect(errors).toEqual([]);
 });
+
+// ---- v3.7 리뷰 반영 ----
+type NB = { isNudging(): boolean; nudges: Array<{ node: { cell: number }; tl: { repeat(): number } }> };
+const nb = (page: import("@playwright/test").Page) => page.evaluate(() => {
+  const b = (window as unknown as { __board(): NB }).__board();
+  return { on: b.isNudging(), cells: b.nudges.map((n) => n.node.cell), repeats: b.nudges.map((n) => n.tl.repeat()) };
+});
+async function fresh(page: import("@playwright/test").Page) {
+  await page.goto("/?e2e");
+  await page.locator(".gh-board-container .board-host canvas").waitFor();
+  await page.waitForFunction(() => !!(window as unknown as { __game?: unknown }).__game);
+}
+
+test("리뷰: 넛지 쌍 중 하나가 보드 밖 행동으로 사라지면 남은 타일도 멈춤 (코치가 끝난 뒤 대기 힌트)", async ({ page }) => {
+  await fresh(page);
+  await seed(page, "d.rooms.alc_cauldron.done = true");
+  await expect.poll(async () => (await nb(page)).on, { timeout: 9_000 }).toBe(true);
+  const { cells } = await nb(page);
+  await seed(page, `d.board[${cells[0]}] = null`);
+  await page.waitForTimeout(300);
+  expect((await nb(page)).on).toBe(false);
+});
+
+test("리뷰: 타일을 누르고 있는 동안에는 넛지가 시작되지 않음", async ({ page }) => {
+  await fresh(page);
+  const c = await cellCenter(page, 25);
+  await page.mouse.move(c.x, c.y);
+  await page.mouse.down();
+  await page.waitForTimeout(3000);
+  expect((await nb(page)).on).toBe(false);
+  await page.mouse.up();
+});
+
+test("리뷰: 연출 줄이기를 켜면 넛지는 한 번만, 반짝임은 테두리만", async ({ page }) => {
+  await fresh(page);
+  await seed(page, "d.settings.reduceMotion = true");
+  await expect.poll(async () => (await nb(page)).on, { timeout: 9_000 }).toBe(true);
+  expect((await nb(page)).repeats.every((r) => r === 0)).toBe(true);
+  await expect(page.locator("body")).toHaveClass(/reduce-motion/);
+  await seed(page, `d.orders[0].reqs.forEach((r, i) => { d.board[47 + i] = { uid: 'o' + i, state: 'active', isGenerator: false, chain: r.chain, level: r.level }; })`);
+  const card = page.locator(".gh-order-card.coach-pulse");
+  await expect(card).toHaveCount(1);
+  expect(await card.evaluate((el) => getComputedStyle(el).animationName)).toBe("none");
+});

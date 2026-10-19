@@ -73,7 +73,8 @@
     const s = app().store.get();
     const coach = coachStep(s);
     if (coach) return coach.cells;
-    return findMergePair(s) ?? [];
+    // 주문에 쓰일 재료는 되도록 빼고 (그것밖에 없으면 그 쌍이라도)
+    return findMergePair(s, computeWanted(s).wantedUids) ?? findMergePair(s) ?? [];
   }
 
   function idleHint(view: BoardView) {
@@ -83,7 +84,8 @@
       return;
     }
     const wait = coachStep(app().store.get()) ? COACH_IDLE_MS : IDLE_MS;
-    if (view.isNudging() || performance.now() - lastInput < wait) return;
+    if (view.isNudging() || view.isPressing() || performance.now() - lastInput < wait) return;
+    view.reduceMotion = app().store.get().settings.reduceMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cells = hintCells();
     if (cells.length) view.nudge(cells);
   }
@@ -99,6 +101,7 @@
         const ev = act(spawnFromGenerator, { cell }, at);
         if (ev.some((e) => e.type === "rejected" && e.reason === "boardFull")) {
           const cells = hintCells();
+          view.reduceMotion = s.settings.reduceMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
           if (cells.length) view.nudge(cells);
         }
         return;

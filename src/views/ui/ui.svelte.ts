@@ -76,7 +76,8 @@ export function toast(text: string, x?: number, y?: number, color = "#fbbf24"): 
   }
   const slot = (toasts.length % 4) * 34;
   const w = typeof window !== "undefined" ? window.innerWidth : 412;
-  const half = Math.min(w - 24, TOAST_MAX_W) / 2;
+  // 글자 수로 상자 폭을 어림 (한글·이모지 약 13px + 좌우 여백) — 짧은 알림은 누른 자리 가까이, 긴 알림만 가운데 쪽으로
+  const half = Math.min(w - 24, TOAST_MAX_W, [...text].length * 13 + 24) / 2;
   const safeX = Math.max(12 + half, Math.min(w - 12 - half, x ?? w / 2));
   const safeY = Math.max(65, (y ?? 220) - 10 - slot);
   const id = ++toastSeq;

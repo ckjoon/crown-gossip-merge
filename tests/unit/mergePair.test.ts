@@ -74,3 +74,14 @@ describe("findMergePair", () => {
     expect(ev.some((e) => e.type === "merged")).toBe(true);
   });
 });
+
+test("v3.7 리뷰: 주문에 쓰일 재료(제외 목록)는 힌트 쌍에서 뺀다", () => {
+  const s = createInitialState(fixedCtx());
+  emptyBoard(s);
+  s.board[0] = item("potion", 2);
+  s.board[1] = item("potion", 2, { state: "cobweb" });
+  s.board[5] = item("herb", 3);
+  s.board[6] = item("herb", 3);
+  expect(findMergePair(s, new Set([s.board[0]!.uid]))).toEqual([5, 6]);
+  expect(findMergePair(s, new Set([s.board[0]!.uid, s.board[5]!.uid]))).toBeNull();
+});

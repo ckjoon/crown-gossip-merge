@@ -2,7 +2,7 @@
   import { app } from "../context";
   import { ui, act, pointOf } from "../ui.svelte";
   import { getItemSVG, getCrateSVG } from "../../art/sprites";
-  import { getItemMeta, getGeneratorTierMeta, formatGeneratorStars } from "../../../core/rules/chains";
+  import { CHAINS, getItemMeta, getGeneratorTierMeta, formatGeneratorStars } from "../../../core/rules/chains";
   import { spawnRange } from "../../../core/rules/progression";
   import { spawnFromGenerator, storeToBag, sellItem, collectItem, unlockCobweb, sortBoard } from "../../../core/actions/board";
 
@@ -11,6 +11,14 @@
   const meta = $derived(item && !item.isGenerator ? getItemMeta(item.chain, item.level) : null);
   const tier = $derived(item && item.isGenerator ? getGeneratorTierMeta(item.chain, item.level) : null);
   const range = $derived(item && item.isGenerator ? spawnRange(item.level) : null);
+
+  // 이 재료가 어디서 오는지 (v3.9): Lv.1은 생성기에서, 그 위는 한 단계 아래 둘을 합쳐서
+  const origin = $derived.by(() => {
+    if (!item || item.isGenerator || !meta) return "";
+    const src = CHAINS[item.chain]?.shortGen ?? "";
+    if (item.level === 1) return `${src}에서 나와요 · 둘을 합치면 Lv.2`;
+    return `Lv.${item.level - 1} 둘을 합쳐서 · ${src}${item.level < meta.maxLv ? ` · 다음 Lv.${item.level + 1}` : " · 최고 단계!"}`;
+  });
 
   const cell = () => ui.selectedCell!;
   function afterRemove() {
@@ -55,7 +63,7 @@
       {:else if meta.isCollectible}
         <p>탭하면 바로 받아요</p>
       {:else}
-        <p>{meta.chainName}</p>
+        <p>{origin}</p>
       {/if}
     </div>
     {#if item.state === "cobweb"}

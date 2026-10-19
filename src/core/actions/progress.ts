@@ -5,8 +5,8 @@ import { grant, spend } from "../economy";
 import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
 import { GEM_SHOP_ENERGY, nextBoost } from "../rules/progression";
-import { bagSize, levelUpReward, unlockedChains, unlocksAt, xpToNext } from "../rules/levels";
-import { ENERGY_REGEN_SEC, NATURAL_ENERGY_CAP, type GameState, type GenChain, type Settings } from "../types";
+import { GEN_UNITS_MAX, SURPLUS_PART_COINS, bagSize, generatorUnits, levelUpReward, unlockedChains, unlocksAt, xpToNext } from "../rules/levels";
+import { ENERGY_REGEN_SEC, NATURAL_ENERGY_CAP, type BoardItem, type GameState, type GenChain, type Settings } from "../types";
 import { findNearestEmptyCell } from "./board";
 
 // force: 새 체인 해금 생성기처럼 잃으면 안 되는 지급은 보관함이 꽉 차 있어도 넣는다
@@ -24,6 +24,36 @@ export function grantGeneratorPart(s: GameState, ev: GameEvent[], chain: GenChai
   }
 }
 
+// 파츠를 줄 체인: 원하는 체인이 한도(★3 하나)에 못 미치면 그 체인, 아니면 쓸 수 있는 체인을 차례로 돌며 한도가 남은 첫 체인. 모두 가득이면 null
+export function pickPartChain(s: GameState, preferred: GenChain): GenChain | null {
+  const pool = unlockedChains(s) as GenChain[];
+  const start = Math.max(0, pool.indexOf(preferred));
+  for (let k = 0; k < pool.length; k++) {
+    const c = pool[(start + k) % pool.length];
+    if (generatorUnits(s, c) < GEN_UNITS_MAX) return c;
+  }
+  return null;
+}
+
+// 예전 세이브의 남는 생성기 정리: ★3가 있는 체인은 그 ★3 하나(보드 먼저)만 남기고 나머지 같은 체인 생성기를 걷어 파츠당 코인으로 돌려준다
+export function trimSurplusGenerators(s: GameState, ev: GameEvent[]): Array<{ chain: GenChain; count: number; coins: number }> {
+  const out: Array<{ chain: GenChain; count: number; coins: number }> = [];
+  const all = [...s.board, ...s.bag].filter((it): it is BoardItem => !!it?.isGenerator);
+  for (const chain of new Set(all.map((it) => it.chain as GenChain))) {
+    const keep = all.find((it) => it.chain === chain && (it.level || 1) >= 3);
+    if (!keep) continue;
+    const drop = all.filter((it) => it.chain === chain && it !== keep);
+    if (!drop.length) continue;
+    const ids = new Set(drop.map((it) => it.uid));
+    s.board = s.board.map((it) => (it && ids.has(it.uid) ? null : it));
+    s.bag = s.bag.filter((it) => !ids.has(it.uid));
+    const coins = drop.reduce((n, it) => n + Math.pow(2, Math.min(3, Math.max(1, it.level || 1)) - 1), 0) * SURPLUS_PART_COINS;
+    grant(s, ev, "coins", coins, "surplusGenerators");
+    out.push({ chain, count: drop.length, coins });
+  }
+  return out;
+}
+
 // 레벨업 보상(levels.ts): 코인 25×레벨, 번개 +5, 💎3, 짝수 레벨에 생성기 파츠(쓸 수 있는 체인 순환)
 // 새 체인 생성기는 레벨이 아니라 구역 완성 보상 (castle.renovate)
 export function gainXP(s: GameState, ev: GameEvent[], amount: number): void {
@@ -32,8 +62,9 @@ export function gainXP(s: GameState, ev: GameEvent[], amount: number): void {
     s.xp -= xpToNext(s.playerLv);
     s.playerLv += 1;
     const r = levelUpReward(s.playerLv);
-    const pool = unlockedChains(s);
-    const genChain = r.genPart ? pool[(s.playerLv / 2 - 1) % pool.length] : null;
+    const pool = unlockedChains(s) as GenChain[];
+    // 한도(★3 하나)가 찬 체인은 건너뛰고, 모든 체인이 가득이면 파츠 없음
+    const genChain = r.genPart ? pickPartChain(s, pool[(s.playerLv / 2 - 1) % pool.length]) : null;
     grant(s, ev, "coins", r.coins, "levelUp");
     grant(s, ev, "energy", r.energy, "levelUp");
     grant(s, ev, "gems", r.gems, "levelUp");

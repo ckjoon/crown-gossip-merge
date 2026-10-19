@@ -1,6 +1,7 @@
 // state.ts — 새 게임 초기 상태 (v2.5 초기값·초기 보드 배치와 동일)
 
 import { newUid, type Ctx } from "./ctx";
+import { sweepCodex } from "./codex";
 import { ALL_SPOTS_IN_ORDER } from "./rules/rooms";
 import { STARTING_GEMS } from "./rules/progression";
 import { COLS, ENERGY_REGEN_SEC, EVENT_CELLS, NATURAL_ENERGY_CAP, ROWS, TOTAL_CELLS, type BoardItem, type GameState } from "./types";
@@ -26,9 +27,11 @@ export function createInitialState(_ctx: Ctx): GameState {
     settings: { sound: true, reduceMotion: false },
     lastSeenVersion: null,
     cauldronPartGranted: true,
+    codexSeen: {},
     uidSeq: 0,
   };
   buildInitialBoard(s);
+  sweepCodex(s);
   return s;
 }
 

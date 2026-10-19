@@ -260,8 +260,24 @@ function decorate(svg: string, level: number): string {
   return out;
 }
 
+// 생성기 등급 장식 (v3.9): ★★는 반짝이 둘, ★★★는 금빛 오라 + 반짝이 셋 + 작은 왕관 — 등급이 오를수록 눈에 띄게 화려하게
+function decorateGenerator(svg: string, tier: number): string {
+  let out = svg;
+  if (tier >= 3) {
+    out = out.replace(
+      "<!--AURA-->",
+      `<circle data-aura="1" cx="32" cy="33" r="30" fill="url(#auraGlow)"/><circle cx="32" cy="33" r="29" fill="none" stroke="#fcd34d" stroke-width="1.4" stroke-dasharray="3 2.5" opacity="0.9"/>`,
+    );
+  }
+  if (tier >= 2) {
+    const crown = tier >= 3 ? `<path data-crown="1" d="M24 8 L27 2 L30 6.5 L32 1 L34 6.5 L37 2 L40 8 Z" fill="#fde047" stroke="#b45309" stroke-width="1"/><circle cx="32" cy="5.5" r="1.1" fill="#f43f5e"/>` : "";
+    out = out.replace("<!--SPARKLE-->", crown + sparkleStar(54, 12, 4.5) + sparkleStar(9, 44, 3.2) + (tier >= 3 ? sparkleStar(56, 46, 3.6) : ""));
+  }
+  return out;
+}
+
 export function getItemSVG(chain: string, level: number, isGenerator = false): string {
-  if (isGenerator) return getGeneratorSVG(chain, level || 1);
+  if (isGenerator) return decorateGenerator(getGeneratorSVG(chain, level || 1), Math.min(3, level || 1));
   return decorate(baseItemSVG(chain, level), level);
 }
 

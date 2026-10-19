@@ -6,7 +6,7 @@ import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
 import { CUSTOMERS_BY_ZONE } from "../rules/customers";
 import { ROOMS } from "../rules/rooms";
-import { computeZoneProgress, getItemGemPrice, rollOrderReqs, ZONE_ORDER, type ZoneProgress } from "../rules/progression";
+import { computeZoneProgress, getItemGemPrice, rollOrderReqs, spawnRange, ZONE_ORDER, type ZoneProgress } from "../rules/progression";
 import { bagSize, orderCoins, orderXP, unlockedChains } from "../rules/levels";
 import { type BoardItem, type GameState, type Order, type OrderReq, type ZoneKey } from "../types";
 import { findNearestEmptyCell } from "./board";
@@ -35,9 +35,42 @@ export function createOrder(s: GameState, ctx: Ctx, slotIdx: number, customReqs?
 export function initCustomerOrders(s: GameState, ctx: Ctx): void {
   s.orders = [
     createOrder(s, ctx, 0, [{ chain: "potion", level: 3 }]),
-    createOrder(s, ctx, 1, [{ chain: "potion", level: 2 }, { chain: "herb", level: 1 }]),
+    createOrder(s, ctx, 1, [{ chain: "potion", level: 2 }, { chain: "tea", level: 2 }]),
     createOrder(s, ctx, 2, [{ chain: "grimoire", level: 2 }, { chain: "bakery", level: 2 }]),
   ];
+}
+
+// 이 체인 생성기들이 바로 만들 수 있는 가장 낮은 단계 (★1 → Lv.1, ★2·★3 → Lv.2). 생성기가 없으면 Infinity
+export function minSpawnLevel(s: GameState, chain: string): number {
+  return [...s.board, ...s.bag].reduce((m, it) => (it?.isGenerator && it.chain === chain ? Math.min(m, spawnRange(it.level || 1).min) : m), Infinity);
+}
+
+// 만들 수 없게 된 주문 요구를 그 체인이 만드는 가장 낮은 단계로 바꾼다 (생성기가 자라 Lv.1이 더 안 나오는 경우·예전 세이브).
+// 보드·보관함·거미줄에 남아 있는 그 단계 재료 몫만큼은 그대로 둔다. 바뀐 요구 수를 돌려준다 (코인도 다시 계산)
+export function fitOrdersToGenerators(s: GameState): number {
+  const left = new Map<string, number>();
+  for (const it of [...s.board, ...s.bag]) {
+    if (it && !it.isGenerator && it.state !== "crate") left.set(`${it.chain}:${it.level}`, (left.get(`${it.chain}:${it.level}`) ?? 0) + 1);
+  }
+  let changed = 0;
+  for (const o of s.orders) {
+    let touched = false;
+    for (const r of o.reqs) {
+      const min = minSpawnLevel(s, r.chain);
+      if (!Number.isFinite(min) || r.level >= min) continue;
+      const key = `${r.chain}:${r.level}`;
+      const n = left.get(key) ?? 0;
+      if (n > 0) {
+        left.set(key, n - 1);
+        continue;
+      }
+      r.level = min;
+      touched = true;
+      changed++;
+    }
+    if (touched) o.coins = orderCoins(o.reqs);
+  }
+  return changed;
 }
 
 export interface OrderStatus {

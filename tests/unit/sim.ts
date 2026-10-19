@@ -18,6 +18,8 @@ export interface ChapterLog {
   net: number; // 쓴 번개 − 게임 안에서 얻은 번개(번개 조각·레벨업) = 자연 충전으로 채워야 하는 양
   level: number;
   lockedEnergy: number; // 이 장 직전 레벨 잠금으로 기다리며 쓴 번개
+  stars: Record<string, number>; // 이 장 복구 순간 체인별 가장 높은 생성기 등급 (★)
+  dupStar3: number; // 같은 체인 ★3가 둘 이상인 경우의 남는 ★3 수
 }
 
 export interface SimResult {
@@ -74,7 +76,15 @@ export function simulate(seed = 7, maxEnergy = 80000): SimResult {
     if (zp.nextSpotLockedLv === null && s.coins >= getSpotCoinCost(found.zoneKey, found.spot.cost)) {
       renovate(s, ctx, { spotId: zp.nextSpotId, styleIdx: 0 });
       gained();
-      chapters.push({ chapter: found.chapter, spotId: found.spot.id, energy, net: energy - income, level: s.playerLv, lockedEnergy });
+      const stars: Record<string, number> = {};
+      const star3: Record<string, number> = {};
+      for (const c of [...s.board, ...s.bag]) {
+        if (!c?.isGenerator) continue;
+        stars[c.chain] = Math.max(stars[c.chain] ?? 0, c.level || 1);
+        if ((c.level || 1) >= 3) star3[c.chain] = (star3[c.chain] ?? 0) + 1;
+      }
+      const dupStar3 = Object.values(star3).reduce((n, k) => n + Math.max(0, k - 1), 0);
+      chapters.push({ chapter: found.chapter, spotId: found.spot.id, energy, net: energy - income, level: s.playerLv, lockedEnergy, stars, dupStar3 });
       lockedEnergy = 0;
       continue;
     }

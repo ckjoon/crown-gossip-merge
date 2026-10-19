@@ -51,7 +51,7 @@ async function boot(): Promise<void> {
     }
     restored = restoreState(null, Date.now(), ctx);
   }
-  const { state, report, isNew, granted } = restored;
+  const { state, report, isNew, granted, tidy } = restored;
   const store = createStore(state, ctx);
   // 처음 하는 사람에게는 지난 업데이트 노트를 띄우지 않는다 (다음 버전부터 보여 줌)
   if (isNew) store.dispatch(markVersionSeen, { version: APP_VERSION });
@@ -83,6 +83,15 @@ async function boot(): Promise<void> {
   // 업데이트 노트 등 모달이 떠 있으면 닫힌 뒤에
   const announce = (text: string) => (ui.modal !== null ? setTimeout(() => announce(text), 600) : say("대마녀 셀레네", text));
   if (granted.length) announce(`구역을 완성한 보상으로 새 생성기를 놓아 두었어 — ${granted.map((c) => getGeneratorTierMeta(c, 1).name).join(", ")}. 탭해서 새 재료를 만들어 봐!`);
+  // v3.9: 같은 체인에 ★★★가 있으면 나머지 생성기는 쓸모없는 중복 → 불러올 때 정리하고 코인으로 돌려줌. 대화 바는 한 줄이라 한 번에 알림
+  const tidyLines: string[] = [];
+  if (tidy.trimmed.length) {
+    const n = tidy.trimmed.reduce((k, t) => k + t.count, 0);
+    const coins = tidy.trimmed.reduce((k, t) => k + t.coins, 0);
+    tidyLines.push(`★★★가 있는 체인의 겹치는 생성기 ${n}개를 ${coins}🪙로 바꿔 두었어 (체인마다 ★★★ 하나면 충분해)`);
+  }
+  if (tidy.adjusted) tidyLines.push(`더 만들 수 없는 Lv.1 주문 ${tidy.adjusted}건은 Lv.2로 바꿨어`);
+  if (tidyLines.length) setTimeout(() => announce(tidyLines.join(" · ")), granted.length ? 6000 : 0);
   const fx = new FxLayer();
   await fx.init();
   attachJuice(store, fx, sfx);

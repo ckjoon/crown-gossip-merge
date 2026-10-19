@@ -89,6 +89,15 @@ export function unlockedChains(s: Pick<GameState, "rooms" | "board" | "bag">): A
   return [...CORE_GEN_CHAINS, ...extras];
 }
 
+// 생성기 한도 (v3.9): 체인마다 ★3 하나면 충분 — 같은 체인 생성기가 둘이면 탭할 때 번개만 같이 들 뿐 보드만 차지한다.
+// 파츠 단위로 세면 ★1=1, ★2=2, ★3=4. 한 체인이 4가 되면 그 체인 파츠는 더 주지 않는다
+export const GEN_UNITS_MAX = 4;
+export function generatorUnits(s: Pick<GameState, "board" | "bag">, chain: ChainId): number {
+  return [...s.board, ...s.bag].reduce((n, it) => (it?.isGenerator && it.chain === chain ? n + Math.pow(2, Math.min(3, Math.max(1, it.level || 1)) - 1) : n), 0);
+}
+// 정리한 남는 생성기 파츠 1개당 돌려주는 코인 (예전 세이브)
+export const SURPLUS_PART_COINS = 40;
+
 export function isExtraChain(c: ChainId): c is ExtraChain {
   return Object.hasOwn(CHAIN_UNLOCK_ZONE, c);
 }

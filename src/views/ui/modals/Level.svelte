@@ -1,20 +1,20 @@
 <script lang="ts">
   import Modal from "./Modal.svelte";
   import { app } from "../context";
-  import { getGeneratorTierMeta } from "../../../core/rules/chains";
-  import { levelUpReward, unlockedChains, unlocksAt, xpToNext } from "../../../core/rules/levels";
+  import { levelUpReward, unlocksAt, xpToNext } from "../../../core/rules/levels";
+  import { pickPartChain } from "../../../core/actions/progress";
   let { onclose }: { onclose: () => void } = $props();
   const game = app().store;
   const req = $derived(xpToNext($game.playerLv));
   const pct = $derived(Math.min(100, Math.round(($game.xp / req) * 100)));
   // 지난 레벨 1개 + 앞으로 8레벨
   const levels = $derived(Array.from({ length: 9 }, (_, i) => Math.max(2, $game.playerLv - 1) + i));
-  // 지난 레벨은 받은 생성기 이름, 앞으로의 레벨은 그때 열려 있는 체인에 따라 달라지므로 "생성기"로만
+  // 생성기 파츠는 체인마다 ★★★ 하나 몫까지만 (v3.9) — 받을 체인은 그때 한도가 남은 체인이라 "생성기 파츠"로만, 모든 체인이 ★★★면 없음
+  const partLeft = $derived(pickPartChain($game, "potion") !== null);
   function partOf(lv: number): string | null {
     if (!levelUpReward(lv).genPart) return null;
-    if (lv > $game.playerLv) return "생성기";
-    const pool = unlockedChains($game);
-    return getGeneratorTierMeta(pool[(lv / 2 - 1) % pool.length], 1).name;
+    if (lv > $game.playerLv && !partLeft) return null;
+    return "생성기 파츠";
   }
 </script>
 

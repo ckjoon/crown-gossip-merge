@@ -9,6 +9,7 @@ import { getGeneratorTierCap, resolveBoost, rollBaseSpawn } from "../rules/progr
 import { GEN_EVOLVE_XP, bagSize, mergeXP, sellPrice } from "../rules/levels";
 import { COLS, ROWS, TOTAL_CELLS, type BoardItem, type ChainId, type GameState } from "../types";
 import { gainXP } from "./progress";
+import { fitOrdersToGenerators } from "./orders";
 
 const UNLOCK_COBWEB_COST = 20;
 
@@ -135,6 +136,9 @@ export const moveOrMerge: Action<{ from: number; to: number }> = (s, ctx, { from
     s.board[from] = null;
     s.board[to] = item;
     ev.push({ type: "merged", from, to, item: { ...item }, wasCobweb: false, generatorEvolved: true });
+    // 먼저 만들 수 없게 된 Lv.1 주문을 Lv.2로 바꾸고(남은 Lv.1 재료 몫은 그대로), 그다음 남는 Lv.1을 흡수
+    const adjusted = fitOrdersToGenerators(s);
+    if (adjusted) ev.push({ type: "ordersAdjusted", count: adjusted });
     absorbOrphans(s, ev, item.chain, to);
     gainXP(s, ev, GEN_EVOLVE_XP);
     return ev;

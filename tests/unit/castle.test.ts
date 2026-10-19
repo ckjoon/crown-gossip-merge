@@ -26,13 +26,23 @@ describe("장소 복구", () => {
     expect(s.coins).toBe(299);
     expect(s.rooms.alc_cauldron.done).toBe(false);
   });
-  test("정상 복구(제1화 비용 1×1000): 코인 −1000, 완료·스타일, XP 35, 생성기 파츠, spotRestored", () => {
+  test("정상 복구(제1화 비용 1×1000): 코인 −1000, 완료·스타일, XP 35, spotRestored (생성기 파츠는 4화마다·구역 완성 때만)", () => {
     const ev = renovate(s, fixedCtx(), { spotId: "alc_cauldron", styleIdx: 2 });
     expect(s.coins).toBe(9000);
     expect(s.rooms.alc_cauldron).toEqual({ done: true, styleIdx: 2 });
     expect(s.xp).toBe(35);
     expect(ev.find((e) => e.type === "spotRestored")).toEqual({ type: "spotRestored", spotId: "alc_cauldron", zoneKey: "alchemy", chapter: 1, coinCost: 1000, styleIdx: 2 });
-    expect(ev.some((e) => e.type === "generatorPartGranted")).toBe(true);
+    expect(ev.some((e) => e.type === "generatorPartGranted")).toBe(false);
+  });
+  test("제4화 복구는 생성기 파츠, 한도(★3 하나)가 찬 체인은 건너뜀", () => {
+    for (const id of ALC.slice(0, 3)) s.rooms[id].done = true;
+    s.coins = 99999;
+    const pots = s.board.flatMap((c, i) => (c?.isGenerator && c.chain === "potion" ? [i] : []));
+    pots.forEach((i, k) => (s.board[i] = k === 0 ? { ...s.board[i]!, level: 3 } : null));
+    const ev = renovate(s, fixedCtx(), { spotId: ALC[3], styleIdx: 0 });
+    const g = ev.find((e) => e.type === "generatorPartGranted") as { chain: string } | undefined;
+    expect(g).toBeDefined();
+    expect(g!.chain).not.toBe("potion");
   });
   test("구역 마지막 장소: 💎50 + zoneCompleted(revealKey harbor) — 하버 입장 레벨(6) 이상", () => {
     s.playerLv = 6;

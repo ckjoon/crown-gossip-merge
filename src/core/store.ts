@@ -3,6 +3,7 @@
 import type { Ctx } from "./ctx";
 import type { GameEvent } from "./events";
 import type { GameState } from "./types";
+import { sweepCodex } from "./codex";
 
 export type Action<P> = (draft: GameState, ctx: Ctx, payload: P) => GameEvent[];
 
@@ -54,6 +55,8 @@ export function createStore(initial: GameState, ctx: Ctx): Store {
       // 사본에서 실행하므로 행동이 예외를 던지면 기존 상태가 그대로 남는다
       const draft = structuredClone(state);
       const events = action(draft, ctx, payload);
+      // 도감 발견은 행동마다 보드·보관함을 훑어 기록 (어느 행동이 재료를 만들었는지와 상관없이 한 곳에서)
+      if (!opts?.transient) sweepCodex(draft);
       state = draft;
       notify();
       const info: CommitInfo = { transient: !!opts?.transient, events };

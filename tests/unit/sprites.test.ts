@@ -64,3 +64,14 @@ test("새 체인 생성기 ★1~3은 서로 다른 그림이고 다른 체인 �
     expect(shapes).not.toContain(shape(getItemSVG("potion", 1, true)));
   }
 });
+
+// v3.9: 생성기는 등급이 오를수록 화려하게 — ★ 장식 없음, ★★ 반짝이, ★★★ 오라·왕관 (모든 생성기 체인)
+test("생성기 등급 장식", () => {
+  for (const c of ["potion", "grimoire", "herb", "bakery", "tea", "candle", "silk"]) {
+    expect(getItemSVG(c, 1, true)).not.toContain("data-sparkle");
+    expect(getItemSVG(c, 2, true)).toContain("data-sparkle");
+    expect(getItemSVG(c, 2, true)).not.toContain("data-crown");
+    expect(getItemSVG(c, 3, true)).toContain("data-crown");
+    expect(getItemSVG(c, 3, true)).toContain("data-aura");
+  }
+});

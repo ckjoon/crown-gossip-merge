@@ -23,6 +23,17 @@ describe("밸런스 시뮬레이션 (실제 액션만 쓰는 봇, 시드 3개)",
     }
   });
 
+  // v3.9: 체인마다 ★★★ 하나까지, ★★★는 이야기 내내 천천히 (예전엔 제2화에 가마솥 ★★★, 제15화에 전부 ★★★)
+  test("같은 체인 ★★★가 둘이 되는 일 없음, 제10화엔 ★★★가 2체인 이하, 끝날 때는 기본 5체인 모두 ★★★", () => {
+    for (const r of runs) {
+      for (const c of r.chapters) expect(c.dupStar3, `ch${c.chapter}`).toBe(0);
+      const ch10 = r.chapters.find((c) => c.chapter === 10)!;
+      expect(Object.values(ch10.stars).filter((t) => t >= 3).length).toBeLessThanOrEqual(2);
+      const last = r.chapters[r.chapters.length - 1];
+      for (const c of ["potion", "grimoire", "herb", "bakery", "tea"]) expect(last.stars[c], c).toBe(3);
+    }
+  });
+
   test("구역 입장 레벨이 실제로 길을 막되, 한 번에 1.5일분을 넘게 기다리게 하지 않음", () => {
     for (const r of runs) {
       expect(r.chapters.some((c) => c.lockedEnergy > 0)).toBe(true);

@@ -79,6 +79,8 @@ export interface GameState {
   settings: Settings;
   lastSeenVersion: string | null;
   cauldronPartGranted: boolean;
+  // 도감 (v3.9): 체인별로 보드·보관함에 나타난 적 있는 가장 높은 재료 단계. 그보다 높은 단계는 도감에서 ??? 로 가린다
+  codexSeen: Partial<Record<ChainId, number>>;
   uidSeq: number;
 }
 

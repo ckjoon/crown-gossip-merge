@@ -3,7 +3,9 @@
 
 import { newUid, type Ctx } from "../../core/ctx";
 import type { GenChain } from "../../core/types";
-import { initCustomerOrders, createOrder, getZoneProgress } from "../../core/actions/orders";
+import { initCustomerOrders, createOrder, getZoneProgress, fitOrdersToGenerators } from "../../core/actions/orders";
+import { trimSurplusGenerators } from "../../core/actions/progress";
+import { sweepCodex } from "../../core/codex";
 import { initHolidayBoard } from "../../core/actions/holiday";
 import { createInitialState } from "../../core/state";
 import { CHAINS } from "../../core/rules/chains";
@@ -135,6 +137,15 @@ export function restoreOrders(s: GameState, raw: unknown): void {
   s.orders = orders;
 }
 
+// 도감 발견 기록: 아는 체인의 1~8 정수만. 없으면 빈 기록 (불러온 뒤 tidyLoaded가 보드·보관함으로 채움)
+export function restoreCodexSeen(raw: unknown): GameState["codexSeen"] {
+  const o = asObj(raw);
+  const out: GameState["codexSeen"] = {};
+  if (!o) return out;
+  for (const [k, v] of Object.entries(o)) if (isChain(k) && typeof v === "number" && v >= 1) out[k as ChainId] = Math.min(8, Math.floor(v));
+  return out;
+}
+
 export function regenerateComboOrders(s: GameState, ctx: Ctx): void {
   s.orders = s.orders.map((o, i) => (o.reqs.some((r) => r.chain === "combo") ? createOrder(s, ctx, i) : o));
 }
@@ -230,6 +241,7 @@ function restoreV4(data: Raw, updatedAt: number, now: number, ctx: Ctx): { s: Ga
   s.settings = { sound: st?.sound !== false, reduceMotion: st?.reduceMotion === true };
   s.lastSeenVersion = typeof data.lastSeenVersion === "string" ? data.lastSeenVersion : null;
   s.cauldronPartGranted = data.cauldronPartGranted !== false;
+  s.codexSeen = restoreCodexSeen(data.codexSeen);
   fixCurrentTheme(s, data.currentThemeKey);
   fixUidSeq(s, data.uidSeq);
   dedupeUids(s);
@@ -239,16 +251,32 @@ function restoreV4(data: Raw, updatedAt: number, now: number, ctx: Ctx): { s: Ga
 }
 
 // granted: 불러오면서 새로 받은 레벨 해금 생성기 체인 (화면이 안내)
-export function restoreState(record: SaveRecord | null, now: number, ctx: Ctx): { state: GameState; report: MigrationReport | null; isNew: boolean; granted: GenChain[] } {
+// tidy (v3.9): ★3가 있는 체인의 남는 생성기를 걷고 코인으로 돌려준 내역, 만들 수 없게 된 주문 요구를 바꾼 수
+export interface LoadTidy {
+  trimmed: Array<{ chain: GenChain; count: number; coins: number }>;
+  adjusted: number;
+}
+export function restoreState(
+  record: SaveRecord | null,
+  now: number,
+  ctx: Ctx,
+): { state: GameState; report: MigrationReport | null; isNew: boolean; granted: GenChain[]; tidy: LoadTidy } {
   const data = asObj(record?.data);
-  if (!record || !data) return { state: newGame(ctx), report: null, isNew: true, granted: [] };
+  if (!record || !data) return { state: newGame(ctx), report: null, isNew: true, granted: [], tidy: { trimmed: [], adjusted: 0 } };
   const updatedAt = num(record.updatedAt, now);
   if (num(record.schemaVersion, 0) < 4) {
     const { state, report } = migrateV2ToV4(data, updatedAt, now, ctx);
-    return { state, report, isNew: false, granted: [] };
+    return { state, report, isNew: false, granted: [], tidy: tidyLoaded(state) };
   }
   const { s, granted } = restoreV4(data, updatedAt, now, ctx);
-  return { state: s, report: null, isNew: false, granted };
+  return { state: s, report: null, isNew: false, granted, tidy: tidyLoaded(s) };
+}
+
+// 남는 생성기 정리 → 그 뒤 생성기 기준으로 주문 맞추기 (정리로 ★1이 사라질 수 있으므로 이 순서)
+function tidyLoaded(s: GameState): LoadTidy {
+  sweepCodex(s);
+  const trimmed = trimSurplusGenerators(s, []);
+  return { trimmed, adjusted: fitOrdersToGenerators(s) };
 }
 
 export function hasReportContent(r: MigrationReport | null): boolean {

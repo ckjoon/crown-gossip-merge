@@ -9,7 +9,7 @@ import { GEM_REWARDS, getSpotCoinCost } from "../rules/progression";
 import type { ExtraChain, ZoneKey } from "../types";
 import { CHAIN_UNLOCK_ZONE, RESTORE_XP } from "../rules/levels";
 import { getZoneProgress } from "./orders";
-import { gainXP, grantGeneratorPart } from "./progress";
+import { gainXP, grantGeneratorPart, pickPartChain } from "./progress";
 
 export const selectZone: Action<{ zoneKey: ZoneKey }> = (s, _ctx, { zoneKey }) => {
   if (!getZoneProgress(s).accessibleKeys.includes(zoneKey)) return [rejected("locked")];
@@ -41,7 +41,8 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
 
   // 이 복구로 구역이 완성되면 💎 보상 (같은 저장에 포함되도록 즉시 지급)
   const after = getZoneProgress(s);
-  if (after.completedKeys.includes(found.zoneKey) && !before.completedKeys.includes(found.zoneKey)) {
+  const zoneDone = after.completedKeys.includes(found.zoneKey) && !before.completedKeys.includes(found.zoneKey);
+  if (zoneDone) {
     grant(s, ev, "gems", GEM_REWARDS.zoneComplete, "zoneComplete");
     const revealKey = after.currentZoneKey !== found.zoneKey ? after.currentZoneKey : null;
     ev.push({ type: "zoneCompleted", zoneKey: found.zoneKey, gems: GEM_REWARDS.zoneComplete, revealKey, nextLockedLv: after.nextSpotLockedLv });
@@ -55,6 +56,11 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
   }
   // 경험치·구역 생성기 파츠는 선물 다음에 (같은 복구의 레벨업 파츠가 선물 생성기를 먼저 줘 선물 장면이 빠지지 않게)
   gainXP(s, ev, RESTORE_XP);
-  grantGeneratorPart(s, ev, getGeneratorChainForTheme(found.zoneKey));
+  // 구역 생성기 파츠는 구역을 완성할 때만 (v3.9: 장마다 주면 ★3가 이야기 절반에 다 나와 버림).
+  // 한도(★3 하나)가 찬 체인은 건너뛰고 한도가 남은 다음 체인으로, 모두 가득이면 없음
+  if (zoneDone || found.chapter % 4 === 0) {
+    const part = pickPartChain(s, getGeneratorChainForTheme(found.zoneKey));
+    if (part) grantGeneratorPart(s, ev, part);
+  }
   return ev;
 };

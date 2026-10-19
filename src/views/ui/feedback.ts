@@ -19,6 +19,10 @@ export function attachFeedback(store: Store, sfx: SoundEngine): () => void {
         sfx.serve();
         toast(e.currency === "coins" ? `+${e.amount}🪙 획득!` : `+${e.amount}⚡ 번개 획득!`, undefined, 200, e.currency === "coins" ? "#fbbf24" : "#38bdf8");
         break;
+      case "ordersAdjusted":
+        // 생성기가 자라 Lv.1이 더 안 나오면 그 주문 요구를 Lv.2로 (core orders.fitOrdersToGenerators)
+        toast(`📜 생성기가 자라 주문 ${e.count}건을 한 단계 높였어요 (보상도 올라요)`, undefined, 180, "#a855f7");
+        break;
       case "cobwebUnlocked":
         sfx.merge(3, true);
         toast("🕸️ 거미줄 즉시 해제!", undefined, 220, "#10b981");

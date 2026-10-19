@@ -35,7 +35,7 @@ describe("주문 생성", () => {
     initCustomerOrders(s, fixedCtx());
     expect(s.orders.map((o) => o.reqs)).toEqual([
       [{ chain: "potion", level: 3 }],
-      [{ chain: "potion", level: 2 }, { chain: "herb", level: 1 }],
+      [{ chain: "potion", level: 2 }, { chain: "tea", level: 2 }],
       [{ chain: "grimoire", level: 2 }, { chain: "bakery", level: 2 }],
     ]);
   });

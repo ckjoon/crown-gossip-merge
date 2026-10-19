@@ -84,8 +84,11 @@ test("첫 복구 코치: 합성 → 주문 완성 → 성으로 단계가 바뀌
   await expect(page.locator(".gh-order-card").first()).toHaveClass(/coach-pulse/);
 
   // 코인을 채우고 주문 완성 → castle, 성 버튼 반짝
+  // (주문 완성 단계가 성보다 먼저라, 새로 온 주문이 우연히 바로 완성 가능하면 serve가 맞음 — 남은 주문은 못 만드는 것으로)
   await seed(page, "d.coins = 2000");
   await page.locator(".gh-order-card").first().locator(".gh-serve-btn").click({ force: true });
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __game: { get(): { coins: number } } }).__game.get().coins)).toBeGreaterThan(2000);
+  await seed(page, "d.orders.forEach((o) => { o.reqs = [{ chain: 'tea', level: 8 }]; })");
   await expect(bar).toHaveAttribute("data-step", "castle");
   await expect(page.locator(".gh-castle-btn")).toHaveClass(/coach-pulse/);
   await page.locator(".gh-castle-btn").click();

@@ -8,13 +8,23 @@ export interface VersionEntry {
   changes: string[];
 }
 
-export const APP_VERSION = "v3.3.0";
+export const APP_VERSION = "v3.3.1";
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: "v3.3.1",
+    date: "2026-10-20",
+    badge: "LATEST",
+    title: "보드 아이콘 빈칸 수정",
+    changes: [
+      "🩹 [아이콘 빈칸 수정] Lv.5 이상 아이템이 보드에서 빈칸으로 보이던 문제를 고쳤어요.",
+      "💎 [상단 정리] 보석 숫자를 가리던 상단 이벤트 버튼을 뺐어요. 이벤트는 아래 🎃 이벤트 버튼에서 열 수 있어요.",
+    ],
+  },
+  {
     version: "v3.3.0",
     date: "2026-10-19",
-    badge: "LATEST",
+    badge: "3D",
     title: "진짜 가구로 채우는 마녀의 성 인테리어",
     changes: [
       "🛋️ [3D 가구 교체] 가마솥·마도서 서가·약병 선반·연회 테이블·디저트·화분 등 100여 종의 3D 모델로 20개 장소를 새로 꾸몄어요. 스타일마다 색과 곁들이는 소품이 달라져요.",

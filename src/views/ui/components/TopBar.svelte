@@ -2,13 +2,11 @@
   import { app } from "../context";
   import { ui } from "../ui.svelte";
   import { getRequiredXP } from "../../../core/rules/chains";
-  import { getHolidayConfig } from "../../../core/rules/holidays";
   import { NATURAL_ENERGY_CAP } from "../../../core/types";
 
   const game = app().store;
   const reqXP = $derived(getRequiredXP($game.playerLv));
   const xpPct = $derived(Math.min(100, Math.round(($game.xp / reqXP) * 100)));
-  const holiday = $derived(getHolidayConfig($game.holiday.activeHolidayId));
 
   // 재화가 바뀌면 숫자 알약이 통통 튄다
   let bump = $state<Record<string, boolean>>({});
@@ -62,7 +60,6 @@
   </div>
 
   <div class="gh-top-btns">
-    <button class="gh-icon-btn event-top-btn" onclick={open("holiday")} title="명절 한정 이벤트">{holiday.icon}</button>
     <button class="gh-icon-btn" onclick={open("codex")} title="아이템 체인 도감">📖</button>
     <button class="gh-icon-btn" onclick={open("settings")} title="설정">⚙️</button>
   </div>

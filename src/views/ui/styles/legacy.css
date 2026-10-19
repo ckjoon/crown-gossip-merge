@@ -194,7 +194,7 @@ body {
   align-items: center;
   gap: 3px;
   flex: 1;
-  justify-content: center;
+  justify-content: flex-start;
   min-width: 0;
 }
 

@@ -245,7 +245,7 @@ function svgWrap(inner: string, bgGradId: string, c1: string, c2: string): strin
 
 // 레벨 장식: Lv.5+ 금빛 오라, Lv.7+ 반짝이는 별
 function sparkleStar(x: number, y: number, r: number): string {
-  return `<path data-sparkle d="M${x} ${y - r} Q${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y} Q${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r} Q${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y} Q${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r} Z" fill="#fffbeb" stroke="#f59e0b" stroke-width="0.6"/>`;
+  return `<path data-sparkle="1" d="M${x} ${y - r} Q${x + r * 0.18} ${y - r * 0.18} ${x + r} ${y} Q${x + r * 0.18} ${y + r * 0.18} ${x} ${y + r} Q${x - r * 0.18} ${y + r * 0.18} ${x - r} ${y} Q${x - r * 0.18} ${y - r * 0.18} ${x} ${y - r} Z" fill="#fffbeb" stroke="#f59e0b" stroke-width="0.6"/>`;
 }
 
 function decorate(svg: string, level: number): string {
@@ -253,7 +253,7 @@ function decorate(svg: string, level: number): string {
   if (level >= 5) {
     out = out.replace(
       "<!--AURA-->",
-      `<circle data-aura cx="32" cy="33" r="30" fill="url(#auraGlow)"/><circle cx="32" cy="33" r="29" fill="none" stroke="#fcd34d" stroke-width="1.2" stroke-dasharray="2.5 3" opacity="0.85"/>`
+      `<circle data-aura="1" cx="32" cy="33" r="30" fill="url(#auraGlow)"/><circle cx="32" cy="33" r="29" fill="none" stroke="#fcd34d" stroke-width="1.2" stroke-dasharray="2.5 3" opacity="0.85"/>`
     );
   }
   if (level >= 7) out = out.replace("<!--SPARKLE-->", sparkleStar(52, 10, 5) + sparkleStar(9, 20, 3.6) + (level >= 8 ? sparkleStar(55, 44, 3.2) : ""));

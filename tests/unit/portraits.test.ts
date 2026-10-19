@@ -24,3 +24,16 @@ test("캐릭터끼리 기본 표정이 서로 다름", () => {
   const all = PORTRAIT_IDS.map((id) => getPortraitSVG(id, "neutral"));
   expect(new Set(all).size).toBe(PORTRAIT_IDS.length);
 });
+
+test("모든 초상화는 XML로 올바름 (data URL 이미지로 그려짐)", () => {
+  const bad: string[] = [];
+  for (const id of Object.keys(CHARACTERS))
+    for (const ex of EXPRESSIONS) {
+      const body = getPortraitSVG(id, ex).replace(/<!--[\s\S]*?-->/g, "");
+      for (const m of body.matchAll(/<([a-zA-Z][^\s/>]*)([^>]*)>/g)) {
+        const rest = m[2].replace(/\s[a-zA-Z_:][-\w:.]*\s*=\s*("[^"]*"|'[^']*')/g, "").replace(/\/$/, "").trim();
+        if (rest) bad.push(`${id}/${ex}: <${m[1]}> ${rest}`);
+      }
+    }
+  expect(bad).toEqual([]);
+});

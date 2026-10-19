@@ -16,7 +16,7 @@ import { setDecorGlow } from "./decor";
 import { ZONE_MODULES, moduleIndexOf, moduleStates, panClamp, zoneBounds, fitZoom, type Bounds, type ModuleState } from "./modules";
 import { animateModuleAppear, animateModuleBuild, buildModules } from "./roomBuilder";
 import { ZONE_RESIDENT } from "./resident";
-import { CharacterActor, walkTargets, zoneGuests } from "./actor";
+import { CharacterActor, walkPath, walkTargets, zoneGuests } from "./actor";
 import { CharacterLibrary } from "./characters3d";
 
 const DEFAULT_CAM = new THREE.Vector3(10, 10.5, 10);
@@ -246,7 +246,10 @@ export class CastleView {
     for (const a of this.actors.filter((x) => !want.includes(x.id))) a.dispose();
     this.actors = this.actors.filter((x) => want.includes(x.id));
     const targets = walkTargets(this.zone, this.states);
-    for (const a of this.actors) a.setTargets(targets);
+    const zone = this.zone;
+    const states = [...this.states];
+    const pathOf = (f: [number, number], t: [number, number]) => walkPath(zone, states, f, t);
+    for (const a of this.actors) a.setTargets(targets, pathOf);
     const missing = want.filter((id) => !this.actors.some((a) => a.id === id));
     if (!missing.length) return;
     const token = ++this.actorToken;
@@ -259,7 +262,7 @@ export class CastleView {
         toonify(built.root);
         const at: [number, number] = id === resident ? [1.3, 1.3] : targets[(this.actors.length * 3 + 1) % Math.max(1, targets.length)] ?? [1.3, 1.3];
         const actor = new CharacterActor(id, built, at);
-        actor.setTargets(targets);
+        actor.setTargets(targets, pathOf);
         this.roomGroup.add(actor.group);
         this.actors.push(actor);
         gsap.from(actor.group.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.45, ease: "back.out(2)" });

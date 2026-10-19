@@ -129,7 +129,8 @@ function m(color: number, extra: Partial<THREE.MeshStandardMaterialParameters> =
 function mesh(geo: THREE.BufferGeometry, mat: THREE.Material, x = 0, y = 0, z = 0): THREE.Mesh {
   const o = new THREE.Mesh(geo, mat);
   o.position.set(x, y, z);
-  o.castShadow = true;
+  // 그림자 맵은 장면이 바뀔 때만 다시 그려지므로 움직이는 캐릭터는 그림자를 남기지 않는다 (발밑 원형 그림자로 대신)
+  o.castShadow = false;
   return o;
 }
 
@@ -396,7 +397,7 @@ export const CharacterLibrary = {
       const mesh = o as THREE.SkinnedMesh;
       if (!mesh.isMesh) return;
       mesh.userData.shared = true; // 기하는 원본 체형과 공유 — 해제하지 않는다
-      mesh.castShadow = true;
+      mesh.castShadow = false;
       mesh.userData.noOutline = true; // 스킨 메시는 뒤집힌 껍데기 외곽선이 따라오지 않는다
       const mat = mesh.material as THREE.MeshStandardMaterial;
       if (mat.map && (look.hue !== 0 || look.sat !== 1)) {

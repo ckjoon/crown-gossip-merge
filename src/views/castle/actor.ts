@@ -22,6 +22,42 @@ export function walkTargets(zone: ZoneKey, states: ModuleState[]): [number, numb
   return out;
 }
 
+// 두 점 사이 걷는 길: 같은 조각이면 바로, 다른 조각이면 조각 사이 문(맞닿은 변 가운데)을 차례로 거친다
+// 조각은 직사각형이라 조각 안 직선은 벽을 넘지 않고, 지어진 조각은 부모 관계로 이어진 나무라 길이 항상 있다
+export function walkPath(zone: ZoneKey, states: ModuleState[], from: [number, number], to: [number, number]): [number, number][] {
+  const defs = ZONE_MODULES[zone];
+  const owner = new Map<string, number>();
+  defs.forEach((d, i) => states[i] === "built" && moduleCells(d).forEach(([x, z]) => owner.set(`${x},${z}`, i)));
+  const at = ([x, z]: [number, number]) => owner.get(`${Math.round(x / CELL)},${Math.round(z / CELL)}`) ?? -1;
+  const a = at(from);
+  const b = at(to);
+  if (a === -1 || b === -1 || a === b) return [to];
+  // 나무에서 a → b 경로 (부모·자식 이웃)
+  const next = (i: number) => defs.map((d, j) => j).filter((j) => states[j] === "built" && (defs[j].parent === i || defs[i].parent === j));
+  const prev = new Map<number, number>([[a, a]]);
+  const queue = [a];
+  while (queue.length) {
+    const i = queue.shift()!;
+    for (const j of next(i)) if (!prev.has(j)) {
+      prev.set(j, i);
+      queue.push(j);
+    }
+  }
+  if (!prev.has(b)) return [to];
+  const chain = [b];
+  while (chain[0] !== a) chain.unshift(prev.get(chain[0])!);
+  const out: [number, number][] = [];
+  for (let k = 1; k < chain.length; k++) {
+    const ca = moduleCells(defs[chain[k - 1]]);
+    const cb = moduleCells(defs[chain[k]]);
+    let door: [number, number] | null = null;
+    for (const [x1, z1] of ca) for (const [x2, z2] of cb) if (!door && Math.abs(x1 - x2) + Math.abs(z1 - z2) === 1) door = [((x1 + x2) / 2) * CELL, ((z1 + z2) / 2) * CELL];
+    if (door) out.push(door);
+  }
+  out.push(to);
+  return out;
+}
+
 // 이 구역에서 복구한 장소의 대사에 나온 캐릭터 (가장 최근 장소부터, 주민 제외, 최대 2명)
 export function zoneGuests(zone: ZoneKey, rooms: Record<string, SpotState>, residentId: string): string[] {
   const out: string[] = [];
@@ -53,6 +89,8 @@ export class CharacterActor {
   private wait = 2 + Math.random() * 6;
   private target = new THREE.Vector3();
   private targets: [number, number][] = [];
+  private route: [number, number][] = [];
+  private pathOf: (from: [number, number], to: [number, number]) => [number, number][] = (_f, t) => [t];
   private t = Math.random() * 10;
   private current: THREE.AnimationAction | null = null;
   private actTimer = 0;
@@ -74,8 +112,15 @@ export class CharacterActor {
     this.play("Idle");
   }
 
-  setTargets(points: [number, number][]): void {
+  setTargets(points: [number, number][], pathOf?: (from: [number, number], to: [number, number]) => [number, number][]): void {
     this.targets = points;
+    if (pathOf) this.pathOf = pathOf;
+    this.route = [];
+    if (this.mode === "walk") {
+      this.mode = "idle";
+      this.wait = 1;
+      this.play("Idle");
+    }
   }
 
   private play(name: string, once = false): void {
@@ -132,7 +177,9 @@ export class CharacterActor {
       const here = this.group.position;
       const far = this.targets.filter(([x, z]) => Math.hypot(x - here.x, z - here.z) > 1.2);
       const pick = (far.length ? far : this.targets)[Math.floor(Math.random() * (far.length || this.targets.length))];
-      this.target.set(pick[0], 0, pick[1]);
+      this.route = this.pathOf([here.x, here.z], pick);
+      const first = this.route.shift()!;
+      this.target.set(first[0], 0, first[1]);
       this.mode = "walk";
       this.play("Walking_A");
       return;
@@ -143,6 +190,11 @@ export class CharacterActor {
     const dz = this.target.z - p.z;
     const d = Math.hypot(dx, dz);
     if (d < 0.05) {
+      const nxt = this.route.shift();
+      if (nxt) {
+        this.target.set(nxt[0], 0, nxt[1]);
+        return;
+      }
       this.mode = "idle";
       this.wait = 6 + Math.random() * 5;
       this.play("Idle");

@@ -46,3 +46,38 @@ test("탭 대사: 이미 본 이야기의 그 캐릭터 대사 중 하나, 없�
   expect(ROOMS.alchemy.spots[0].dialogues.map((d) => d.line)).toContain(line);
   expect(tapLine("oberon", rooms("alchemy", 0), () => 0).length).toBeGreaterThan(0);
 });
+
+// ---- 리뷰 반영 ----
+import * as THREE from "three";
+import { walkPath } from "../../src/views/castle/actor";
+import { ACC_BUILDERS, buildAnimal } from "../../src/views/castle/characters3d";
+
+test("걷는 경로는 문을 거쳐 지어진 조각 안으로만 지나감 (바깥 벽·빈 공간을 가로지르지 않음)", () => {
+  for (const zone of ZONES)
+    for (const n of [2, 3, 5]) {
+      const r = rooms(zone, n);
+      const states = moduleStates(zone, (id) => !!r[id]?.done);
+      const built = ZONE_MODULES[zone].flatMap((d, i) => (states[i] === "built" ? moduleCells(d) : []));
+      const inside = (x: number, z: number) => built.some(([cx, cz]) => Math.abs(x - cx * CELL) <= CELL / 2 + 0.01 && Math.abs(z - cz * CELL) <= CELL / 2 + 0.01);
+      const pts = walkTargets(zone, states);
+      for (const a of pts)
+        for (const b of pts) {
+          const path = [a, ...walkPath(zone, states, a, b)];
+          expect(path[path.length - 1]).toEqual(b);
+          for (let k = 1; k < path.length; k++)
+            for (let t = 0; t <= 1; t += 0.05) {
+              const x = path[k - 1][0] + (path[k][0] - path[k - 1][0]) * t;
+              const z = path[k - 1][1] + (path[k][1] - path[k - 1][1]) * t;
+              expect(inside(x, z), `${zone} n${n} ${a}→${b} @${x.toFixed(1)},${z.toFixed(1)}`).toBe(true);
+            }
+        }
+    }
+});
+
+test("캐릭터 메시는 그림자 맵에 그리지 않음 (그림자는 멈춰 있는 그림자 맵에 남으므로 발밑 원형 그림자만)", () => {
+  const meshes: THREE.Mesh[] = [];
+  for (const k of ["cat", "bird"] as const) buildAnimal(k).root.traverse((o) => (o as THREE.Mesh).isMesh && meshes.push(o as THREE.Mesh));
+  for (const f of Object.values(ACC_BUILDERS)) f().obj.traverse((o) => (o as THREE.Mesh).isMesh && meshes.push(o as THREE.Mesh));
+  expect(meshes.length).toBeGreaterThan(10);
+  for (const m of meshes) expect(m.castShadow).toBe(false);
+});

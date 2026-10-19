@@ -78,6 +78,8 @@ export function attachRewardDirector(store: Store, fx: FxLayer, sfx: SoundEngine
       ui.revealZone = z.revealKey;
       say("🗺️ 새 구역 공개", `${ROOMS[z.revealKey].shortName}이(가) 열렸어요! 성 지도에서 핀을 눌러 입장하세요.`);
       setTimeout(() => (ui.revealZone = null), 3000);
+    } else if (z.nextLockedLv !== null) {
+      say("🔒 다음 구역", `Lv.${z.nextLockedLv}에 도달하면 다음 구역이 열려요! 주문과 높은 단계 합성으로 경험치를 모으세요.`);
     } else {
       say("👑 마녀의 성 완전 복원", "모든 구역을 완성했어요! 셀레네의 성이 다시 빛나기 시작했어요.");
     }

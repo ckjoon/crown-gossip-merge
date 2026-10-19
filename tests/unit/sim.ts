@@ -14,7 +14,8 @@ import type { GameState } from "../../src/core/types";
 export interface ChapterLog {
   chapter: number;
   spotId: string;
-  energy: number; // 이 장을 복구한 순간까지 누적 번개
+  energy: number; // 이 장을 복구한 순간까지 누적 번개 (쓴 양)
+  net: number; // 쓴 번개 − 게임 안에서 얻은 번개(번개 조각·레벨업) = 자연 충전으로 채워야 하는 양
   level: number;
   lockedEnergy: number; // 이 장 직전 레벨 잠금으로 기다리며 쓴 번개
 }
@@ -22,6 +23,7 @@ export interface ChapterLog {
 export interface SimResult {
   chapters: ChapterLog[];
   energy: number;
+  income: number;
   steps: number;
   finished: boolean;
   state?: GameState;
@@ -41,6 +43,7 @@ export function simulate(seed = 7, maxEnergy = 80000): SimResult {
   const s: GameState = createInitialState(ctx);
   initCustomerOrders(s, ctx);
   let energy = 0;
+  let income = 0;
   let steps = 0;
   let lockedEnergy = 0;
   const chapters: ChapterLog[] = [];
@@ -51,12 +54,17 @@ export function simulate(seed = 7, maxEnergy = 80000): SimResult {
     steps++;
     // 번개는 무제한으로 두고 쓴 양만 센다
     if (s.energy < 50) s.energy = 1000;
+    const e0 = s.energy;
+    const gained = () => {
+      if (s.energy > e0) income += s.energy - e0;
+    };
 
     // 1. 주문 완료
     const w = computeWanted(s);
     const ready = w.status.findIndex((st) => st.allReady);
     if (ready !== -1) {
       serveOrder(s, ctx, { orderIdx: ready });
+      gained();
       continue;
     }
     // 2. 복구
@@ -65,16 +73,16 @@ export function simulate(seed = 7, maxEnergy = 80000): SimResult {
     const found = findSpot(zp.nextSpotId)!;
     if (zp.nextSpotLockedLv === null && s.coins >= getSpotCoinCost(found.zoneKey, found.spot.cost)) {
       renovate(s, ctx, { spotId: zp.nextSpotId, styleIdx: 0 });
-      chapters.push({ chapter: found.chapter, spotId: found.spot.id, energy, level: s.playerLv, lockedEnergy });
+      gained();
+      chapters.push({ chapter: found.chapter, spotId: found.spot.id, energy, net: energy - income, level: s.playerLv, lockedEnergy });
       lockedEnergy = 0;
       continue;
     }
     // 3. 수집 아이템(코인·번개)
     const col = s.board.findIndex((c) => c && c.state === "active" && !c.isGenerator && isCollectible(c.chain));
     if (col !== -1) {
-      const it = s.board[col]!;
       collectItem(s, ctx, { cell: col });
-      if (it.chain === "energy") energy -= 0; // 번개 조각은 s.energy에 더해지지만 무제한 모드라 계산에서 빼지 않음 (보수적)
+      gained(); // 번개 조각은 수입으로 센다
       continue;
     }
     // 3-1. 빈칸이 부족하면 코인으로 거미줄을 푼다 (🪙20)
@@ -93,6 +101,7 @@ export function simulate(seed = 7, maxEnergy = 80000): SimResult {
       if (!web || web.state !== "cobweb") continue;
       const j = s.board.findIndex((c, k) => k !== i && c && c.state === "active" && !c.isGenerator && c.chain === web.chain && c.level === web.level && !w.wantedUids.has(c.uid));
       if (j !== -1) merged = moveOrMerge(s, ctx, { from: j, to: i }).some((e) => e.type === "merged");
+      gained();
     }
     if (merged) continue;
     const seen = new Map<string, number>();
@@ -110,6 +119,7 @@ export function simulate(seed = 7, maxEnergy = 80000): SimResult {
         if (s.board[from]!.state === "active") {
           const ev = moveOrMerge(s, ctx, { from, to });
           merged = ev.some((e) => e.type === "merged");
+          gained();
         }
       } else seen.set(key, i);
     }
@@ -156,5 +166,5 @@ export function simulate(seed = 7, maxEnergy = 80000): SimResult {
     if (sell === -1) break;
     sellItem(s, ctx, { cell: sell });
   }
-  return { chapters, energy, steps, finished: !getZoneProgress(s).nextSpotId, state: s };
+  return { chapters, energy, income, steps, finished: !getZoneProgress(s).nextSpotId, state: s };
 }

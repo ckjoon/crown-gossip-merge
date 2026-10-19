@@ -41,7 +41,7 @@ export type GameEvent =
   | { type: "chainUnlocked"; chain: ExtraChain }
   | { type: "spotRestored"; spotId: string; zoneKey: ZoneKey; chapter: number; coinCost: number; styleIdx: number }
   | { type: "spotRestyled"; spotId: string; styleIdx: number }
-  | { type: "zoneCompleted"; zoneKey: ZoneKey; gems: number; revealKey: ZoneKey | null }
+  | { type: "zoneCompleted"; zoneKey: ZoneKey; gems: number; revealKey: ZoneKey | null; nextLockedLv: number | null }
   | { type: "zoneSelected"; zoneKey: ZoneKey }
   | { type: "holidaySpawned"; cell: number; level: number; free: boolean }
   | { type: "holidayMerged"; from: number; to: number; level: number }

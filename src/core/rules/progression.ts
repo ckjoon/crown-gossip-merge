@@ -10,7 +10,7 @@ export const ZONE_ORDER: ZoneKey[] = ["alchemy", "harbor", "garden", "banquet", 
 // 구역별 손님 주문 요구 레벨 상한
 export const ORDER_LEVEL_CAP: Record<ZoneKey, number> = { alchemy: 4, harbor: 5, garden: 6, banquet: 8, cellar: 8, tower: 8 };
 // 장소 복구 비용 = spot.cost × 구역 단가(🪙)
-export const ZONE_COIN_UNIT: Record<ZoneKey, number> = { alchemy: 800, harbor: 1400, garden: 2400, banquet: 3600, cellar: 5400, tower: 7600 };
+export const ZONE_COIN_UNIT: Record<ZoneKey, number> = { alchemy: 1000, harbor: 1400, garden: 2400, banquet: 3600, cellar: 5400, tower: 7600 };
 // 생성기 등급(★)별 한 번에 나오게 할 수 있는 최대 재료 레벨
 export const GENERATOR_TIER_CAP: Record<number, number> = { 1: 3, 2: 5, 3: 6 };
 // 배속별 추가 단계 (×2 = +1단계, ×4 = +2단계)
@@ -48,12 +48,16 @@ export function computeZoneProgress(rooms: Array<{ key: string; spots: Array<{ i
   let nextSpotLockedLv: number | null = null;
   let chapter = 0;
   let blocked = false; // 앞 구역이 레벨로 잠겨 그 뒤로는 새로 열리지 않음
+  // 이야기 순서상 뒤 구역을 이미 진행한 세이브(v2)는 앞 구역을 레벨로 잠그지 않는다
+  const laterDone = rooms.map((_, i) => rooms.slice(i + 1).some((r) => r.spots.some((sp) => sp.done)));
+  let ri = -1;
 
   for (const room of rooms) {
     const key = room.key as ZoneKey;
     const allDone = room.spots.length > 0 && room.spots.every((s) => s.done);
     const anyDone = room.spots.some((s) => s.done);
-    const lvOk = anyDone || playerLv >= (ZONE_REQUIRED_LEVEL[key] ?? 1);
+    ri++;
+    const lvOk = anyDone || laterDone[ri] || playerLv >= (ZONE_REQUIRED_LEVEL[key] ?? 1);
     for (const s of room.spots) {
       chapter++;
       chapterById[s.id] = chapter;

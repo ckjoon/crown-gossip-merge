@@ -207,3 +207,30 @@ describe("버그 수정: 해금 생성기 유실·만들 수 없는 주문", () 
     for (let i = 0; i < 500; i++) for (const r of rollOrderReqs("garden", unlockedChains(10), rng)) expect(r.level).toBeGreaterThanOrEqual(2);
   });
 });
+
+describe("리뷰 반영", () => {
+  test("다음 구역이 레벨로 잠긴 채 구역을 완성하면 zoneCompleted에 필요 레벨이 실림 (완결 아님)", () => {
+    ROOMS.alchemy.spots.slice(0, 4).forEach((sp) => (s.rooms[sp.id] = { done: true, styleIdx: 0 }));
+    s.playerLv = 2;
+    s.coins = 99999;
+    const ev = renovate(s, fixedCtx(), { spotId: ROOMS.alchemy.spots[4].id, styleIdx: 0 });
+    expect(ev.find((e) => e.type === "zoneCompleted")).toMatchObject({ revealKey: null, nextLockedLv: 6 });
+  });
+  test("보드가 꽉 차 있어도 해금된 새 체인 생성기는 불러올 때 보관함으로 지급", () => {
+    s.board = s.board.map(() => item("tea", 1));
+    s.playerLv = 12;
+    ensureGenerators(s);
+    const all = [...s.board, ...s.bag];
+    expect(all.some((c) => c?.isGenerator && c.chain === "candle")).toBe(true);
+    expect(all.some((c) => c?.isGenerator && c.chain === "silk")).toBe(true);
+  });
+  test("이야기 순서상 뒤 구역을 이미 진행한 v2 세이브는 앞 구역이 레벨로 잠기지 않음", () => {
+    finishZone("alchemy");
+    s.rooms[ROOMS.garden.spots[0].id] = { done: true, styleIdx: 0 };
+    s.playerLv = 4;
+    const zp = getZoneProgress(s);
+    expect(zp.accessibleKeys).toEqual(["alchemy", "harbor", "garden"]);
+    expect(zp.nextSpotId).toBe(ROOMS.harbor.spots[0].id);
+    expect(zp.nextSpotLockedLv).toBeNull();
+  });
+});

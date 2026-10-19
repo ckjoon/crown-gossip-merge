@@ -6,7 +6,7 @@ import { initCustomerOrders, createOrder, getZoneProgress } from "../../core/act
 import { initHolidayBoard } from "../../core/actions/holiday";
 import { createInitialState } from "../../core/state";
 import { CHAINS } from "../../core/rules/chains";
-import { BAG_MAX, unlockedChains } from "../../core/rules/levels";
+import { BAG_MAX, isExtraChain, unlockedChains } from "../../core/rules/levels";
 import { ALL_SPOTS_IN_ORDER } from "../../core/rules/rooms";
 import { sanitizeBoost, ZONE_ORDER } from "../../core/rules/progression";
 import { getHolidayConfig } from "../../core/rules/holidays";
@@ -65,8 +65,11 @@ export function ensureGenerators(s: GameState): void {
   for (const chain of unlockedChains(s.playerLv)) {
     const owned = [...s.board, ...s.bag].some((it) => it && it.isGenerator && it.chain === chain);
     if (owned) continue;
+    const gen = { uid: newUid(s), state: "active" as const, isGenerator: true, chain, level: 1 };
     const empty = s.board.findIndex((it) => it === null);
-    if (empty !== -1) s.board[empty] = { uid: newUid(s), state: "active", isGenerator: true, chain, level: 1 };
+    if (empty !== -1) s.board[empty] = gen;
+    // 레벨로 해금된 체인은 생성기가 없으면 주문을 만들 수 없으므로 보드가 꽉 차도 보관함에 넣는다
+    else if (isExtraChain(chain) && s.bag.length < BAG_MAX) s.bag.push(gen);
   }
 }
 

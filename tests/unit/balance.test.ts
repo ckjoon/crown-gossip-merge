@@ -3,7 +3,8 @@ import { simulate } from "./sim";
 import { ROOMS } from "../../src/core/rules/rooms";
 import { ZONE_ORDER } from "../../src/core/rules/progression";
 
-// 효율 좋은 봇 기준 (사람은 더 오래 걸림). 번개 자연 충전 = 하루 288개
+// 효율 좋은 봇 기준 (사람은 배속 낭비·덜 효율적인 합성·충전 상한 낭비로 더 오래 걸림). 번개 자연 충전 = 하루 288개
+// net = 쓴 번개 − 게임 안에서 얻은 번개(번개 조각·레벨업) = 자연 충전으로 채워야 하는 양
 const DAY = 288;
 
 describe("밸런스 시뮬레이션 (실제 액션만 쓰는 봇, 시드 3개)", () => {
@@ -13,11 +14,11 @@ describe("밸런스 시뮬레이션 (실제 액션만 쓰는 봇, 시드 3개)",
     for (const r of runs) expect(r.finished).toBe(true);
   });
 
-  test("공방 완료까지 번개 ≥ 600 (2일 이상), 전체는 ≥ 12,000 (40일 이상)", () => {
+  test("공방 완료까지 자연 충전 2일분 이상(net ≥ 576), 전체는 33일분 이상(net ≥ 9,500)", () => {
     for (const r of runs) {
       const alc = r.chapters.find((c) => c.spotId === ROOMS.alchemy.spots[4].id)!;
-      expect(alc.energy).toBeGreaterThanOrEqual(600);
-      expect(r.energy).toBeGreaterThanOrEqual(12000);
+      expect(alc.net).toBeGreaterThanOrEqual(DAY * 2);
+      expect(r.energy - r.income).toBeGreaterThanOrEqual(9500);
     }
   });
 

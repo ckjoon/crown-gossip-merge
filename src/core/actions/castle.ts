@@ -46,7 +46,7 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
   if (after.completedKeys.includes(found.zoneKey) && !before.completedKeys.includes(found.zoneKey)) {
     grant(s, ev, "gems", GEM_REWARDS.zoneComplete, "zoneComplete");
     const revealKey = after.currentZoneKey !== found.zoneKey ? after.currentZoneKey : null;
-    ev.push({ type: "zoneCompleted", zoneKey: found.zoneKey, gems: GEM_REWARDS.zoneComplete, revealKey });
+    ev.push({ type: "zoneCompleted", zoneKey: found.zoneKey, gems: GEM_REWARDS.zoneComplete, revealKey, nextLockedLv: after.nextSpotLockedLv });
   }
   return ev;
 };

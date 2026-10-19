@@ -68,7 +68,7 @@ export function storyNext(): void {
   app().sfx.tap();
   // 다음 이야기 구역이 레벨로 잠겨 있으면 필요 레벨만 알려 준다
   if (zp.nextSpotLockedLv !== null) {
-    say(ROOMS[f.zoneKey].shortName, `🔒 Lv.${zp.nextSpotLockedLv}이 되면 이 구역이 열려요! 주문을 완료하고 높은 단계를 합성해 경험치를 모으세요.`);
+    say(ROOMS[f.zoneKey].shortName, `🔒 Lv.${zp.nextSpotLockedLv}에 도달하면 이 구역이 열려요! 주문을 완료하고 높은 단계를 합성해 경험치를 모으세요.`);
     return;
   }
   if (ui.screen !== "castle") ui.screen = "castle";

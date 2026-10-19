@@ -1,5 +1,7 @@
 // progression.ts — 구역 진행·주문 상한·생성기 배출·배속 부스트·재화 환산 같은 순수 게임 규칙 모음 (v2.5 progression.js 이전)
 
+import { ZONE_REQUIRED_LEVEL } from "./levels";
+
 export type ZoneKey = "alchemy" | "harbor" | "garden" | "banquet";
 export type Boost = 1 | 2 | 4;
 
@@ -30,40 +32,50 @@ export interface ZoneProgress {
   accessibleKeys: ZoneKey[];
   completedKeys: ZoneKey[];
   nextSpotId: string | null;
+  nextSpotLockedLv: number | null; // 다음 이야기 장소의 구역이 레벨로 잠겨 있으면 필요 레벨
   chapterById: Record<string, number>;
   totalChapters: number;
 }
 
-// rooms: [{ key, spots: [{ id, done }] }] (ZONE_ORDER 순서)
-export function computeZoneProgress(rooms: Array<{ key: string; spots: Array<{ id: string; done: boolean }> }>): ZoneProgress {
+// rooms: [{ key, spots: [{ id, done }] }] (ZONE_ORDER 순서). playerLv가 구역 입장 레벨(levels.ts)에 못 미치면
+// 아직 손대지 않은 그 구역은 잠긴다 (이미 진행한 구역은 레벨과 상관없이 열림 — 세이브 호환)
+export function computeZoneProgress(rooms: Array<{ key: string; spots: Array<{ id: string; done: boolean }> }>, playerLv = Infinity): ZoneProgress {
   const completedKeys: ZoneKey[] = [];
   const accessibleKeys: ZoneKey[] = [];
   const chapterById: Record<string, number> = {};
   let currentZoneKey: ZoneKey | null = null;
   let nextSpotId: string | null = null;
+  let nextSpotLockedLv: number | null = null;
   let chapter = 0;
+  let blocked = false; // 앞 구역이 레벨로 잠겨 그 뒤로는 새로 열리지 않음
 
   for (const room of rooms) {
     const key = room.key as ZoneKey;
     const allDone = room.spots.length > 0 && room.spots.every((s) => s.done);
     const anyDone = room.spots.some((s) => s.done);
+    const lvOk = anyDone || playerLv >= (ZONE_REQUIRED_LEVEL[key] ?? 1);
     for (const s of room.spots) {
       chapter++;
       chapterById[s.id] = chapter;
-      if (!s.done && nextSpotId === null) nextSpotId = s.id;
+      if (!s.done && nextSpotId === null) {
+        nextSpotId = s.id;
+        if (!lvOk) nextSpotLockedLv = ZONE_REQUIRED_LEVEL[key];
+      }
     }
     if (allDone) completedKeys.push(key);
-    if (!allDone && currentZoneKey === null) currentZoneKey = key;
+    if (!lvOk && !allDone) blocked = true;
+    if (!allDone && currentZoneKey === null && !blocked) currentZoneKey = key;
     // 현재 구역까지는 모두 입장 가능, 그 뒤는 이미 진행한 장소가 있는 구역만 (v2.4.0 세이브 호환)
-    if (currentZoneKey === null || currentZoneKey === key || anyDone) {
+    if (anyDone || (!blocked && (currentZoneKey === null || currentZoneKey === key))) {
       accessibleKeys.push(key);
     }
   }
 
   if (currentZoneKey === null) {
-    currentZoneKey = rooms.length > 0 ? (rooms[rooms.length - 1].key as ZoneKey) : ZONE_ORDER[0];
+    // 모두 완성했거나 다음 구역이 레벨로 잠김 → 마지막으로 입장 가능한 구역
+    currentZoneKey = accessibleKeys.length > 0 ? accessibleKeys[accessibleKeys.length - 1] : ZONE_ORDER[0];
   }
-  return { currentZoneKey, accessibleKeys, completedKeys, nextSpotId, chapterById, totalChapters: chapter };
+  return { currentZoneKey, accessibleKeys, completedKeys, nextSpotId, nextSpotLockedLv, chapterById, totalChapters: chapter };
 }
 
 export function getNextZoneKey(zoneKey: ZoneKey): ZoneKey | null {

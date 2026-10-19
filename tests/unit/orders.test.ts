@@ -12,7 +12,8 @@ beforeEach(() => {
 });
 
 describe("주문 생성", () => {
-  test("공방에서는 최대 Lv.4, 공방 완성 뒤에는 최대 Lv.5 + 하버 손님", () => {
+  test("공방에서는 최대 Lv.4, 공방 완성 뒤(하버 입장 레벨)에는 최대 Lv.5 + 하버 손님", () => {
+    s.playerLv = 4;
     const ctx = createCtx();
     let max = 0;
     for (let i = 0; i < 200; i++) for (const r of createOrder(s, ctx, i % 3).reqs) max = Math.max(max, r.level);
@@ -56,7 +57,7 @@ describe("주문 완료·구매", () => {
     expect(ev.find((e) => e.type === "orderServed")).toMatchObject({ orderIdx: 0, cells: [3, 9], coins, bonusCell: null });
     expect(s.board[3]).toBeNull();
     expect(s.coins).toBe(350 + coins);
-    expect(s.xp).toBe(25);
+    expect(s.xp).toBe(5 + 3 * (2 + 1)); // orderXP: 5 + 3×요구 레벨 합
     expect(s.orders[0].reqs).not.toEqual([{ chain: "tea", level: 2 }, { chain: "herb", level: 1 }]);
   });
   test("재료가 부족하면 아무 일도 없음, 8% 미만이면 번개 조각", () => {

@@ -13,7 +13,7 @@
       shown = e;
       app().sfx.reward();
       if (timer) clearTimeout(timer);
-      timer = setTimeout(() => (shown = null), 3600);
+      timer = setTimeout(() => (shown = null), e.unlocks.length ? 5200 : 3600);
     })
   );
 </script>
@@ -23,7 +23,8 @@
     <div class="lv-banner-icon">👑</div>
     <div class="lv-banner-text">
       <strong>👑 연금술사 레벨 업! Lv.{shown.level} 달성!</strong>
-      <span>보상: +{shown.coins}🪙 · +{shown.energy}⚡ · +💎{shown.gems} · [{getGeneratorTierMeta(shown.genChain, 1).name} ★] 진화 파츠 지급!</span>
+      <span>보상: +{shown.coins}🪙 · +{shown.energy}⚡ · +💎{shown.gems}{#if shown.genChain} · [{getGeneratorTierMeta(shown.genChain, 1).name} ★] 진화 파츠{/if}</span>
+      {#if shown.unlocks.length}<span class="lv-banner-unlock">🔓 {shown.unlocks.join(" · ")}</span>{/if}
     </div>
   </div>
 {/if}

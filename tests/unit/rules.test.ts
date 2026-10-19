@@ -28,8 +28,8 @@ describe("체인 데이터", () => {
     expect(formatGeneratorStars(2)).toBe("★★☆");
   });
   test("XP 요구량과 구역별 생성기", () => {
-    expect(getRequiredXP(1)).toBe(50);
-    expect(getRequiredXP(3)).toBe(90);
+    expect(getRequiredXP(1)).toBe(80);
+    expect(getRequiredXP(3)).toBe(184);
     expect(CORE_CHAINS).toEqual(["potion", "grimoire", "herb", "bakery", "tea"]);
     expect(getGeneratorChainForTheme("harbor")).toBe("bakery");
   });

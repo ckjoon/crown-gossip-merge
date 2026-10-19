@@ -71,6 +71,7 @@ const REJECT_TEXT: Record<RejectReason, string> = {
   notEnoughCoins: "🪙 코인이 부족해요!",
   notEnoughGems: "💎 보석이 부족해요",
   locked: "🔒 이전 구역의 이야기를 모두 진행해야 열려요!",
+  levelLocked: "🔒 레벨이 더 높아야 다음 구역에 들어갈 수 있어요!",
   cannotMerge: "🕸️ 같은 재료를 드래그해야 합쳐집니다!",
   crateLocked: "📦 봉인 상자는 주변 거미줄 타일을 합치면 열립니다!",
   noCobweb: "해제할 거미줄 타일이 없습니다!",

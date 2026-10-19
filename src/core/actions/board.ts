@@ -6,7 +6,8 @@ import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
 import { CHAINS, getItemMeta } from "../rules/chains";
 import { getGeneratorTierCap, resolveBoost, rollBaseSpawn } from "../rules/progression";
-import { BAG_SIZE, COLS, ROWS, TOTAL_CELLS, type BoardItem, type GameState } from "../types";
+import { GEN_EVOLVE_XP, bagSize, mergeXP } from "../rules/levels";
+import { COLS, ROWS, TOTAL_CELLS, type BoardItem, type GameState } from "../types";
 import { gainXP } from "./progress";
 
 const UNLOCK_COBWEB_COST = 20;
@@ -88,7 +89,7 @@ export const moveOrMerge: Action<{ from: number; to: number }> = (s, ctx, { from
     s.board[from] = null;
     s.board[to] = item;
     ev.push({ type: "merged", from, to, item: { ...item }, wasCobweb: false, generatorEvolved: true });
-    gainXP(s, ev, 25);
+    gainXP(s, ev, GEN_EVOLVE_XP);
     return ev;
   }
 
@@ -112,7 +113,7 @@ export const moveOrMerge: Action<{ from: number; to: number }> = (s, ctx, { from
         ev.push({ type: "bonusDropped", cell, item: { ...bonus } });
       }
     }
-    gainXP(s, ev, 5);
+    gainXP(s, ev, mergeXP(item.level));
     return ev;
   }
 
@@ -171,7 +172,7 @@ export const sortBoard: Action<void> = (s) => {
 export const storeToBag: Action<{ cell: number }> = (s, _ctx, { cell }) => {
   const it = s.board[cell];
   if (!it || it.state !== "active") return [];
-  if (s.bag.length >= BAG_SIZE) return [rejected("bagFull", cell)];
+  if (s.bag.length >= bagSize(s.playerLv)) return [rejected("bagFull", cell)];
   s.bag.push(it);
   s.board[cell] = null;
   return [{ type: "bagStored", from: cell }];

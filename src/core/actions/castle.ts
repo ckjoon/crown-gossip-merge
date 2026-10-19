@@ -7,6 +7,7 @@ import { getGeneratorChainForTheme } from "../rules/chains";
 import { findSpot } from "../rules/rooms";
 import { GEM_REWARDS, getSpotCoinCost } from "../rules/progression";
 import type { ZoneKey } from "../types";
+import { RESTORE_XP } from "../rules/levels";
 import { getZoneProgress } from "./orders";
 import { gainXP, grantGeneratorPart } from "./progress";
 
@@ -29,6 +30,7 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
 
   const before = getZoneProgress(s);
   if (before.nextSpotId !== spotId) return [rejected("notNextChapter")];
+  if (before.nextSpotLockedLv !== null) return [rejected("levelLocked")];
   const coinCost = getSpotCoinCost(found.zoneKey, found.spot.cost);
   const ev: GameEvent[] = [];
   if (!spend(s, ev, "coins", coinCost, "renovate")) return [rejected("notEnoughCoins")];
@@ -36,7 +38,7 @@ export const renovate: Action<{ spotId: string; styleIdx: number }> = (s, _ctx, 
   room.done = true;
   room.styleIdx = styleIdx;
   ev.push({ type: "spotRestored", spotId, zoneKey: found.zoneKey, chapter: found.chapter, coinCost, styleIdx });
-  gainXP(s, ev, 35);
+  gainXP(s, ev, RESTORE_XP);
   grantGeneratorPart(s, ev, getGeneratorChainForTheme(found.zoneKey));
 
   // 이 복구로 구역이 완성되면 💎 보상 (같은 저장에 포함되도록 즉시 지급)

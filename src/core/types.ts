@@ -4,7 +4,10 @@ import type { Boost, ZoneKey } from "./rules/progression";
 
 export type { Boost, ZoneKey };
 export type CoreChain = "potion" | "grimoire" | "herb" | "bakery" | "tea";
-export type ChainId = CoreChain | "gem" | "combo" | "coin" | "energy";
+// v3.5 레벨로 해금되는 생성 체인
+export type ExtraChain = "candle" | "silk";
+export type GenChain = CoreChain | ExtraChain;
+export type ChainId = CoreChain | ExtraChain | "gem" | "combo" | "coin" | "energy";
 export type CellState = "active" | "crate" | "cobweb";
 
 export interface BoardItem {
@@ -84,5 +87,4 @@ export const ROWS = 8;
 export const TOTAL_CELLS = COLS * ROWS;
 export const NATURAL_ENERGY_CAP = 100;
 export const ENERGY_REGEN_SEC = 300;
-export const BAG_SIZE = 6;
 export const EVENT_CELLS = 25;

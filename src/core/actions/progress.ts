@@ -4,18 +4,18 @@ import { newUid } from "../ctx";
 import { grant, spend } from "../economy";
 import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
-import { CORE_CHAINS, getRequiredXP } from "../rules/chains";
-import { GEM_REWARDS, GEM_SHOP_ENERGY, nextBoost } from "../rules/progression";
-import { BAG_SIZE, ENERGY_REGEN_SEC, NATURAL_ENERGY_CAP, type CoreChain, type GameState, type Settings } from "../types";
+import { GEM_SHOP_ENERGY, nextBoost } from "../rules/progression";
+import { CHAIN_UNLOCK_LEVEL, bagSize, levelUpReward, unlockedChains, unlocksAt, xpToNext } from "../rules/levels";
+import { ENERGY_REGEN_SEC, NATURAL_ENERGY_CAP, type ExtraChain, type GameState, type GenChain, type Settings } from "../types";
 import { findNearestEmptyCell } from "./board";
 
-export function grantGeneratorPart(s: GameState, ev: GameEvent[], chain: CoreChain): void {
+export function grantGeneratorPart(s: GameState, ev: GameEvent[], chain: GenChain): void {
   const part = { uid: newUid(s), state: "active" as const, isGenerator: true, chain, level: 1 };
   const cell = findNearestEmptyCell(s, 24, () => 0);
   if (cell !== -1) {
     s.board[cell] = part;
     ev.push({ type: "generatorPartGranted", chain, where: "board", cell });
-  } else if (s.bag.length < BAG_SIZE) {
+  } else if (s.bag.length < bagSize(s.playerLv)) {
     s.bag.push(part);
     ev.push({ type: "generatorPartGranted", chain, where: "bag", cell: null });
   } else {
@@ -23,21 +23,26 @@ export function grantGeneratorPart(s: GameState, ev: GameEvent[], chain: CoreCha
   }
 }
 
-// 레벨업 보상: 코인 40×레벨, 번개 +10, 💎3, 생성기 진화 파츠(체인 순환)
+// 레벨업 보상(levels.ts): 코인 25×레벨, 번개 +5, 💎3, 짝수 레벨에 생성기 파츠(해금 체인 순환)
+// 새 체인 해금 레벨에 닿으면 그 체인 ★1 생성기를 준다
 export function gainXP(s: GameState, ev: GameEvent[], amount: number): void {
   s.xp += amount;
-  while (s.xp >= getRequiredXP(s.playerLv)) {
-    s.xp -= getRequiredXP(s.playerLv);
+  while (s.xp >= xpToNext(s.playerLv)) {
+    s.xp -= xpToNext(s.playerLv);
     s.playerLv += 1;
-    const coins = 40 * s.playerLv;
-    const energy = 10;
-    const gems = GEM_REWARDS.levelUp;
-    const genChain = CORE_CHAINS[(s.playerLv - 2) % CORE_CHAINS.length];
-    grant(s, ev, "coins", coins, "levelUp");
-    grant(s, ev, "energy", energy, "levelUp");
-    grant(s, ev, "gems", gems, "levelUp");
-    ev.push({ type: "levelUp", level: s.playerLv, coins, energy, gems, genChain });
-    grantGeneratorPart(s, ev, genChain);
+    const r = levelUpReward(s.playerLv);
+    const pool = unlockedChains(s.playerLv);
+    const genChain = r.genPart ? pool[(s.playerLv / 2 - 1) % pool.length] : null;
+    grant(s, ev, "coins", r.coins, "levelUp");
+    grant(s, ev, "energy", r.energy, "levelUp");
+    grant(s, ev, "gems", r.gems, "levelUp");
+    ev.push({ type: "levelUp", level: s.playerLv, coins: r.coins, energy: r.energy, gems: r.gems, genChain, unlocks: unlocksAt(s.playerLv) });
+    if (genChain) grantGeneratorPart(s, ev, genChain);
+    for (const c of Object.keys(CHAIN_UNLOCK_LEVEL) as ExtraChain[]) {
+      if (CHAIN_UNLOCK_LEVEL[c] !== s.playerLv) continue;
+      ev.push({ type: "chainUnlocked", chain: c });
+      grantGeneratorPart(s, ev, c);
+    }
   }
 }
 

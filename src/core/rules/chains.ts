@@ -456,6 +456,144 @@ export const CHAINS: Record<ChainId, ChainDef> =
       }
     ]
   },
+  candle: {
+    id: "candle",
+    name: "마법 촛불 체인",
+    shortGen: "🕯️촛대",
+    css: "chain-candle",
+    generator: {
+      name: "마법 촛대 제단",
+      desc: "[Lv.6 해금] 탭하면 촛불 재료를 생성합니다(⚡). 같은 촛대끼리 합성하면 등급이 올라갑니다!",
+      tiers: [
+        {
+          level: 1,
+          name: "수습 촛대 제단",
+          desc: "[★ 기본] 촛불 재료(Lv.1~2)를 생성합니다. 배속을 써도 최대 Lv.3까지 나와요."
+        },
+        {
+          level: 2,
+          name: "은빛 촛대 제단",
+          desc: "[★★ 진화] 촛불(Lv.2~3)을 생성합니다. 배속을 쓰면 최대 Lv.5까지 바로 나와요!"
+        },
+        {
+          level: 3,
+          name: "영원의 성화대",
+          desc: "[★★★ 신화] 상급 촛불(Lv.2~4)을 생성합니다. 배속을 쓰면 최대 Lv.6까지 바로 나와요!"
+        }
+      ]
+    },
+    items: [
+      {
+        level: 1,
+        name: "양초 토막",
+        sell: 2
+      },
+      {
+        level: 2,
+        name: "밀랍 양초",
+        sell: 5
+      },
+      {
+        level: 3,
+        name: "달빛 향초",
+        sell: 12
+      },
+      {
+        level: 4,
+        name: "별꽃 랜턴",
+        sell: 28
+      },
+      {
+        level: 5,
+        name: "수정 촛대",
+        sell: 65
+      },
+      {
+        level: 6,
+        name: "불사조 횃불",
+        sell: 150
+      },
+      {
+        level: 7,
+        name: "성운 샹들리에",
+        sell: 340
+      },
+      {
+        level: 8,
+        name: "영원의 성화",
+        sell: 780
+      }
+    ]
+  },
+  silk: {
+    id: "silk",
+    name: "요정 비단 체인",
+    shortGen: "🧵물레",
+    css: "chain-silk",
+    generator: {
+      name: "요정 물레",
+      desc: "[Lv.12 해금] 탭하면 비단 재료를 생성합니다(⚡). 같은 물레끼리 합성하면 등급이 올라갑니다!",
+      tiers: [
+        {
+          level: 1,
+          name: "수습 요정 물레",
+          desc: "[★ 기본] 비단 재료(Lv.1~2)를 생성합니다. 배속을 써도 최대 Lv.3까지 나와요."
+        },
+        {
+          level: 2,
+          name: "은사 베틀",
+          desc: "[★★ 진화] 비단(Lv.2~3)을 생성합니다. 배속을 쓰면 최대 Lv.5까지 바로 나와요!"
+        },
+        {
+          level: 3,
+          name: "별자리 직조기",
+          desc: "[★★★ 신화] 상급 비단(Lv.2~4)을 생성합니다. 배속을 쓰면 최대 Lv.6까지 바로 나와요!"
+        }
+      ]
+    },
+    items: [
+      {
+        level: 1,
+        name: "요정 실타래",
+        sell: 2
+      },
+      {
+        level: 2,
+        name: "무지개 실뭉치",
+        sell: 5
+      },
+      {
+        level: 3,
+        name: "레이스 리본",
+        sell: 12
+      },
+      {
+        level: 4,
+        name: "비단 손수건",
+        sell: 28
+      },
+      {
+        level: 5,
+        name: "달빛 망토",
+        sell: 65
+      },
+      {
+        level: 6,
+        name: "요정 날개 드레스",
+        sell: 150
+      },
+      {
+        level: 7,
+        name: "마법 양탄자",
+        sell: 340
+      },
+      {
+        level: 8,
+        name: "별자리 태피스트리",
+        sell: 780
+      }
+    ]
+  },
   coin: {
     id: "coin",
     name: "황금 금화 체인",
@@ -547,9 +685,8 @@ export function formatGeneratorStars(lv: number): string {
   return "★".repeat(t) + "☆".repeat(3 - t);
 }
 
-export function getRequiredXP(lv: number): number {
-  return 50 + (lv - 1) * 20;
-}
+// 레벨 곡선은 levels.ts (v3.5)
+export { xpToNext as getRequiredXP } from "./levels";
 
 const THEME_GENERATOR: Record<ZoneKey, CoreChain> = { alchemy: "potion", harbor: "bakery", garden: "herb", banquet: "grimoire" };
 

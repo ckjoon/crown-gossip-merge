@@ -6,11 +6,11 @@ import { initCustomerOrders, createOrder, getZoneProgress } from "../../core/act
 import { initHolidayBoard } from "../../core/actions/holiday";
 import { createInitialState } from "../../core/state";
 import { CHAINS, CORE_CHAINS } from "../../core/rules/chains";
+import { BAG_MAX } from "../../core/rules/levels";
 import { ALL_SPOTS_IN_ORDER } from "../../core/rules/rooms";
 import { sanitizeBoost, ZONE_ORDER } from "../../core/rules/progression";
 import { getHolidayConfig } from "../../core/rules/holidays";
 import {
-  BAG_SIZE,
   ENERGY_REGEN_SEC,
   EVENT_CELLS,
   NATURAL_ENERGY_CAP,
@@ -102,7 +102,7 @@ export function restoreBag(s: GameState, raw: unknown, now: number): void {
     .map((c, i) => restoreBoardItem(c, `bag_${i}_${now}`))
     .filter((c): c is BoardItem => !!c)
     .map((c) => ({ ...c, state: "active" as const }))
-    .slice(0, BAG_SIZE);
+    .slice(0, BAG_MAX); // 레벨별 보관함 크기 이하로 줄이지 않는다 (아이템 보존)
 }
 
 // 주문 3개가 모두 유효하면 복원 (v2의 stars 필드는 버림), 아니면 기본 주문 유지

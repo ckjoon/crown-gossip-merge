@@ -4,17 +4,18 @@ import { newUid, type Ctx } from "../ctx";
 import { grant, spend } from "../economy";
 import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
-import { CORE_CHAINS } from "../rules/chains";
 import { CUSTOMERS_BY_ZONE } from "../rules/customers";
 import { ROOMS } from "../rules/rooms";
 import { computeZoneProgress, getItemGemPrice, rollOrderReqs, ZONE_ORDER, type ZoneProgress } from "../rules/progression";
-import { BAG_SIZE, type BoardItem, type GameState, type Order, type OrderReq, type ZoneKey } from "../types";
+import { bagSize, orderXP, unlockedChains } from "../rules/levels";
+import { type BoardItem, type GameState, type Order, type OrderReq, type ZoneKey } from "../types";
 import { findNearestEmptyCell } from "./board";
 import { gainXP } from "./progress";
 
 export function getZoneProgress(s: GameState): ZoneProgress {
   return computeZoneProgress(
-    ZONE_ORDER.map((key) => ({ key, spots: ROOMS[key].spots.map((sp) => ({ id: sp.id, done: !!s.rooms[sp.id]?.done })) }))
+    ZONE_ORDER.map((key) => ({ key, spots: ROOMS[key].spots.map((sp) => ({ id: sp.id, done: !!s.rooms[sp.id]?.done })) })),
+    s.playerLv,
   );
 }
 
@@ -26,7 +27,7 @@ export function createOrder(s: GameState, ctx: Ctx, slotIdx: number, customReqs?
   const zoneKey = getCurrentZoneKey(s);
   const list = CUSTOMERS_BY_ZONE[zoneKey] ?? CUSTOMERS_BY_ZONE.alchemy;
   const cust = list[(s.playerLv + slotIdx) % list.length];
-  const reqs: OrderReq[] = customReqs ?? rollOrderReqs(zoneKey, CORE_CHAINS, ctx.rng);
+  const reqs: OrderReq[] = customReqs ?? rollOrderReqs(zoneKey, unlockedChains(s.playerLv), ctx.rng);
   const coins = reqs.reduce((sum, r) => sum + Math.pow(2, r.level) * 9, 0) + 20;
   return { id: newUid(s), customer: { ...cust }, reqs: reqs.map((r) => ({ ...r })), coins };
 }
@@ -76,7 +77,7 @@ export const serveOrder: Action<{ orderIdx: number }> = (s, ctx, { orderIdx }) =
   const ev: GameEvent[] = [];
   for (const c of st.matchedCells) s.board[c] = null;
   grant(s, ev, "coins", ord.coins, "orderServed");
-  gainXP(s, ev, 25);
+  gainXP(s, ev, orderXP(ord.reqs));
   // 주문 완료 시 번개 조각은 8% 확률로만
   let bonusCell: number | null = null;
   if (ctx.rng() < 0.08) {
@@ -98,7 +99,7 @@ export const buyOrderRequirement: Action<{ orderIdx: number; reqIdx: number }> =
   const price = getItemGemPrice(req.level);
   if (s.gems < price) return [rejected("notEnoughGems")];
   const cell = findNearestEmptyCell(s, null, ctx.rng);
-  if (cell === -1 && s.bag.length >= BAG_SIZE) return [rejected("boardFull")];
+  if (cell === -1 && s.bag.length >= bagSize(s.playerLv)) return [rejected("boardFull")];
   const ev: GameEvent[] = [];
   spend(s, ev, "gems", price, "buyOrderItem");
   const it: BoardItem = { uid: newUid(s), state: "active", isGenerator: false, chain: req.chain, level: req.level };

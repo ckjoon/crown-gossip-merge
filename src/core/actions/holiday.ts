@@ -6,7 +6,8 @@ import { rejected, type GameEvent } from "../events";
 import type { Action } from "../store";
 import { getHolidayConfig } from "../rules/holidays";
 import { getHolidayMissionReward } from "../rules/progression";
-import { BAG_SIZE, EVENT_CELLS, type ChainId, type GameState } from "../types";
+import { bagSize } from "../rules/levels";
+import { EVENT_CELLS, type ChainId, type GameState } from "../types";
 import { findNearestEmptyCell } from "./board";
 
 export function initHolidayBoard(s: GameState, _ctx: Ctx): void {
@@ -22,7 +23,7 @@ export function initHolidayBoard(s: GameState, _ctx: Ctx): void {
 }
 
 function hasMainSpace(s: GameState): boolean {
-  return s.board.some((c) => c === null) || s.bag.length < BAG_SIZE;
+  return s.board.some((c) => c === null) || s.bag.length < bagSize(s.playerLv);
 }
 
 function sendToMainGame(s: GameState, chain: ChainId, level: number): void {

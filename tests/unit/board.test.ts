@@ -62,14 +62,14 @@ describe("이동·합성", () => {
     expect(ev).toEqual([{ type: "moved", from: 5, to: 6, swapped: true }]);
     expect(s.board[5]?.chain).toBe("herb");
   });
-  test("같은 재료 합성: 레벨 +1, XP +5", () => {
+  test("같은 재료 합성: 레벨 +1, XP = 결과 레벨", () => {
     s.board[0] = item("potion", 2);
     s.board[1] = item("potion", 2);
     const ev = moveOrMerge(s, fixedCtx([0.9]), { from: 0, to: 1 });
     expect(types(ev)).toContain("merged");
     expect(s.board[0]).toBeNull();
     expect(s.board[1]).toMatchObject({ chain: "potion", level: 3 });
-    expect(s.xp).toBe(5);
+    expect(s.xp).toBe(3);
   });
   test("최대 레벨·레거시 조합품은 합성 안 되고 교체", () => {
     s.board[0] = item("tea", 8);
@@ -79,14 +79,14 @@ describe("이동·합성", () => {
     s.board[3] = item("combo", 1);
     expect(types(moveOrMerge(s, fixedCtx(), { from: 2, to: 3 }))).toEqual(["moved"]);
   });
-  test("생성기 진화 ★1+★1 → ★2 (XP 25), ★3끼리는 교체", () => {
+  test("생성기 진화 ★1+★1 → ★2 (XP 15), ★3끼리는 교체", () => {
     s.board[0] = gen("herb", 1);
     s.board[1] = gen("herb", 1);
     const ev = moveOrMerge(s, fixedCtx(), { from: 0, to: 1 });
     const m = ev.find((e) => e.type === "merged");
     expect(m && m.type === "merged" && m.generatorEvolved).toBe(true);
     expect(s.board[1]).toMatchObject({ isGenerator: true, level: 2 });
-    expect(s.xp).toBe(25);
+    expect(s.xp).toBe(15);
     s.board[2] = gen("tea", 3);
     s.board[3] = gen("tea", 3);
     expect(types(moveOrMerge(s, fixedCtx(), { from: 2, to: 3 }))).toEqual(["moved"]);
@@ -177,19 +177,7 @@ describe("수집·거미줄·정렬·보관함·판매", () => {
   });
 });
 
-describe("레벨업", () => {
-  test("XP가 넘치면 레벨+1, 이월, 💎3 · 번개 10 · 코인 40×lv · 생성기 파츠", () => {
-    const ev: GameEvent[] = [];
-    gainXP(s, ev, 60);
-    expect(s.playerLv).toBe(2);
-    expect(s.xp).toBe(10);
-    expect(s.gems).toBe(13);
-    expect(s.energy).toBe(110);
-    expect(s.coins).toBe(430);
-    expect(ev.find((e) => e.type === "levelUp")).toMatchObject({ level: 2, coins: 80, energy: 10, gems: 3, genChain: "potion" });
-    expect(ev.find((e) => e.type === "generatorPartGranted")).toMatchObject({ chain: "potion", where: "board" });
-  });
-});
+// 레벨업 규칙은 levels.test.ts
 
 import { getMergeTargets } from "../../src/core/actions/board";
 

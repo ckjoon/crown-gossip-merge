@@ -128,6 +128,9 @@
       {#if !pick && !ui.inputLocked}
         {#if ui.castleMap}
           {#each ZONE_ORDER as z (z)}
+            {#if !zp.accessibleKeys.includes(z) && pins[z] && next?.zoneKey === z && zp.nextSpotLockedLv !== null}
+              <div class="room-pin castle-zone-pin pin-locked" style="left:{clampX(pins[z].x)}px;top:{clampY(pins[z].y)}px">🔒 {ROOMS[z].shortName} <b>Lv.{zp.nextSpotLockedLv}</b></div>
+            {/if}
             {#if zp.accessibleKeys.includes(z) && pins[z]}
               {@const done = ROOMS[z].spots.filter((sp) => $game.rooms[sp.id]?.done).length}
               <button class="room-pin castle-zone-pin" class:pin-ready={z === $game.currentThemeKey} class:pin-reveal={ui.revealZone === z} style="left:{clampX(pins[z].x)}px;top:{clampY(pins[z].y)}px" onclick={(e) => { app().sfx.tap(); goZone(z, { x: e.clientX, y: e.clientY }); }}>
@@ -200,7 +203,9 @@
 
   <div class="castle-quest-panel" class:input-locked={ui.inputLocked}>
     <div class="story-action-row">
-      <button class="story-next-btn" disabled={!next} onclick={storyNext}>📖 {next ? `제${next.chapter}화 · ${next.spot.name}` : "🎉 완결"} {#if next}<b>🪙{nextCost}</b>{/if}</button>
+      <button class="story-next-btn" class:story-locked={zp.nextSpotLockedLv !== null} disabled={!next} onclick={storyNext}>
+        {#if next && zp.nextSpotLockedLv !== null}🔒 제{next.chapter}화 · <b>Lv.{zp.nextSpotLockedLv} 필요</b>{:else}📖 {next ? `제${next.chapter}화 · ${next.spot.name}` : "🎉 완결"} {#if next}<b>🪙{nextCost}</b>{/if}{/if}
+      </button>
       <button class="story-log-btn" onclick={() => { app().sfx.tap(); ui.modal = "storyLog"; }} title="지난 이야기 다시 보기">📜</button>
     </div>
   </div>

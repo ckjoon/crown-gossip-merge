@@ -8,6 +8,7 @@ export interface CellVisual {
   key: string; // uid (스프라이트 재사용 기준)
   tex: TexKey;
   accent: number; // 합성 파티클 색
+  tier?: number; // 생성기 등급 ★1~3
   state: "active" | "crate" | "cobweb";
   isGenerator: boolean;
   wanted: boolean;
@@ -32,7 +33,7 @@ export function mainBoardVisuals(s: GameState, wantedUids: Set<string>): (CellVi
   return s.board.map((it) => {
     if (!it) return null;
     if (it.state === "crate") return { key: it.uid, tex: "crate", accent: 0xb45309, state: "crate", isGenerator: false, wanted: false };
-    if (it.isGenerator) return { key: it.uid, tex: itemKey(it.chain, it.level, true), accent: GEN_ACCENT, state: "active", isGenerator: true, wanted: false };
+    if (it.isGenerator) return { key: it.uid, tex: itemKey(it.chain, it.level, true), accent: GEN_ACCENT, state: "active", isGenerator: true, wanted: false, tier: it.level || 1 };
     return { key: it.uid, tex: itemKey(it.chain, it.level, false), accent: CHAIN_ACCENT[it.chain] ?? 0x3b82f6, state: it.state, isGenerator: false, wanted: wantedUids.has(it.uid) };
   });
 }

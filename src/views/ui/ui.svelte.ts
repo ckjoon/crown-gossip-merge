@@ -24,6 +24,8 @@ export const ui = $state({
   selectedEventCell: 6 as number | null,
   selectedOrderIdx: null as number | null,
   modal: null as ModalId | null,
+  // 도감을 열 때 강조할 생성기 체인 (생성기 정보에서 📜로 열면)
+  codexFocus: null as string | null,
   // 말풍선: 할 말이 생길 때만 잠깐 떠오른다 (seq가 바뀌면 다시 표시)
   dialogue: { speaker: "", text: "", seq: 0 },
   inputLocked: false,

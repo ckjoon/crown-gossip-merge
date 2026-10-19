@@ -140,3 +140,15 @@ test("명절 미션 보상: 번개 없음, 보석은 이벤트당 10회까지만
   expect(P.getHolidayMissionReward(9)).toEqual({ energy: 0, gems: 5, freeSpawns: 0 });
   expect(P.getHolidayMissionReward(10)).toEqual({ energy: 0, gems: 0, freeSpawns: 0 });
 });
+
+test("생성기 등급별로 바로 나오는 단계와 배속 최대 단계 (시각화용)", () => {
+  expect(P.spawnRange(1)).toEqual({ min: 1, max: 2, boostMax: 3 });
+  expect(P.spawnRange(2)).toEqual({ min: 2, max: 3, boostMax: 5 });
+  expect(P.spawnRange(3)).toEqual({ min: 2, max: 4, boostMax: 6 });
+  // 실제 배출과 일치: 등급별로 무작위 값을 넣어 범위 확인
+  for (const t of [1, 2, 3]) for (let i = 0; i < 50; i++) {
+    const r = P.rollBaseSpawn(t, 0, () => i / 50);
+    expect(r.level).toBeGreaterThanOrEqual(P.spawnRange(t).min);
+    expect(r.level).toBeLessThanOrEqual(P.spawnRange(t).max);
+  }
+});

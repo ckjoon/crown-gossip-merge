@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { bagSize } from "../../../core/rules/levels";
   import Modal from "./Modal.svelte";
   import { app } from "../context";
   import { act, pointOf, ui } from "../ui.svelte";
@@ -12,12 +13,13 @@
     const got = ev.find((x) => x.type === "bagRetrieved");
     if (got && got.type === "bagRetrieved") ui.selectedCell = got.to;
   }
+  const size = $derived(bagSize($game.playerLv));
 </script>
 
-<Modal title="🎒 인벤토리 보관함 (최대 6칸)" {onclose}>
+<Modal title={`🎒 인벤토리 보관함 (${size}칸)`} {onclose}>
   <p class="bag-help">보드가 좁을 때 재료나 여분의 생성기 파츠를 보관해 두세요. 슬롯을 탭하면 보드로 꺼냅니다.</p>
   <div class="bag-grid">
-    {#each Array(6) as _, i (i)}
+    {#each Array(Math.max(size, $game.bag.length)) as _, i (i)}
       {@const it = $game.bag[i]}
       <div class="bag-slot" role="button" tabindex="0" onclick={(e) => it && take(i, e)} onkeydown={() => {}}>
         {#if it}

@@ -1,33 +1,46 @@
 <script lang="ts">
   import Modal from "./Modal.svelte";
+  import ChainStrip from "../components/ChainStrip.svelte";
+  import { app } from "../context";
+  import { ui } from "../ui.svelte";
   import { CHAINS } from "../../../core/rules/chains";
-  import { getGeneratorTierCap } from "../../../core/rules/progression";
+  import { CHAIN_UNLOCK_LEVEL, CORE_GEN_CHAINS, isExtraChain } from "../../../core/rules/levels";
   import { getItemSVG } from "../../art/sprites";
-  import type { ChainId } from "../../../core/types";
+  import type { ChainId, ExtraChain, GenChain } from "../../../core/types";
   let { onclose }: { onclose: () => void } = $props();
-  const potTiers = CHAINS.potion.generator!.tiers;
-  const chains = (Object.keys(CHAINS) as ChainId[]).filter((k) => k !== "combo");
+  const game = app().store;
+  const genChains: GenChain[] = [...CORE_GEN_CHAINS, ...(Object.keys(CHAIN_UNLOCK_LEVEL) as ExtraChain[])];
+  // 보유한 생성기 중 가장 높은 등급 (보드 + 보관함)
+  const owned = $derived.by(() => {
+    const m = new Map<string, number>();
+    for (const it of [...$game.board, ...$game.bag]) if (it?.isGenerator) m.set(it.chain, Math.max(m.get(it.chain) ?? 0, it.level || 1));
+    return m;
+  });
+  const others = (Object.keys(CHAINS) as ChainId[]).filter((k) => !CHAINS[k].generator && k !== "combo");
+  let listEl: HTMLDivElement | undefined = $state();
+  $effect(() => {
+    const f = ui.codexFocus;
+    if (!f || !listEl) return;
+    listEl.querySelector(`[data-chain="${f}"]`)?.scrollIntoView({ block: "center" });
+  });
 </script>
 
-<Modal title="📖 생성기 진화 & 아이템 체인 도감" {onclose}>
+<Modal title="🗺️ 생성기 지도 & 아이템 도감" onclose={() => { ui.codexFocus = null; onclose(); }}>
   <div class="codex-card" style="background:#f3e8ff;border-color:#9333ea">
-    <h4>🔥 생성기 합성 진화 (★ ➔ ★★ ➔ ★★★)</h4>
-    <p style="font-size:11px;color:#475569;margin-bottom:6px">같은 생성기 2개를 합치면 등급이 올라 더 높은 재료가 한 번에 나옵니다!</p>
-    <div class="codex-flow">
-      {#each potTiers as t, idx (t.level)}
-        <div class="codex-node" style="flex:1">
-          <div class="codex-svg-mini">{@html getItemSVG("potion", t.level, true)}</div>
-          <strong style="font-size:9.5px">{t.name}</strong>
-          <small style="font-size:8.5px;color:#6d28d9">{"★".repeat(t.level)} · 최대 Lv.{getGeneratorTierCap(t.level)}</small>
-        </div>
-        {#if idx < potTiers.length - 1}<span style="color:#9333ea;font-weight:900">➔</span>{/if}
-      {/each}
-    </div>
+    <h4>🔥 생성기는 같은 것끼리 합치면 ★ → ★★ → ★★★</h4>
+    <p style="font-size:11px;color:#475569">등급이 오를수록 더 높은 재료가 바로 나와요. 아래에서 내 생성기 등급과 만들 수 있는 단계를 확인하세요.</p>
+    <div class="cs-legend"><span class="cs-spawn">바로 나옴</span><span class="cs-boost">⚡배속으로</span><span class="cs-merge">합성으로만</span></div>
   </div>
-  {#each chains as key (key)}
+  <div bind:this={listEl}>
+    {#each genChains as c (c)}
+      {@const lockLv = isExtraChain(c) && $game.playerLv < CHAIN_UNLOCK_LEVEL[c] ? CHAIN_UNLOCK_LEVEL[c] : null}
+      <div data-chain={c}><ChainStrip chain={c} tier={owned.get(c) ?? null} lockedLv={lockLv} focus={ui.codexFocus === c} /></div>
+    {/each}
+  </div>
+  {#each others as key (key)}
     {@const ch = CHAINS[key]}
     <div class="codex-card">
-      <h4>{ch.name} {ch.generator ? `(생성기: ${ch.generator.name})` : ""}</h4>
+      <h4>{ch.name}</h4>
       <div class="codex-flow">
         {#each ch.items as it, idx (it.level)}
           <div class="codex-node">

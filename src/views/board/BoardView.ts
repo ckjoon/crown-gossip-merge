@@ -306,11 +306,14 @@ export class BoardView {
 
     const fontSize = Math.max(8, Math.min(11, h * 0.15));
     if (vis.isGenerator) {
-      const chip = new Graphics().circle(w - 7, h - 7, 7).fill({ color: 0xf59e0b }).stroke({ width: 1.5, color: 0xffffff });
-      const bolt = new Text({ text: "⚡", style: { fontSize: 8 } });
-      bolt.anchor.set(0.5);
-      bolt.position.set(w - 7, h - 7);
-      c.addChild(chip, bolt);
+      // 생성기 등급(★1~3)을 아래쪽 작은 알약으로 — 합성으로 진화하면 별이 늘어난다
+      const tier = Math.max(1, Math.min(3, vis.tier ?? 1));
+      const pw = 9 + tier * 9;
+      const pill = new Graphics().roundRect(w / 2 - pw / 2, h - 13, pw, 12, 6).fill({ color: 0x3b0764, alpha: 0.88 }).stroke({ width: 1.5, color: 0xfde047 });
+      const stars = new Text({ text: "★".repeat(tier), style: { fontSize: 9, fill: 0xfde047, fontWeight: "900" } });
+      stars.anchor.set(0.5);
+      stars.position.set(w / 2, h - 7);
+      c.addChild(pill, stars);
     }
 
     if (vis.state === "cobweb") {

@@ -3,12 +3,14 @@
   import { ui, act, pointOf } from "../ui.svelte";
   import { getItemSVG, getCrateSVG } from "../../art/sprites";
   import { getItemMeta, getGeneratorTierMeta, formatGeneratorStars } from "../../../core/rules/chains";
+  import { spawnRange } from "../../../core/rules/progression";
   import { spawnFromGenerator, storeToBag, sellItem, collectItem, unlockCobweb, sortBoard } from "../../../core/actions/board";
 
   const game = app().store;
   const item = $derived(ui.selectedCell !== null ? $game.board[ui.selectedCell] : null);
   const meta = $derived(item && !item.isGenerator ? getItemMeta(item.chain, item.level) : null);
   const tier = $derived(item && item.isGenerator ? getGeneratorTierMeta(item.chain, item.level) : null);
+  const range = $derived(item && item.isGenerator ? spawnRange(item.level) : null);
 
   const cell = () => ui.selectedCell!;
   function afterRemove() {
@@ -34,10 +36,11 @@
     <div class="insp-icon">{@html getItemSVG(item.chain, item.level, true)}</div>
     <div class="insp-details">
       <div class="insp-title-row"><strong>{tier.name}</strong><span class="insp-lv-badge">{formatGeneratorStars(item.level)}</span></div>
-      <p>탭하면 재료가 나와요</p>
+      <p>바로 Lv.{range!.min}~{range!.max} · ⚡배속 최대 Lv.{range!.boostMax}</p>
     </div>
     <div class="insp-actions">
       <button class="insp-btn spawn-btn" onclick={(e) => act(spawnFromGenerator, { cell: cell() }, pointOf(e))}>⚡ 생성 ×{$game.boostMultiplier}</button>
+      <button class="insp-btn store-btn" title="이 생성기로 만드는 것" onclick={() => { app().sfx.tap(); ui.codexFocus = item!.chain; ui.modal = "codex"; }}>📜</button>
       <button class="insp-btn store-btn" onclick={(e) => { act(storeToBag, { cell: cell() }, pointOf(e)); afterRemove(); }}>🎒보관</button>
     </div>
   {:else if meta}

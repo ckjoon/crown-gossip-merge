@@ -113,6 +113,13 @@ function clampTier(tier: number): number {
   return Math.min(3, Math.max(1, Math.floor(tier) || 1));
 }
 
+// 등급별로 바로 나오는 재료 단계(기본 배출)와 배속을 쓸 때 최대 단계 — 생성기 체인 지도 표시용 (rollBaseSpawn과 같은 범위)
+export function spawnRange(tier: number): { min: number; max: number; boostMax: number } {
+  const t = clampTier(tier);
+  const base = t === 1 ? { min: 1, max: 2 } : t === 2 ? { min: 2, max: 3 } : { min: 2, max: 4 };
+  return { ...base, boostMax: GENERATOR_TIER_CAP[t] };
+}
+
 export function getGeneratorTierCap(tier: number): number {
   return GENERATOR_TIER_CAP[clampTier(tier)];
 }

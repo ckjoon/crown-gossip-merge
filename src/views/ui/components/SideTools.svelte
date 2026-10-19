@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { bagSize } from "../../../core/rules/levels";
   import { app } from "../context";
   import { ui, act, pointOf } from "../ui.svelte";
   import { getHolidayConfig } from "../../../core/rules/holidays";
@@ -29,9 +30,9 @@
     <span class="castle-ico">🏰</span>
     <span class="castle-label">성</span>
   </button>
-  <button class="gh-bag-btn" onclick={() => { app().sfx.tap(); ui.modal = "bag"; }} title="보관함 (아이템 최대 6개 보관)">
+  <button class="gh-bag-btn" onclick={() => { app().sfx.tap(); ui.modal = "bag"; }} title="보관함 (레벨이 오르면 칸이 늘어나요)">
     <span class="bag-ico">🎒</span>
-    <span class="bag-count">{$game.bag.length}/6</span>
+    <span class="bag-count">{$game.bag.length}/{bagSize($game.playerLv)}</span>
   </button>
   <button class="gh-mini-booster event-btn" onclick={() => { app().sfx.tap(); ui.modal = "holiday"; }} title="{holiday.name}">
     <span class="ev-ico">{holiday.icon}</span><small>이벤트</small>

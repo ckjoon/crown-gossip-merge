@@ -1,4 +1,4 @@
-// layout.ts — 성 3D 화면 전용 데이터: 장소별 3D 위치(방 조각 기준)·가구 종류, 구역별 색과 성 지도 핀 위치 (v2 ROOM_THEMES에서 분리)
+// layout.ts — 성 3D 화면 전용 데이터: 장소별 3D 위치(방 조각 기준)·가구 종류, 구역별 색 (v2 ROOM_THEMES에서 분리)
 
 import type { ZoneKey } from "../../core/rules/progression";
 import { ZONE_MODULES, moduleIndexOf, spotAnchor } from "./modules";
@@ -13,7 +13,6 @@ export interface ZoneLook {
   floorColor1: number;
   floorColor2: number;
   ambientColor: number;
-  castlePinPos: [number, number, number];
 }
 
 // 장소별 가구 종류. 창문형(벽에 거는 가구)은 걸리는 높이(wallY)를 갖는다. 위치는 방 조각(modules.ts)에서 계산
@@ -53,44 +52,24 @@ export const ZONE_LOOK: Record<ZoneKey, ZoneLook> = {
     wallColor: 0x2e1a47,
     floorColor1: 0x3d2759,
     floorColor2: 0x311e47,
-    ambientColor: 0x9370db,
-    castlePinPos: [
-      -1.8,
-      2.7,
-      -1.2
-    ]
+    ambientColor: 0x9370db
   },
   harbor: {
     wallColor: 0x1e3a8a,
     floorColor1: 0xd9a066,
     floorColor2: 0xc48c52,
-    ambientColor: 0xfef08a,
-    castlePinPos: [
-      -2,
-      1.5,
-      2.5
-    ]
+    ambientColor: 0xfef08a
   },
   garden: {
     wallColor: 0x064e3b,
     floorColor1: 0x166534,
     floorColor2: 0x14532d,
-    ambientColor: 0x6ee7b7,
-    castlePinPos: [
-      2.6,
-      2,
-      1.5
-    ]
+    ambientColor: 0x6ee7b7
   },
   banquet: {
     wallColor: 0x3b0764,
     floorColor1: 0x4c1d95,
     floorColor2: 0x3b0764,
-    ambientColor: 0xfde047,
-    castlePinPos: [
-      2,
-      4.1,
-      -2
-    ]
+    ambientColor: 0xfde047
   }
 };

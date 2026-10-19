@@ -46,7 +46,7 @@
     const s = $game;
     if (ui.castleMap) {
       if (!shown.map) {
-        view.showMap();
+        view.showMap(s.rooms, zp.accessibleKeys);
         shown = { map: true, zone: "" };
       }
     } else if (shown.map || shown.zone !== s.currentThemeKey) {

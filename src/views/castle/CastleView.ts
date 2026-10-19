@@ -6,7 +6,8 @@ import { gsap } from "gsap";
 import type { SpotState, ZoneKey } from "../../core/types";
 import { ROOMS, STYLE_PALETTES } from "../../core/rules/rooms";
 import { SPOT_LAYOUT, ZONE_LOOK } from "./layout";
-import { buildCastleOverview, buildRoomLights } from "./scenes";
+import { buildRoomLights } from "./scenes";
+import { MAP_CENTER, buildFloorplan, wingPinPos } from "./floorplan";
 import { buildSpotClutter, buildSpotFurniture, buildZoneProps, zonePropModels, spotModelNames, CLUTTER_MODELS } from "./furniture";
 import { ModelLibrary } from "./models/library";
 import { Ambience } from "./ambience";
@@ -114,15 +115,15 @@ export class CastleView {
     return () => this.frameHooks.delete(fn);
   }
 
-  // Galaxy S25 세로 비율에서도 방(±7.5)·지도(±8)가 잘리지 않도록 최소 시야 보장 (v2와 같은 규칙)
+  // Galaxy S25 세로 비율에서도 방(±7.5)·지도(가로 ±7.4)가 잘리지 않도록 최소 시야 보장 (v2와 같은 규칙)
   resize(): void {
     if (!this.renderer) return;
     const w = this.host.clientWidth || 360;
     const h = this.host.clientHeight || 320;
     if (w <= 0 || h <= 0) return;
     const aspect = w / h;
-    const minHalfW = this.mode === "map" ? 8.0 : 7.5;
-    const minHalfH = this.mode === "map" ? 6.0 : 5.5;
+    const minHalfW = this.mode === "map" ? 7.4 : 7.5;
+    const minHalfH = this.mode === "map" ? 7.0 : 5.5;
     let halfW = minHalfH * aspect;
     let halfH = minHalfH;
     if (halfW < minHalfW) {
@@ -186,11 +187,11 @@ export class CastleView {
     this.bursts = [];
   }
 
-  showMap(): void {
+  showMap(rooms: Record<string, SpotState>, accessible: ZoneKey[]): void {
     this.mode = "map";
     this.preview = null;
     this.clearGroup();
-    this.scene.background = buildCastleOverview(this.roomGroup);
+    this.scene.background = buildFloorplan(this.roomGroup, rooms, accessible);
     this.ambientLight = null;
     this.ambience = null;
     legacyLightCompensate(this.roomGroup);
@@ -549,7 +550,7 @@ export class CastleView {
     gsap.killTweensOf(this.camera);
     gsap.killTweensOf(this.lookTarget);
     const z0 = this.baseZoom();
-    const home = this.mode === "room" ? this.home : new THREE.Vector3(0, 1, 0);
+    const home = this.mode === "room" ? this.home : new THREE.Vector3(...MAP_CENTER);
     if (!animate) {
       this.camera.zoom = z0;
       this.lookTarget.copy(home);
@@ -575,7 +576,7 @@ export class CastleView {
   }
 
   projectZonePin(zone: ZoneKey): { x: number; y: number } {
-    return this.project(ZONE_LOOK[zone].castlePinPos);
+    return this.project(wingPinPos(zone));
   }
 
   // 시공 완료 버스트: 금색·분홍 팔면체 조각이 사방으로 튐

@@ -5,7 +5,7 @@
 import * as THREE from "three";
 import { gsap } from "gsap";
 import type { ZoneKey } from "../../core/types";
-import { ZONE_LOOK } from "./layout";
+import { SPOT_LAYOUT, ZONE_LOOK } from "./layout";
 import { CELL, WALL_H, ZONE_MODULES, moduleCells, moduleEdges, type EdgeSpec, type ModuleState } from "./modules";
 
 type WallStyle = "stone" | "rail" | "hedge";
@@ -190,6 +190,12 @@ function buildFloor(g: THREE.Group, zone: ZoneKey, i: number, state: ModuleState
   }
 }
 
+// 창문형 장소(벽에 거는 가구)가 걸리는 벽: 그 조각 첫 칸의 뒷벽(-z). 이 벽엔 장식을 달지 않는다 (창문과 겹침)
+function holdsWindow(zone: ZoneKey, e: EdgeSpec): boolean {
+  const d = ZONE_MODULES[zone][e.mod];
+  return !!d?.spotId && SPOT_LAYOUT[d.spotId]?.type === "window" && e.side === "-z" && Math.abs(e.x - d.gx * CELL) < 0.01;
+}
+
 function buildWall(g: THREE.Group, zone: ZoneKey, e: EdgeSpec, low: boolean): void {
   const st = STYLES[zone];
   const M = mats(zone);
@@ -213,7 +219,7 @@ function buildWall(g: THREE.Group, zone: ZoneKey, e: EdgeSpec, low: boolean): vo
     g.add(tag(edgeBox(e, CELL + 0.2, h, 0.7, M.wall), e.mod, role));
     g.add(tag(edgeBox(e, CELL + 0.25, 0.2, 0.75, M.trim, h + 0.05), e.mod, role));
   }
-  if (!low) buildOrnament(g, zone, e);
+  if (!low && !holdsWindow(zone, e)) buildOrnament(g, zone, e);
 }
 
 // 바깥 벽 장식: 공방 약병 선반, 연회장 깃발과 별, 하버 등불 기둥, 정원 꽃
@@ -313,19 +319,36 @@ function buildBroken(g: THREE.Group, zone: ZoneKey, e: EdgeSpec): void {
   });
 }
 
-export function buildModules(zone: ZoneKey, states: ModuleState[]): THREE.Group {
+// appearing: 복구 연출 중 새로 폐허가 될 조각. 연출(animateModuleAppear) 전까지는 청사진으로 보이고 폐허 부분은 숨겨 둔다
+export function buildModules(zone: ZoneKey, states: ModuleState[], opts: { appearing?: number } = {}): THREE.Group {
   const g = new THREE.Group();
   g.name = "modules";
   const defs = ZONE_MODULES[zone];
   defs.forEach((_, i) => buildFloor(g, zone, i, states[i]));
-  for (const e of moduleEdges(defs, states)) {
-    if (e.kind === "wall") buildWall(g, zone, e, false);
-    else if (e.kind === "low") buildWall(g, zone, e, true);
-    else if (e.kind === "curb") buildCurb(g, zone, e);
-    else if (e.kind === "door") buildDoor(g, zone, e);
-    else if (e.kind === "broken") buildBroken(g, zone, e);
+  const ap = opts.appearing;
+  if (ap !== undefined && states[ap] === "ruin") {
+    const hidden = new Set(g.children.filter((o) => o.userData.module === ap));
+    buildFloor(g, zone, ap, "ghost");
+    for (const o of hidden) o.scale.setScalar(0.01);
+    const before = g.children.length;
+    for (const e of moduleEdges(defs, states)) if (e.mod === ap && e.kind === "broken") buildBroken(g, zone, e);
+    for (const o of g.children.slice(before)) o.scale.setScalar(0.01);
+    for (const e of moduleEdges(defs, states)) {
+      if (e.mod === ap) continue;
+      buildEdge(g, zone, e);
+    }
+    return g;
   }
+  for (const e of moduleEdges(defs, states)) buildEdge(g, zone, e);
   return g;
+}
+
+function buildEdge(g: THREE.Group, zone: ZoneKey, e: EdgeSpec): void {
+  if (e.kind === "wall") buildWall(g, zone, e, false);
+  else if (e.kind === "low") buildWall(g, zone, e, true);
+  else if (e.kind === "curb") buildCurb(g, zone, e);
+  else if (e.kind === "door") buildDoor(g, zone, e);
+  else if (e.kind === "broken") buildBroken(g, zone, e);
 }
 
 function partsOf(g: THREE.Group, pred: (o: THREE.Object3D) => boolean): THREE.Object3D[] {
@@ -346,9 +369,14 @@ export function animateModuleBuild(g: THREE.Group, idx: number): number {
   return t2 + 0.45;
 }
 
-// 다음 복구 조각(폐허)이 청사진 자리에 나타남
+// 다음 복구 조각(폐허)이 청사진 자리에서 자라나고, 청사진 점선은 걷힌다 (buildModules의 appearing으로 숨겨 둔 부분)
 export function animateModuleAppear(g: THREE.Group, idx: number): void {
-  partsOf(g, (o) => o.userData.module === idx).forEach((o, k) =>
-    gsap.from(o.scale, { x: 0.01, y: 0.01, z: 0.01, duration: 0.4, delay: 0.04 * k, ease: "back.out(1.8)" }),
-  );
+  const mine = partsOf(g, (o) => o.userData.module === idx);
+  for (const o of mine.filter((o) => o.userData.role === "ghost")) {
+    g.remove(o);
+    (o as THREE.Mesh).geometry?.dispose();
+  }
+  mine
+    .filter((o) => o.userData.role !== "ghost")
+    .forEach((o, k) => gsap.to(o.scale, { x: 1, y: 1, z: 1, duration: 0.4, delay: 0.04 * k, ease: "back.out(1.8)" }));
 }

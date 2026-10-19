@@ -243,12 +243,12 @@ export class CastleView {
   }
 
   // 방 조각을 상태에 맞춰 다시 만든다 (재질은 구역별로 공유되어 툰 변환도 재사용)
-  private renderModules(): THREE.Group {
+  private renderModules(appearing?: number): THREE.Group {
     if (this.modules) {
       this.roomGroup.remove(this.modules);
       disposeGroup(this.modules);
     }
-    const g = buildModules(this.zone, this.states);
+    const g = buildModules(this.zone, this.states, { appearing });
     toonify(g);
     addOutline(g, 0.02);
     setDecorGlow(g, this.glowStep);
@@ -371,7 +371,9 @@ export class CastleView {
 
     // 방 조각 짓기
     this.states = this.computeStates();
-    const modules = this.renderModules();
+    // 다음 장소 폐허는 가구가 떨어진 뒤에 나타나도록 그때까지 청사진으로 둔다
+    const nextIdx = this.states.indexOf("ruin");
+    const modules = this.renderModules(nextIdx > 0 ? nextIdx : undefined);
     const idx = moduleIndexOf(zone, spotId);
     const buildSec = animateModuleBuild(modules, idx);
     this.refreshShadowsFor(buildSec * 1000 + 1500);
@@ -391,7 +393,6 @@ export class CastleView {
     this.constructionBurst(spotId, 14);
 
     // 다음 장소 폐허가 청사진 자리에 나타남
-    const nextIdx = this.states.indexOf("ruin");
     const nextSpot = nextIdx > 0 ? ZONE_MODULES[zone][nextIdx].spotId : null;
     if (nextSpot) {
       animateModuleAppear(modules, nextIdx);

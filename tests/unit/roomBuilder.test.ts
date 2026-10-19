@@ -58,3 +58,39 @@ test("바깥 벽마다 발광 장식 (방 분위기 단계에 따라 밝아짐)"
     expect(orn.some((m) => typeof (m.material as THREE.Material).userData.glowBase === "number"), zone).toBe(true);
   }
 });
+
+// ---- 리뷰 반영 ----
+import { SPOT_LAYOUT } from "../../src/views/castle/layout";
+import { gsap } from "gsap";
+import { animateModuleAppear } from "../../src/views/castle/roomBuilder";
+
+test("창문형 장소가 걸린 벽에는 벽 장식을 달지 않음 (창문과 겹침 방지)", () => {
+  for (const zone of Object.keys(ROOMS) as ZoneKey[]) {
+    const g = buildModules(zone, moduleStates(zone, doneUpTo(zone, 5)));
+    g.updateMatrixWorld(true);
+    for (const s of ROOMS[zone].spots) {
+      const l = SPOT_LAYOUT[s.id];
+      if (l.type !== "window") continue;
+      const [x, y, z] = l.pos;
+      const win = new THREE.Box3(new THREE.Vector3(x - 1.5, y - 1.3, z - 0.4), new THREE.Vector3(x + 1.5, y + 1.3, z + 0.7));
+      for (const m of meshes(g, (o) => o.userData.role === "ornament")) {
+        expect(new THREE.Box3().setFromObject(m).intersectsBox(win), `${zone} ${s.id}`).toBe(false);
+      }
+    }
+  }
+});
+
+test("복구 직후 다음 폐허는 숨겨진 채 청사진으로 보이다가, 나타남 연출에서 자란다", () => {
+  const states = moduleStates("alchemy", doneUpTo("alchemy", 1));
+  const g = buildModules("alchemy", states, { appearing: 2 });
+  const ruinParts = g.children.filter((o) => o.userData.module === 2 && o.userData.role !== "ghost");
+  const ghostParts = g.children.filter((o) => o.userData.module === 2 && o.userData.role === "ghost");
+  expect(ruinParts.length).toBeGreaterThan(0);
+  expect(ghostParts.length).toBeGreaterThan(0);
+  for (const o of ruinParts) expect(o.scale.x).toBeLessThan(0.05);
+  animateModuleAppear(g, 2);
+  for (const o of ruinParts) expect(gsap.getTweensOf(o.scale).length).toBeGreaterThan(0);
+  gsap.globalTimeline.getChildren().forEach((t) => t.progress(1));
+  for (const o of ruinParts) expect(o.scale.x).toBeCloseTo(1);
+  expect(g.children.filter((o) => o.userData.module === 2 && o.userData.role === "ghost").length).toBe(0);
+});

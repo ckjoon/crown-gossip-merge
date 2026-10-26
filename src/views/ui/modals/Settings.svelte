@@ -9,9 +9,23 @@
   import { restoreState } from "../../../services/save/restore";
   import { createCtx } from "../../../core/ctx";
   import { installPrompt } from "../install";
+  import { energyAlertOn } from "../../../services/push";
+  import { turnOffEnergyAlert, turnOnEnergyAlert } from "../energyAlert";
   let { onclose }: { onclose: () => void } = $props();
   const game = app().store;
   let code = $state("");
+  let alertOn = $state(energyAlertOn());
+  let alertBusy = $state(false);
+
+  async function toggleAlert(e: MouseEvent) {
+    if (alertBusy) return;
+    alertBusy = true;
+    const at = pointOf(e);
+    if (alertOn) await turnOffEnergyAlert(at);
+    else await turnOnEnergyAlert(at);
+    alertOn = energyAlertOn();
+    alertBusy = false;
+  }
 
   $effect(() => {
     void (async () => {
@@ -73,6 +87,13 @@
       <p class="setting-desc">화면 흔들림을 끄고 파티클과 비행 연출을 줄입니다.</p>
     </div>
     <button class="insp-btn spawn-btn" onclick={(e) => act(setSetting, { key: "reduceMotion", value: !$game.settings.reduceMotion }, pointOf(e))}>{$game.settings.reduceMotion ? "✅ 켜짐" : "⬜ 꺼짐"}</button>
+  </div>
+  <div class="codex-card setting-row">
+    <div>
+      <h4>🔔 번개 가득 알림</h4>
+      <p class="setting-desc">게임을 닫아 두어도 번개가 100개로 다 차면 폰 알림을 보내요. 켤 때 알림 권한을 물어봐요.</p>
+    </div>
+    <button class="insp-btn spawn-btn" data-testid="energy-alert-toggle" disabled={alertBusy} onclick={toggleAlert}>{alertOn ? "✅ 켜짐" : "⬜ 꺼짐"}</button>
   </div>
   <div class="codex-card setting-row" style="background:#fefce8;border-color:#f59e0b">
     <div>

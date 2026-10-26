@@ -1,12 +1,13 @@
 // ui.svelte.ts — 저장하지 않는 화면 상태(현재 화면·선택 칸·열린 모달·대화 바·입력 잠금)와 떠오르는 알림, 행동 실행 도우미
 
 import type { Action } from "../../core/store";
+import { shouldAskEnergyAlert } from "../../services/push";
 import type { GameEvent, RejectReason } from "../../core/events";
 import { app } from "./context";
 import { ENERGY_REGEN_SEC, type ChainId } from "../../core/types";
 
 export type Screen = "merge" | "castle";
-export type ModalId = "codex" | "itemInfo" | "bag" | "level" | "settings" | "changelog" | "gemShop" | "storyLog" | "holiday" | "migration";
+export type ModalId = "codex" | "itemInfo" | "bag" | "level" | "settings" | "changelog" | "gemShop" | "storyLog" | "holiday" | "migration" | "energyAlert";
 
 export type RewardView =
   | { kind: "ribbon"; chapter: number; name: string; chips: string[] }
@@ -122,6 +123,8 @@ export function act<P>(action: Action<P>, payload: P, at?: { x: number; y: numbe
     if (e.type === "rejected") {
       sfx.warn();
       toast(REJECT_TEXT[e.reason], at?.x, at?.y, "#ef4444");
+      // v3.13: 번개가 처음 바닥났을 때 한 번만 "다 차면 알려 줄까요?"
+      if (e.reason === "noEnergy" && ui.modal === null && shouldAskEnergyAlert()) ui.modal = "energyAlert";
     }
   }
   return events;

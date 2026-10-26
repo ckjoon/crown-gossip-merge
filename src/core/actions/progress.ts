@@ -91,6 +91,12 @@ export const tickEnergy: Action<{ seconds: number }> = (s, _ctx, { seconds }) =>
   return ev;
 };
 
+// 번개 가득 알림(v3.13): 자연 충전으로 상한까지 남은 초 (이미 가득이면 0)
+export function energyFullInSec(s: GameState): number {
+  if (s.energy >= NATURAL_ENERGY_CAP) return 0;
+  return (NATURAL_ENERGY_CAP - s.energy - 1) * ENERGY_REGEN_SEC + Math.max(0, s.energyCountdown);
+}
+
 export const buyEnergyPack: Action<{ pack: number }> = (s, _ctx, { pack }) => {
   const p = GEM_SHOP_ENERGY[pack];
   if (!p) return [];

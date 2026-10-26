@@ -9,6 +9,7 @@
   import Bag from "./modals/Bag.svelte";
   import Level from "./modals/Level.svelte";
   import Settings from "./modals/Settings.svelte";
+  import EnergyAlertAsk from "./modals/EnergyAlertAsk.svelte";
   import Changelog from "./modals/Changelog.svelte";
   import GemShop from "./modals/GemShop.svelte";
   import StoryLog from "./modals/StoryLog.svelte";
@@ -51,6 +52,8 @@
   <Level onclose={close} />
 {:else if ui.modal === "settings"}
   <Settings onclose={close} />
+{:else if ui.modal === "energyAlert"}
+  <EnergyAlertAsk onclose={close} />
 {:else if ui.modal === "changelog"}
   <Changelog onclose={close} />
 {:else if ui.modal === "gemShop"}

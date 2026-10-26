@@ -29,3 +29,31 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) => Promise.all(keys.filter((k) => k.startsWith("crown-gossip-pwa-v") || (k.startsWith("crown-gossip-models-v") && k !== MODEL_CACHE)).map((k) => caches.delete(k))))
   );
 });
+
+// v3.13 번개 가득 알림: 서버(QStash 예약)가 보낸 푸시를 폰 알림으로. 누르면 열린 게임 창으로, 없으면 새로 연다
+self.addEventListener("push", (event) => {
+  let data: { title?: string; body?: string; tag?: string } = {};
+  try {
+    data = event.data?.json() ?? {};
+  } catch {
+    // 형식이 다르면 기본 문구
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? "⚡ 번개가 가득 찼어요!", {
+      body: data.body ?? "성으로 돌아와 재료를 만들어 볼까요?",
+      tag: data.tag ?? "energy-full",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      const win = list.find((c) => new URL(c.url).origin === self.location.origin);
+      return win ? win.focus() : self.clients.openWindow("/");
+    }),
+  );
+});

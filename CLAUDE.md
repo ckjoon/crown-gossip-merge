@@ -46,6 +46,13 @@ There are three layers. `src/core` never imports `window`, `document`, pixi.js, 
   - `save/migrations.ts`: v2 records (schema ≤3) get a one-time cleanup and return a `MigrationReport`.
   - `save/autosave.ts`: batches saves over 300ms, saves immediately for gems, restores, zone completion, and purchases, and skips transient commits.
   - Also: `save/backup.ts` (v2-compatible backup codes), `audio.ts`, `haptics.ts`.
+  - `push.ts` (v3.13 energy-full alert): a per-device opt-in kept in localStorage (`crown_gossip_energy_alert_*_v1`), not in the save. When the page is hidden, `main.ts` schedules a push at `energyFullInSec` (progress.ts). The request is sent synchronously with keepalive, using the subscription cached at enable/boot, because Android freezes hidden pages. When the page is visible again the push is cancelled. Consent is asked once on the first `noEnergy` reject (`EnergyAlertAsk` modal) and can be toggled in Settings.
+- **`api/`**: Vercel functions (Node, Web `Request` handlers).
+  - `push/schedule` publishes a delayed QStash message that carries the subscription. Nothing is stored server-side.
+  - `push/cancel` deletes that message.
+  - `push/send` is called only by QStash: it checks the signature, then sends web-push.
+  - Request validation is in `api/_lib/pushSub.ts`.
+  - Environment: `VAPID_*` and `QSTASH_*` (Upstash integration). The VAPID public key is also hardcoded in `push.ts`; regenerating the keys breaks every existing subscription.
 - **`src/views`**: rendering only. Views read state and play events. They never decide rules.
   - `ui/`: Svelte 5. `App.svelte`, `components/` (HUD), `modals/`, `castle/` (castle screen, pins, style picker, reward overlay).
     - `ui.svelte.ts` holds UI-only state that is not saved. It also has `act()`, which dispatches an action and turns `rejected` events into toasts. `toast()` dedupes identical live text and clamps the box inside the screen.

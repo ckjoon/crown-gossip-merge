@@ -83,3 +83,20 @@ describe("주문 안내의 생성기", () => {
     expect(generatorCellFor(s, "tea", 2)).toBe(-1);
   });
 });
+
+// v3.13: 번개 가득 알림 — 지금 상태에서 100개가 되기까지 남은 초
+describe("번개가 다 차는 시간", () => {
+  test("남은 칸 × 2분, 지금 칸은 남은 카운트다운만", async () => {
+    const { energyFullInSec } = await import("../../src/core/actions/progress");
+    const s = createInitialState(fixedCtx());
+    s.energy = 100;
+    expect(energyFullInSec(s)).toBe(0);
+    s.energy = 140;
+    expect(energyFullInSec(s)).toBe(0);
+    s.energy = 99;
+    s.energyCountdown = 30;
+    expect(energyFullInSec(s)).toBe(30);
+    s.energy = 90;
+    expect(energyFullInSec(s)).toBe(9 * ENERGY_REGEN_SEC + 30);
+  });
+});

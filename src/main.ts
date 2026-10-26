@@ -6,7 +6,8 @@ import { mount } from "svelte";
 import App from "./views/ui/App.svelte";
 import { createCtx } from "./core/ctx";
 import { createStore } from "./core/store";
-import { tickEnergy, markVersionSeen } from "./core/actions/progress";
+import { tickEnergy, markVersionSeen, energyFullInSec } from "./core/actions/progress";
+import { cancelEnergyAlert, refreshEnergyAlertSub, scheduleEnergyAlert } from "./services/push";
 import { APP_VERSION } from "./core/rules/versionHistory";
 import { SoundEngine } from "./services/audio";
 import { createRepository } from "./services/save/repository";
@@ -62,9 +63,15 @@ async function boot(): Promise<void> {
   setApp({ store, sfx, repo, autosave, migrationReport: hasReportContent(report) ? report : null });
   if (isNew || report) void autosave.flush();
 
+  // v3.13 번개 가득 알림: 떠날 때 다 차는 시각에 예약, 돌아오면 지움 (켜 둔 기기만)
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") void autosave.flush();
+    if (document.visibilityState === "hidden") {
+      void autosave.flush();
+      scheduleEnergyAlert(energyFullInSec(store.get()));
+    } else void cancelEnergyAlert();
   });
+  void cancelEnergyAlert();
+  void refreshEnergyAlertSub();
   window.addEventListener("pagehide", () => void autosave.flush());
   store.subscribe((s) => (sfx.enabled = s.settings.sound));
   attachFeedback(store, sfx);

@@ -8,13 +8,24 @@ export interface VersionEntry {
   changes: string[];
 }
 
-export const APP_VERSION = "v3.12.0";
+export const APP_VERSION = "v3.13.0";
 
 export const VERSION_HISTORY: VersionEntry[] = [
   {
+    version: "v3.13.0",
+    date: "2026-10-28",
+    badge: "LATEST",
+    title: "번개 가득 알림",
+    changes: [
+      "🔔 [번개 가득 알림] 게임을 닫아 두어도 번개가 100개로 다 차면 폰 알림을 보내요. 직접 동의해야 켜지고, ⚙️ 설정에서 언제든 켜고 끌 수 있어요.",
+      "🙋 번개가 처음 바닥났을 때 한 번만 알림을 받을지 물어봐요. [괜찮아요]를 누르면 다시 묻지 않아요.",
+      "📱 알림 설정은 기기마다 따로예요. 아이폰은 홈 화면에 설치한 앱에서만 알림을 받을 수 있어요.",
+    ],
+  },
+  {
     version: "v3.12.0",
     date: "2026-10-25",
-    badge: "LATEST",
+    badge: "주문",
     title: "뒤 구역 주문은 더 알차게",
     changes: [
       "📋 [주문] 이야기가 진행될수록 주문 최저 레벨이 올라가요 (온실 Lv.3, 연회장·저장고 Lv.4, 마탑 Lv.5부터). 뒤 구역에서 Lv.2짜리 작은 주문은 더 나오지 않아요. 이미 받은 주문은 그대로예요.",
